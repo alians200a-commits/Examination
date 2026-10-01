@@ -6,14 +6,12 @@ export interface ExamMeta {
   country: string;
   ministry: string;
   directorate: string;
-  administration: string;
   school: string;
   examTitle: string;
   grade: string;
   subject: string;
   examDate: string;
   round: string;
-  year: string;
   duration: string;
   teacher: string;
   note: string;
@@ -25,6 +23,8 @@ export interface LogoSettings {
   x: number;
   y: number;
   width: number;
+  /** نسبة الارتفاع إلى العرض (لحجز مساحة الشعار في أعلى الترويسة). */
+  ratio: number;
 }
 
 export interface Project {
@@ -35,29 +35,44 @@ export interface Project {
   document: JSONContent;
 }
 
+function currentSchoolYear(): string {
+  const now = new Date();
+  const start = now.getMonth() >= 7 ? now.getFullYear() : now.getFullYear() - 1;
+  return `${start} - ${start + 1}`;
+}
+
 export const defaults: ExamMeta = {
   country: 'جمهورية العراق',
   ministry: 'وزارة التربية',
   directorate: 'المديرية العامة للتربية',
-  administration: 'إدارة مدرسة :',
   school: '',
   examTitle: 'أسئلة الامتحان',
   grade: 'الصف السادس الابتدائي',
   subject: 'العلوم',
-  examDate: '2026 - 2025',
+  examDate: currentSchoolYear(),
   round: 'الدور الأول',
-  year: 'العام الدراسي',
   duration: 'ساعة واحدة',
   teacher: '',
   note: 'ملاحظة: الإجابة عن خمسة أسئلة فقط ولكل سؤال 20 درجة ولكل فرع 10 درجات.',
 };
 
+/** المساحة (كنسبة من عرض الترويسة) التي تُحجز أعلى الترويسة حتى لا يغطي الشعار النص. */
+export const logoBand = (width: number, ratio: number) => width * ratio + 1.5;
+
+/** الموضع الافتراضي: منتصف الشعار في المساحة المحجوزة فوق عنوان الامتحان. */
+export function logoHome(width: number, ratio: number) {
+  const HEADER_PX = 703;       // عرض محتوى A4 (186mm)
+  const BASE_HEIGHT_PX = 142;  // ارتفاع الترويسة بدون شعار
+  const band = (logoBand(width, ratio) / 100) * HEADER_PX;
+  return { x: 50, y: Math.round(((band / 2) / (BASE_HEIGHT_PX + band)) * 1000) / 10 };
+}
+
 export const defaultLogo: LogoSettings = {
   src: '',
   name: '',
-  x: 88,
-  y: 12,
-  width: 13,
+  width: 12,
+  ratio: 1,
+  ...logoHome(12, 1),
 };
 
 export const sampleDocument = `
@@ -88,43 +103,36 @@ export const questionTemplates = [
   {
     id: 'definition',
     label: 'تعريفات',
-    desc: 'سؤال مصطلحات على نمط الامتحانات الوزارية',
     html: '<h2>س/ ـ عرّف خمسة مما يأتي: <strong>(10 درجات)</strong></h2><table><tbody><tr><td>1. المصطلح الأول</td><td>2. المصطلح الثاني</td><td>3. المصطلح الثالث</td></tr><tr><td>4. المصطلح الرابع</td><td>5. المصطلح الخامس</td><td>6. المصطلح السادس</td></tr></tbody></table><p></p>',
   },
   {
     id: 'blanks',
     label: 'املأ الفراغات',
-    desc: 'فقرات مع مساحات للإجابة',
     html: '<h2>س/ ـ املأ الفراغات الآتية بما يناسبها: <strong>(10 درجات)</strong></h2><ol><li>السؤال الأول ( .................... ).</li><li>السؤال الثاني ( .................... ).</li><li>السؤال الثالث ( .................... ).</li></ol><p></p>',
   },
   {
     id: 'mcq',
     label: 'اختيار من متعدد',
-    desc: 'خيارات نمط الأقواس',
     html: '<h2>س/ ـ اختر الإجابة الصحيحة من بين الأقواس: <strong>(10 درجات)</strong></h2><ol><li>اكتب السؤال الأول هنا: ( أ ـ الاختيار الأول، ب ـ الاختيار الثاني ).</li><li>اكتب السؤال الثاني هنا: ( أ ـ الاختيار الأول، ب ـ الاختيار الثاني ).</li></ol><p></p>',
   },
   {
     id: 'truefalse',
     label: 'صح / خطأ',
-    desc: 'عبارات صح وخطأ مع مساحة للجواب',
     html: '<h2>س/ ـ ضع كلمة صح أمام العبارة الصحيحة وخطأ أمام العبارة الخاطئة: <strong>(10 درجات)</strong></h2><ol><li>العبارة الأولى ..........................................</li><li>العبارة الثانية ..........................................</li><li>العبارة الثالثة ..........................................</li></ol><p></p>',
   },
   {
     id: 'essay',
     label: 'سؤال مقالي',
-    desc: 'إجابة مطوّلة أو رسم أو برهان',
     html: '<h2>س/ ـ أجب عما يأتي: <strong>(10 درجات)</strong></h2><p>أ ـ اكتب السؤال هنا.</p><p>........................................................................................</p><p>........................................................................................</p><p></p>',
   },
   {
     id: 'numbering',
     label: 'عدّد فقط',
-    desc: 'فروع قصيرة متعدّدة',
     html: '<h2>س/ ـ عدّد فقط: <strong>(10 درجات)</strong></h2><p>أ ـ الفرع الأول.</p><p>ب ـ الفرع الثاني.</p><p>ج ـ الفرع الثالث.</p><p></p>',
   },
   {
     id: 'mathproof',
     label: 'مسألة رياضيات',
-    desc: 'صيغة مناسبة للمسائل والمعادلات',
     html: '<h2>س/ ـ أوجد / أثبت ما يأتي: <strong>(20 درجة)</strong></h2><p>1) اكتب نص المسألة هنا.</p><p>2) اكتب نص المسألة هنا.</p><p></p>',
   },
 ];

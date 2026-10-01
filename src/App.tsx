@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import type { ChangeEvent, PointerEvent as ReactPointerEvent } from 'react';
-import { EditorContent, useEditor } from '@tiptap/react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { ChangeEvent, ReactNode } from 'react';
+import { useEditor, useEditorState } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import TextAlign from '@tiptap/extension-text-align';
@@ -11,217 +11,323 @@ import TableRow from '@tiptap/extension-table-row';
 import TableCell from '@tiptap/extension-table-cell';
 import TableHeader from '@tiptap/extension-table-header';
 import {
-  AlignCenter, AlignLeft, AlignRight, Bold, BookOpen, Check, ChevronDown, FileJson, FileText,
-  Grip, Heading2, ImagePlus, Italic, List, ListOrdered, Menu, Minus, Palette, PanelRightOpen,
-  PenTool, Printer, Redo2, RotateCcw, Save, Settings2, Sigma, Table2, Type,
-  Underline as UnderlineIcon, Undo2, Upload, X,
+  AlignCenter, AlignLeft, AlignRight, Bold, BookOpen, Check, Heading2, ImagePlus, Italic, List, ListOrdered,
+  Minus, PanelRightOpen, PenTool, Plus, Printer, Redo2, Save, SeparatorHorizontal, Sigma, Table2,
+  Trash2, Type, Underline as UnderlineIcon, Undo2, Upload,
 } from 'lucide-react';
-import {
-  defaultLogo, defaults, paperPresets, questionTemplates, sampleDocument, STORAGE_KEY, THEME_OPTIONS,
-} from './data';
+import { defaultLogo, defaults, logoHome, paperPresets, questionTemplates, sampleDocument } from './data';
 import type { ExamMeta, LogoSettings, Project, Theme } from './data';
-import { ArabicMathNode, ArabicMathPreview, Direction, FontAttributes, MathField, MathNode, MathPreview } from './MathSupport';
+import { ArabicMathNode, MathNode } from './MathSupport';
+import { Direction, FontAttributes, PageBreak } from './extensions';
 import { printToPDF, saveJSON } from './export';
+import { loadProject, sanitizeProject, saveProject } from './storage';
+import { logoFromFile } from './image';
+import { Stage } from './components/Stage';
+import { ExamSheet } from './components/ExamSheet';
+import { SettingsPanel } from './components/SettingsPanel';
+import { ArabicMathDialog, ConfirmDialog, LatinMathDialog } from './components/Dialogs';
 
-type Ribbon = 'home' | 'insert' | 'page' | 'style';
-const ribbonLabels: Record<Ribbon, string> = { home:'الرئيسية', insert:'إدراج', page:'الصفحة', style:'الثيمات' };
-const clamp=(v:number,min:number,max:number)=>Math.min(max,Math.max(min,v));
 
-function migrateProject(value: unknown): Partial<Project> {
-  if (typeof value !== 'object' || !value) return {};
-  const v=value as Partial<Project> & {version?:number};
-  if(v.version===2) return v;
-  return {};
+type RibbonTab = 'home' | 'insert' | 'questions';
+const RIBBON_LABELS: Record<RibbonTab, string> = { home: 'الرئيسية', insert: 'إدراج', questions: 'قوالب أسئلة' };
+
+const FONTS = [
+  { label: 'الخط الافتراضي', value: '' },
+  { label: 'Noto Naskh', value: "'Noto Naskh Arabic', serif" },
+  { label: 'Cairo', value: "'Cairo', sans-serif" },
+  { label: 'Arial', value: 'Arial, sans-serif' },
+  { label: 'Times New Roman', value: "'Times New Roman', serif" },
+];
+const SIZES = [10, 11, 12, 13, 14, 16, 18, 20, 24];
+
+const NO_UI = {
+  bold: false, italic: false, underline: false, inTable: false, ol: false, ul: false, h2: false,
+  right: false, center: false, left: false, canUndo: false, canRedo: false, fontFamily: '', fontSize: '',
+};
+
+type FormulaState = { mode: 'insert' } | { mode: 'edit'; pos: number; value: string } | null;
+
+function Tool({ title, onClick, active = false, disabled = false, children }: { title: string; onClick: () => void; active?: boolean; disabled?: boolean; children: ReactNode }) {
+  return (
+    <button type="button" className={`tool-btn ${active ? 'active' : ''}`} title={title} aria-label={title} aria-pressed={active} disabled={disabled} onClick={onClick}>
+      {children}
+    </button>
+  );
 }
-function readSaved(): Partial<Project> {
-  try { const raw=localStorage.getItem(STORAGE_KEY); return raw?migrateProject(JSON.parse(raw)):{}; } catch { return {}; }
-}
-function Tool({title,onClick,active=false,children}:{title:string;onClick:()=>void;active?:boolean;children:React.ReactNode}) {
-  return <button type="button" className={`tool-btn ${active?'active':''}`} title={title} aria-label={title} onClick={onClick}>{children}</button>;
-}
+const Sep = () => <span className="sep" aria-hidden />;
 
-export default function App(){
-  const saved=typeof window!=='undefined'?readSaved():{};
-  const [meta,setMeta]=useState<ExamMeta>({...defaults,...(saved.meta||{})});
-  const [theme,setTheme]=useState<Theme>(saved.theme||'official');
-  const [logo,setLogo]=useState<LogoSettings>({...defaultLogo,...(saved.logo||{})});
-  const [ribbon,setRibbon]=useState<Ribbon>('home');
-  const [notice,setNotice]=useState('جاهز للتحرير');
-  const [panelsOpen,setPanelsOpen]=useState(false);
-  const [latinDialog,setLatinDialog]=useState(false);
-  const [arabicDialog,setArabicDialog]=useState(false);
-  const [latex,setLatex]=useState('\\frac{a}{b}');
-  const [arabicMath,setArabicMath]=useState('س² + ٣س + ١ = ٠');
-  const [revision,setRevision]=useState(0);
-  const importRef=useRef<HTMLInputElement>(null);
-  const logoRef=useRef<HTMLInputElement>(null);
-  const headerRef=useRef<HTMLDivElement>(null);
-  const dragging=useRef(false);
+export default function App() {
+  const initial = useMemo(() => loadProject(), []);
+  const [meta, setMeta] = useState<ExamMeta>(() => ({ ...defaults, ...initial.meta }));
+  const [theme, setTheme] = useState<Theme>(initial.theme || 'official');
+  const [logo, setLogo] = useState<LogoSettings>(() => ({ ...defaultLogo, ...initial.logo }));
+  const [ribbon, setRibbon] = useState<RibbonTab>('home');
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [latexDialog, setLatexDialog] = useState<FormulaState>(null);
+  const [arabicDialog, setArabicDialog] = useState<FormulaState>(null);
+  const [confirm, setConfirm] = useState<{ message: string; run: () => void } | null>(null);
+  const [revision, setRevision] = useState(0);
+  const [saveState, setSaveState] = useState<'saved' | 'saving' | 'error'>('saved');
+  const [toast, setToast] = useState('');
+  const importRef = useRef<HTMLInputElement>(null);
+  const logoRef = useRef<HTMLInputElement>(null);
+  const toastTimer = useRef<number>();
 
-  const editor=useEditor({
-    extensions:[
-      StarterKit.configure({heading:{levels:[1,2,3]}}), Underline, TextStyle, Color,
-      TextAlign.configure({types:['heading','paragraph','tableCell','tableHeader']}),
-      Table.configure({resizable:true}), TableRow, TableCell, TableHeader,
-      MathNode, ArabicMathNode, Direction, FontAttributes,
+  const notify = useCallback((text: string) => {
+    setToast(text);
+    window.clearTimeout(toastTimer.current);
+    toastTimer.current = window.setTimeout(() => setToast(''), 2600);
+  }, []);
+
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({ heading: { levels: [2, 3] } }), Underline, TextStyle, Color,
+      TextAlign.configure({ types: ['heading', 'paragraph', 'tableCell', 'tableHeader'] }),
+      // تغيير عرض الأعمدة بالسحب يعمل معكوسًا في الاتجاه RTL، لذلك أُوقف.
+      Table.configure({ resizable: false }), TableRow, TableCell, TableHeader,
+      MathNode.configure({ onEdit: (pos, value) => setLatexDialog({ mode: 'edit', pos, value }) }),
+      ArabicMathNode.configure({ onEdit: (pos, value) => setArabicDialog({ mode: 'edit', pos, value }) }),
+      Direction, FontAttributes, PageBreak,
     ],
-    content:saved.document?.type==='doc'?saved.document:sampleDocument,
-    editorProps:{attributes:{class:'exam-editor',dir:'rtl',spellcheck:'true','aria-label':'محرّر ورقة الامتحان'}},
-    onUpdate:()=>setRevision(v=>v+1),
+    content: initial.document ?? sampleDocument,
+    editorProps: { attributes: { class: 'exam-editor', dir: 'rtl', spellcheck: 'false', 'aria-label': 'محرّر ورقة الامتحان' } },
+    onUpdate: () => setRevision(v => v + 1),
   });
 
-  const project=useMemo<Project>(()=>({
-    version:2,meta,theme,logo,document:editor?.getJSON()||{type:'doc',content:[]},
-  }),[editor,meta,theme,logo,revision]);
+  const ui = useEditorState<typeof NO_UI>({
+    editor,
+    selector: ({ editor: e }) => ({
+      bold: !!e?.isActive('bold'), italic: !!e?.isActive('italic'), underline: !!e?.isActive('underline'),
+      inTable: !!e?.isActive('table'),
+      ol: !!e?.isActive('orderedList'), ul: !!e?.isActive('bulletList'), h2: !!e?.isActive('heading', { level: 2 }),
+      right: !!e?.isActive({ textAlign: 'right' }), center: !!e?.isActive({ textAlign: 'center' }), left: !!e?.isActive({ textAlign: 'left' }),
+      canUndo: !!e?.can().undo(), canRedo: !!e?.can().redo(),
+      fontFamily: (e?.getAttributes('textStyle').fontFamily as string | null) || '',
+      fontSize: (e?.getAttributes('textStyle').fontSize as string | null) || '',
+    }),
+  }) ?? NO_UI;
 
-  useEffect(()=>{
-    if(!editor)return;
-    const id=window.setTimeout(()=>{try{localStorage.setItem(STORAGE_KEY,JSON.stringify(project));}catch{setNotice('تعذر الحفظ التلقائي');}},600);
-    return()=>window.clearTimeout(id);
-  },[editor,project]);
+  const buildProject = useCallback((): Project => ({
+    version: 2, meta, theme, logo, document: editor?.getJSON() ?? { type: 'doc', content: [] },
+  }), [editor, meta, theme, logo]);
 
-  useEffect(()=>{
-    const move=(e:PointerEvent)=>{
-      if(!dragging.current||!headerRef.current||!logo.src)return;
-      const rect=headerRef.current.getBoundingClientRect();
-      setLogo(v=>({...v,x:clamp(((e.clientX-rect.left)/rect.width)*100,6,94),y:clamp(((e.clientY-rect.top)/rect.height)*100,6,70)}));
-    };
-    const up=()=>{dragging.current=false;};
-    window.addEventListener('pointermove',move); window.addEventListener('pointerup',up);
-    return()=>{window.removeEventListener('pointermove',move);window.removeEventListener('pointerup',up);};
-  },[logo.src]);
+  useEffect(() => {
+    if (!editor) return;
+    setSaveState('saving');
+    const id = window.setTimeout(() => setSaveState(saveProject(buildProject()) ? 'saved' : 'error'), 700);
+    return () => window.clearTimeout(id);
+    // revision يتغير مع كل تعديل في المحتوى
+  }, [editor, buildProject, revision]);
 
-  const updateMeta=(key:keyof ExamMeta,value:string)=>setMeta(v=>({...v,[key]:value}));
-  const insertHTML=(html:string)=>{editor?.chain().focus().insertContent(html).run();setNotice('تم إدراج القالب');};
-  const applyDirection=(dir:'rtl'|'ltr')=>{
-    if(!editor)return;
-    const target=editor.isActive('heading')?'heading':editor.isActive('listItem')?'listItem':'paragraph';
-    editor.chain().focus().updateAttributes(target,{dir}).run();
+  const run = () => editor?.chain().focus();
+  const setTextStyle = (attrs: Record<string, string | null>) => {
+    if (!editor) return;
+    const prev = editor.getAttributes('textStyle');
+    editor.chain().focus().setMark('textStyle', { ...prev, ...attrs }).removeEmptyTextStyle().run();
   };
-  const loadPreset=(id:string)=>{
-    const p=paperPresets.find(x=>x.id===id); if(!p)return;
-    setMeta(v=>({...v,...p.meta})); editor?.commands.setContent(p.content); setNotice(`تم تحميل ${p.label}`);
+  const applyDirection = (dir: 'rtl' | 'ltr') => {
+    if (!editor) return;
+    const target = editor.isActive('heading') ? 'heading' : editor.isActive('listItem') ? 'listItem' : 'paragraph';
+    editor.chain().focus().updateAttributes(target, { dir }).run();
   };
-  const onLogoUpload=(e:ChangeEvent<HTMLInputElement>)=>{
-    const file=e.currentTarget.files?.[0]; if(!file||!file.type.startsWith('image/'))return;
-    const reader=new FileReader();
-    reader.onload=()=>setLogo({src:String(reader.result),name:file.name,x:88,y:12,width:13});
-    reader.readAsDataURL(file); e.currentTarget.value='';
-  };
-  const onImport=async(e:ChangeEvent<HTMLInputElement>)=>{
-    const file=e.currentTarget.files?.[0]; if(!file)return;
-    try{
-      const p=migrateProject(JSON.parse(await file.text()));
-      if(!p.document||p.document.type!=='doc')throw new Error('ملف غير صالح');
-      setMeta({...defaults,...(p.meta||{})}); setTheme(p.theme||'official'); setLogo({...defaultLogo,...(p.logo||{})});
-      editor?.commands.setContent(p.document); setNotice('تم استيراد المشروع');
-    }catch{setNotice('تعذر استيراد المشروع');}
-    e.currentTarget.value='';
-  };
-  const startDrag=(e:ReactPointerEvent<HTMLButtonElement>)=>{e.preventDefault();dragging.current=true;};
 
-  return <div className="app-shell" dir="rtl">
-    <header className="topbar">
-      <div className="brand"><span className="brand-mark"><BookOpen size={22}/></span><span><strong>استوديو الامتحانات</strong><small>WORD-LIKE EXAM EDITOR</small></span></div>
-      <div className="doc-title"><FileText size={16}/><span>{meta.examTitle}</span><span className="saved-tag"><Check size={13}/> حفظ تلقائي</span></div>
-      <div className="top-actions">
-        <button className="top-ghost mobile-only" onClick={()=>setPanelsOpen(v=>!v)}><PanelRightOpen size={16}/> الإعدادات</button>
-        <button className="top-ghost" onClick={()=>importRef.current?.click()}><Upload size={16}/> فتح مشروع</button>
-        <button className="top-ghost" onClick={()=>saveJSON(project)}><Save size={16}/> حفظ مشروع</button>
-        <button className="top-primary" onClick={printToPDF}><Printer size={16}/> تصدير PDF</button>
+  const updateMeta = (key: keyof ExamMeta, value: string) => setMeta(v => ({ ...v, [key]: value }));
+
+  const loadPreset = (id: string) => {
+    const preset = paperPresets.find(p => p.id === id);
+    if (!preset) return;
+    setConfirm({
+      message: `سيتم استبدال محتوى الورقة الحالي بـ «${preset.label}». يمكنك التراجع بزر التراجع. متابعة؟`,
+      run: () => {
+        setMeta(v => ({ ...v, ...preset.meta }));
+        editor?.commands.setContent(preset.content);
+        setPanelOpen(false);
+        notify(`تم تحميل ${preset.label}`);
+      },
+    });
+  };
+
+  const onLogoUpload = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.currentTarget.files?.[0];
+    e.currentTarget.value = '';
+    if (!file || !file.type.startsWith('image/')) return;
+    try {
+      const { src, ratio } = await logoFromFile(file);
+      setLogo(v => ({ ...v, src, ratio, name: file.name, ...logoHome(v.width, ratio) }));
+      notify('تم رفع الشعار');
+    } catch {
+      notify('تعذر قراءة الصورة');
+    }
+  };
+
+  const onImport = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.currentTarget.files?.[0];
+    e.currentTarget.value = '';
+    if (!file) return;
+    let project: Partial<Project> | null = null;
+    try { project = sanitizeProject(JSON.parse(await file.text())); } catch { /* ملف غير صالح */ }
+    if (!project) { notify('الملف ليس مشروع امتحان صالحًا'); return; }
+    const p = project;
+    setConfirm({
+      message: 'سيتم استبدال المشروع الحالي بمحتوى الملف. متابعة؟',
+      run: () => {
+        setMeta({ ...defaults, ...p.meta });
+        setTheme(p.theme || 'official');
+        setLogo({ ...defaultLogo, ...p.logo });
+        editor?.commands.setContent(p.document!);
+        notify('تم استيراد المشروع');
+      },
+    });
+  };
+
+  const submitLatex = (latex: string) => {
+    if (!editor || !latexDialog) return;
+    if (latexDialog.mode === 'edit') {
+      const pos = latexDialog.pos;
+      editor.chain().focus().command(({ tr }) => { tr.setNodeMarkup(pos, undefined, { latex }); return true; }).run();
+    } else {
+      editor.chain().focus().insertContent({ type: 'math', attrs: { latex } }).run();
+    }
+    setLatexDialog(null);
+  };
+  const submitArabic = (value: string) => {
+    if (!editor || !arabicDialog) return;
+    if (arabicDialog.mode === 'edit') {
+      const pos = arabicDialog.pos;
+      editor.chain().focus().command(({ tr }) => { tr.setNodeMarkup(pos, undefined, { value }); return true; }).run();
+    } else {
+      editor.chain().focus().insertContent({ type: 'arabicMath', attrs: { value } }).run();
+    }
+    setArabicDialog(null);
+  };
+  const deleteFormula = (dialog: FormulaState, close: () => void) => {
+    if (!editor || !dialog || dialog.mode !== 'edit') return;
+    const pos = dialog.pos;
+    editor.chain().focus().command(({ tr, state }) => {
+      const node = state.doc.nodeAt(pos);
+      if (node) tr.delete(pos, pos + node.nodeSize);
+      return true;
+    }).run();
+    close();
+  };
+
+  const saveLabel = saveState === 'saving' ? 'جارٍ الحفظ…' : saveState === 'error' ? 'تعذر الحفظ التلقائي — احفظ المشروع كملف' : 'تم الحفظ تلقائيًا';
+
+  return (
+    <div className="app">
+      <header className="topbar">
+        <div className="brand">
+          <span className="brand-mark"><BookOpen size={20} /></span>
+          <div className="brand-text"><strong>استوديو الامتحانات</strong><small>{meta.examTitle}</small></div>
+        </div>
+        <div className="top-actions">
+          <button type="button" className="btn compact settings-toggle" onClick={() => setPanelOpen(true)} aria-label="الإعدادات"><PanelRightOpen size={17} /><span className="lbl">الإعدادات</span></button>
+          <button type="button" className="btn compact" onClick={() => importRef.current?.click()} aria-label="فتح مشروع"><Upload size={17} /><span className="lbl">فتح</span></button>
+          <button type="button" className="btn compact" onClick={() => saveJSON(buildProject())} aria-label="حفظ مشروع"><Save size={17} /><span className="lbl">حفظ</span></button>
+          <button type="button" className="btn compact primary" onClick={printToPDF} aria-label="تصدير PDF"><Printer size={17} /><span className="lbl">PDF</span></button>
+        </div>
+        <input ref={importRef} type="file" accept=".json,application/json" hidden onChange={onImport} />
+        <input ref={logoRef} type="file" accept="image/*" hidden onChange={onLogoUpload} />
+      </header>
+
+      <div className="ribbon">
+        <nav className="ribbon-tabs" role="tablist">
+          {(Object.keys(RIBBON_LABELS) as RibbonTab[]).map(k => (
+            <button key={k} type="button" role="tab" aria-selected={ribbon === k} className={ribbon === k ? 'current' : ''} onClick={() => setRibbon(k)}>{RIBBON_LABELS[k]}</button>
+          ))}
+        </nav>
+        <div className="ribbon-strip">
+          {ribbon === 'home' && <>
+            <Tool title="تراجع" disabled={!ui.canUndo} onClick={() => run()?.undo().run()}><Undo2 size={18} /></Tool>
+            <Tool title="إعادة" disabled={!ui.canRedo} onClick={() => run()?.redo().run()}><Redo2 size={18} /></Tool>
+            <Sep />
+            <Tool title="عريض" active={ui.bold} onClick={() => run()?.toggleBold().run()}><Bold size={18} /></Tool>
+            <Tool title="مائل" active={ui.italic} onClick={() => run()?.toggleItalic().run()}><Italic size={18} /></Tool>
+            <Tool title="تسطير" active={ui.underline} onClick={() => run()?.toggleUnderline().run()}><UnderlineIcon size={18} /></Tool>
+            <Sep />
+            <select className="tool-select" aria-label="نوع الخط" value={ui.fontFamily} onChange={e => setTextStyle({ fontFamily: e.target.value || null })}>
+              {FONTS.map(f => <option key={f.label} value={f.value}>{f.label}</option>)}
+            </select>
+            <select className="tool-select narrow" aria-label="حجم الخط" value={ui.fontSize} onChange={e => setTextStyle({ fontSize: e.target.value || null })}>
+              <option value="">الحجم</option>
+              {SIZES.map(s => <option key={s} value={`${s}pt`}>{s}</option>)}
+            </select>
+            <label className="color-control" title="لون النص"><Type size={16} /><input type="color" defaultValue="#163a70" aria-label="لون النص" onChange={e => run()?.setColor(e.target.value).run()} /></label>
+            <Sep />
+            <Tool title="محاذاة لليمين" active={ui.right} onClick={() => run()?.setTextAlign('right').run()}><AlignRight size={18} /></Tool>
+            <Tool title="توسيط" active={ui.center} onClick={() => run()?.setTextAlign('center').run()}><AlignCenter size={18} /></Tool>
+            <Tool title="محاذاة لليسار" active={ui.left} onClick={() => run()?.setTextAlign('left').run()}><AlignLeft size={18} /></Tool>
+            <Sep />
+            <Tool title="قائمة مرقمة" active={ui.ol} onClick={() => run()?.toggleOrderedList().run()}><ListOrdered size={18} /></Tool>
+            <Tool title="قائمة نقطية" active={ui.ul} onClick={() => run()?.toggleBulletList().run()}><List size={18} /></Tool>
+            <Sep />
+            <button type="button" className="chip" onClick={() => applyDirection('rtl')}>عربي RTL</button>
+            <button type="button" className="chip" onClick={() => applyDirection('ltr')}>English LTR</button>
+          </>}
+
+          {ribbon === 'insert' && <>
+            <Tool title="عنوان سؤال" active={ui.h2} onClick={() => run()?.toggleHeading({ level: 2 }).run()}><Heading2 size={18} /></Tool>
+            <Tool title="جدول" onClick={() => run()?.insertTable({ rows: 2, cols: 3, withHeaderRow: false }).run()}><Table2 size={18} /></Tool>
+            <Tool title="خط فاصل" onClick={() => run()?.setHorizontalRule().run()}><Minus size={18} /></Tool>
+            <Tool title="فاصل صفحة" onClick={() => run()?.insertContent([{ type: 'pageBreak' }, { type: 'paragraph' }]).run()}><SeparatorHorizontal size={18} /></Tool>
+            <Tool title="إدراج شعار" onClick={() => { setPanelOpen(true); logoRef.current?.click(); }}><ImagePlus size={18} /></Tool>
+            <Sep />
+            <button type="button" className="chip" onClick={() => setLatexDialog({ mode: 'insert' })}><Sigma size={15} /> معادلة</button>
+            <button type="button" className="chip" onClick={() => setArabicDialog({ mode: 'insert' })}><PenTool size={15} /> معادلة عربية</button>
+            {ui.inTable && <>
+              <Sep />
+              <button type="button" className="chip" onClick={() => run()?.addRowAfter().run()}><Plus size={14} /> صف</button>
+              <button type="button" className="chip" onClick={() => run()?.addColumnAfter().run()}><Plus size={14} /> عمود</button>
+              <button type="button" className="chip" onClick={() => run()?.deleteRow().run()}><Trash2 size={14} /> صف</button>
+              <button type="button" className="chip" onClick={() => run()?.deleteColumn().run()}><Trash2 size={14} /> عمود</button>
+              <button type="button" className="chip danger" onClick={() => run()?.deleteTable().run()}><Trash2 size={14} /> الجدول</button>
+            </>}
+          </>}
+
+          {ribbon === 'questions' && questionTemplates.map(q => (
+            <button key={q.id} type="button" className="chip" onClick={() => { run()?.insertContent(q.html).run(); notify('تم إدراج القالب'); }}>{q.label}</button>
+          ))}
+        </div>
       </div>
-      <input ref={importRef} type="file" accept=".json,application/json" hidden onChange={onImport}/>
-      <input ref={logoRef} type="file" accept="image/*" hidden onChange={onLogoUpload}/>
-    </header>
 
-    <nav className="ribbon-tabs">
-      {(Object.keys(ribbonLabels) as Ribbon[]).map(k=><button key={k} className={ribbon===k?'current':''} onClick={()=>setRibbon(k)}>{ribbonLabels[k]}</button>)}
-      <span className="tabs-spacer"/><span className="project-version">Mobile-first · PDF only</span>
-    </nav>
+      <div className="workspace">
+        <Stage>
+          <ExamSheet editor={editor} meta={meta} theme={theme} logo={logo} setLogo={setLogo} />
+        </Stage>
+        <SettingsPanel
+          open={panelOpen} onClose={() => setPanelOpen(false)}
+          meta={meta} onMeta={updateMeta} theme={theme} onTheme={setTheme}
+          logo={logo} setLogo={setLogo} onPickLogo={() => logoRef.current?.click()} onPreset={loadPreset}
+        />
+      </div>
 
-    <div className="ribbon-strip">
-      {ribbon==='home'&&<>
-        <div className="ribbon-group"><span className="group-caption">تحرير</span>
-          <Tool title="تراجع" onClick={()=>editor?.chain().focus().undo().run()}><Undo2 size={18}/></Tool>
-          <Tool title="إعادة" onClick={()=>editor?.chain().focus().redo().run()}><Redo2 size={18}/></Tool>
-          <Tool title="عريض" active={editor?.isActive('bold')} onClick={()=>editor?.chain().focus().toggleBold().run()}><Bold size={18}/></Tool>
-          <Tool title="مائل" active={editor?.isActive('italic')} onClick={()=>editor?.chain().focus().toggleItalic().run()}><Italic size={18}/></Tool>
-          <Tool title="تسطير" active={editor?.isActive('underline')} onClick={()=>editor?.chain().focus().toggleUnderline().run()}><UnderlineIcon size={18}/></Tool>
-        </div>
-        <div className="ribbon-group wide"><span className="group-caption">الخط والمحاذاة</span>
-          <select className="tool-select" defaultValue="" onChange={e=>editor?.chain().focus().setMark('textStyle',{fontFamily:e.target.value}).run()}>
-            <option value="">الخط الافتراضي</option><option value="'Noto Naskh Arabic', serif">Noto Naskh Arabic</option><option value="'Cairo', sans-serif">Cairo</option><option value="Arial, sans-serif">Arial</option>
-          </select>
-          <label className="color-control"><Type size={16}/><input type="color" defaultValue="#163A70" onChange={e=>editor?.chain().focus().setColor(e.target.value).run()}/></label>
-          <Tool title="يمين" onClick={()=>editor?.chain().focus().setTextAlign('right').run()}><AlignRight size={18}/></Tool>
-          <Tool title="وسط" onClick={()=>editor?.chain().focus().setTextAlign('center').run()}><AlignCenter size={18}/></Tool>
-          <Tool title="يسار" onClick={()=>editor?.chain().focus().setTextAlign('left').run()}><AlignLeft size={18}/></Tool>
-          <Tool title="مرقمة" onClick={()=>editor?.chain().focus().toggleOrderedList().run()}><ListOrdered size={18}/></Tool>
-          <Tool title="نقطية" onClick={()=>editor?.chain().focus().toggleBulletList().run()}><List size={18}/></Tool>
-          <button className="ribbon-chip" onClick={()=>applyDirection('rtl')}>عربي RTL</button><button className="ribbon-chip" onClick={()=>applyDirection('ltr')}>English LTR</button>
-        </div>
-      </>}
-      {ribbon==='insert'&&<div className="ribbon-group wider"><span className="group-caption">إدراج</span>
-        <Tool title="عنوان سؤال" onClick={()=>editor?.chain().focus().toggleHeading({level:2}).run()}><Heading2 size={18}/></Tool>
-        <Tool title="جدول" onClick={()=>editor?.chain().focus().insertTable({rows:2,cols:3,withHeaderRow:false}).run()}><Table2 size={18}/></Tool>
-        <Tool title="فاصل" onClick={()=>editor?.chain().focus().setHorizontalRule().run()}><Minus size={18}/></Tool>
-        <button className="ribbon-template" onClick={()=>setLatinDialog(true)}><Sigma size={16}/> معادلة English</button>
-        <button className="ribbon-template" onClick={()=>setArabicDialog(true)}><PenTool size={16}/> معادلة عربية</button>
-        {questionTemplates.map(q=><button key={q.id} className="ribbon-template" onClick={()=>insertHTML(q.html)}>{q.label}</button>)}
-      </div>}
-      {ribbon==='page'&&<div className="ribbon-group wide"><span className="group-caption">الصفحة</span><span className="layout-note">A4 · PDF · موبايل/تابلت/حاسوب</span><button className="ribbon-template" onClick={()=>logoRef.current?.click()}><ImagePlus size={16}/> رفع شعار</button><button className="ribbon-template" onClick={printToPDF}><Printer size={16}/> PDF</button></div>}
-      {ribbon==='style'&&<div className="ribbon-group wider"><span className="group-caption">الثيمات</span>{THEME_OPTIONS.map(t=><button key={t.id} className={`theme-ribbon ${theme===t.id?'theme-active':''}`} onClick={()=>setTheme(t.id)}><span style={{background:t.colors[0]}}/>{t.label}</button>)}</div>}
+      <div className="statusbar">
+        <span className={`save-state ${saveState}`}>{saveState === 'saved' && <Check size={13} />} {saveLabel}</span>
+        <span>{editor?.getText().length ?? 0} حرف</span>
+      </div>
+      {toast && <div className="toast" role="status">{toast}</div>}
+
+      {latexDialog && (
+        <LatinMathDialog
+          mode={latexDialog.mode} initial={latexDialog.mode === 'edit' ? latexDialog.value : '\\frac{a}{b}'}
+          onSubmit={submitLatex} onClose={() => setLatexDialog(null)}
+          onDelete={() => deleteFormula(latexDialog, () => setLatexDialog(null))}
+        />
+      )}
+      {arabicDialog && (
+        <ArabicMathDialog
+          mode={arabicDialog.mode} initial={arabicDialog.mode === 'edit' ? arabicDialog.value : 'س² + ٣س + ١ = ٠'}
+          onSubmit={submitArabic} onClose={() => setArabicDialog(null)}
+          onDelete={() => deleteFormula(arabicDialog, () => setArabicDialog(null))}
+        />
+      )}
+      {confirm && (
+        <ConfirmDialog
+          message={confirm.message}
+          onCancel={() => setConfirm(null)}
+          onConfirm={() => { confirm.run(); setConfirm(null); }}
+        />
+      )}
     </div>
-
-    <div className="workspace">
-      <main className="editing-area">
-        <div className="canvas-toolbar"><div className="canvas-breadcrumb"><FileText size={16}/><strong>معاينة الورقة</strong><ChevronDown size={15}/><span>تحديث مباشر</span></div><div className="canvas-actions"><button onClick={printToPDF}><Printer size={16}/> PDF</button><button onClick={()=>saveJSON(project)}><FileJson size={16}/> JSON</button></div></div>
-        <div className="paper-topline"><span>معاينة A4 — الهاتف أولًا ثم التابلت والحاسوب</span><span>{THEME_OPTIONS.find(t=>t.id===theme)?.label}</span></div>
-        <div className="paper-scroll"><div className={`exam-paper theme-${theme}`}>
-          <div className="paper-header" ref={headerRef}>
-            {logo.src&&<button className="paper-logo" style={{left:`${logo.x}%`,top:`${logo.y}%`,width:`${logo.width}%`}} onPointerDown={startDrag}><img src={logo.src} alt={logo.name||'شعار'}/><span><Grip size={14}/> شعار</span></button>}
-            <div className="header-government"><strong>{meta.country}</strong><span>{meta.ministry}</span><span>{meta.directorate}</span><span>{meta.administration}</span>{meta.school&&<span>{meta.school}</span>}</div>
-            <div className="header-center"><h1>{meta.examTitle}</h1><strong>{meta.year}</strong><strong>({meta.examDate})</strong><span>{meta.round}</span></div>
-            <div className="header-details"><span><b>المادة:</b> {meta.subject}</span><span><b>الصف:</b> {meta.grade}</span><span><b>الوقت:</b> {meta.duration}</span></div>
-          </div>
-          <div className="exam-note">{meta.note}</div>
-          <div className="name-line"><b>اسم الطالب/ة:</b><span className="dotted-line"/></div>
-          <EditorContent editor={editor}/>
-          <footer className="paper-footer"><span>{meta.teacher?`مدرس المادة: ${meta.teacher}`:'مدرس المادة: ........................'}</span><span>مع تمنياتنا لكم بالتوفيق والنجاح</span></footer>
-        </div></div>
-      </main>
-
-      <aside className={`inspector ${panelsOpen?'open':''}`}>
-        <section className="panel-card"><div className="panel-card-head"><h3><Menu size={18}/> نماذج الامتحانات</h3><button className="icon-ghost" onClick={()=>setPanelsOpen(false)}><X size={16}/></button></div><div className="panel-card-body"><div className="preset-list">{paperPresets.map(p=><button className="preset-card" key={p.id} onClick={()=>loadPreset(p.id)}><strong>{p.label}</strong><small>{p.summary}</small></button>)}</div></div></section>
-        <section className="panel-card"><div className="panel-card-head"><h3><Settings2 size={18}/> بيانات الامتحان</h3></div><div className="panel-card-body"><div className="fields-grid">
-          {([['country','الدولة'],['ministry','الوزارة'],['directorate','المديرية'],['administration','الإدارة'],['school','اسم المدرسة'],['examTitle','عنوان الامتحان'],['grade','الصف'],['subject','المادة'],['year','السنة'],['examDate','العام الدراسي'],['round','الدور'],['duration','الوقت'],['teacher','المدرس']] as [keyof ExamMeta,string][]).map(([k,l])=><label key={k}><span>{l}</span><input value={meta[k]} onChange={e=>updateMeta(k,e.target.value)}/></label>)}
-          <label className="full-span"><span>ملاحظة الامتحان</span><textarea rows={3} value={meta.note} onChange={e=>updateMeta('note',e.target.value)}/></label>
-        </div></div></section>
-        <section className="panel-card"><div className="panel-card-head"><h3><ImagePlus size={18}/> الشعار والهيدر</h3></div><div className="panel-card-body">
-          <p className="panel-help">ارفع الشعار ثم اسحبه داخل الهيدر أو اضبط موضعه وحجمه.</p>
-          <div className="logo-actions"><button className="ribbon-template" onClick={()=>logoRef.current?.click()}><Upload size={15}/> رفع شعار</button><button className="ribbon-template" onClick={()=>setLogo(v=>({...v,x:88,y:12,width:13}))}><RotateCcw size={15}/> ضبط</button><button className="ribbon-template" onClick={()=>setLogo(defaultLogo)}><X size={15}/> حذف</button></div>
-          {logo.src&&<div className="slider-group"><label><span>أفقي</span><input type="range" min="6" max="94" value={logo.x} onChange={e=>setLogo(v=>({...v,x:+e.target.value}))}/></label><label><span>عمودي</span><input type="range" min="6" max="70" value={logo.y} onChange={e=>setLogo(v=>({...v,y:+e.target.value}))}/></label><label><span>الحجم</span><input type="range" min="6" max="28" value={logo.width} onChange={e=>setLogo(v=>({...v,width:+e.target.value}))}/></label></div>}
-        </div></section>
-        <section className="panel-card"><div className="panel-card-head"><h3><Palette size={18}/> الثيمات</h3></div><div className="panel-card-body"><div className="theme-grid">{THEME_OPTIONS.map(t=><button key={t.id} className={`theme-tile ${theme===t.id?'chosen':''}`} onClick={()=>setTheme(t.id)}><span className="swatch" style={{background:`linear-gradient(135deg,${t.colors[0]} 0 22%,${t.colors[1]} 22% 100%)`}}/><strong>{t.label}</strong><small>{t.description}</small></button>)}</div></div></section>
-      </aside>
-    </div>
-
-    <div className="statusbar"><span>{notice}</span><span><Check size={13}/> حفظ محلي تلقائي</span><span>{editor?.getText().length||0} حرف</span></div>
-
-    {latinDialog&&<div className="dialog-shade" onMouseDown={e=>{if(e.target===e.currentTarget)setLatinDialog(false)}}><div className="dialog">
-      <div className="dialog-header"><h2><Sigma size={22}/> معادلة إنكليزية</h2><button onClick={()=>setLatinDialog(false)}><X size={18}/></button></div>
-      <p>MathLive / LaTeX للمعادلات القياسية.</p><MathField value={latex} onChange={setLatex}/>
-      <label className="latex-label">LaTeX<input dir="ltr" value={latex} onChange={e=>setLatex(e.target.value)}/></label>
-      <div className="math-sample"><span>معاينة:</span><MathPreview latex={latex} displayMode/></div>
-      <div className="dialog-actions"><button onClick={()=>setLatinDialog(false)}>إلغاء</button><button className="primary-action" onClick={()=>{editor?.chain().focus().insertContent({type:'math',attrs:{latex}}).run();setLatinDialog(false)}}><Sigma size={16}/> إدراج</button></div>
-    </div></div>}
-
-    {arabicDialog&&<div className="dialog-shade" onMouseDown={e=>{if(e.target===e.currentTarget)setArabicDialog(false)}}><div className="dialog">
-      <div className="dialog-header"><h2><PenTool size={22}/> معادلة عربية</h2><button onClick={()=>setArabicDialog(false)}><X size={18}/></button></div>
-      <p>محرر مستقل للعبارات الرياضية العربية.</p><textarea className="arabic-math-editor big" dir="rtl" rows={4} value={arabicMath} onChange={e=>setArabicMath(e.target.value)}/>
-      <div className="arabic-chips">{['س','ص','ع','²','³','√','≤','≥','±','π','جا','جتا','ظا','→','='].map(x=><button key={x} onClick={()=>setArabicMath(v=>v+x)}>{x}</button>)}</div>
-      <div className="math-sample"><span>معاينة:</span><ArabicMathPreview value={arabicMath}/></div>
-      <div className="dialog-actions"><button onClick={()=>setArabicDialog(false)}>إلغاء</button><button className="primary-action" onClick={()=>{editor?.chain().focus().insertContent({type:'arabicMath',attrs:{value:arabicMath}}).run();setArabicDialog(false)}}><PenTool size={16}/> إدراج</button></div>
-    </div></div>}
-  </div>;
+  );
 }

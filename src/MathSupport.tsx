@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import { Extension, Node, mergeAttributes } from '@tiptap/core';
+import { useEffect, useRef } from 'react';
+import { Node, mergeAttributes } from '@tiptap/core';
 import { NodeViewWrapper, ReactNodeViewRenderer, type NodeViewProps } from '@tiptap/react';
 import katex from 'katex';
 import 'mathlive';
@@ -43,23 +43,19 @@ export function MathField({ value, onChange }: { value: string; onChange: (value
       field.remove();
       fieldRef.current = null;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return <div className="math-host" dir="ltr" ref={host} />;
 }
 
 export function MathPreview({ latex, displayMode = false }: { latex: string; displayMode?: boolean }) {
-  let markup: string;
-  try {
-    markup = katex.renderToString(latex || '\\square', {
-      throwOnError: false,
-      displayMode,
-      output: 'htmlAndMathml',
-      strict: 'ignore',
-    });
-  } catch {
-    markup = 'صيغة المعادلة غير صالحة';
-  }
+  const markup = katex.renderToString(latex || '\\square', {
+    throwOnError: false,
+    displayMode,
+    output: 'htmlAndMathml',
+    strict: 'ignore',
+  });
   return <span className="math-render" dir="ltr" dangerouslySetInnerHTML={{ __html: markup }} />;
 }
 
@@ -67,76 +63,42 @@ export function ArabicMathPreview({ value }: { value: string }) {
   return <span className="arabic-math-render" dir="rtl">{value || 'س² + ٣س + ١ = ٠'}</span>;
 }
 
-function MathView({ node, updateAttributes, selected }: NodeViewProps) {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(String(node.attrs.latex || ''));
-
-  useEffect(() => {
-    if (!editing) setDraft(String(node.attrs.latex || ''));
-  }, [editing, node.attrs.latex]);
-
+/** المعادلة داخل الورقة: النقر يفتح نافذة التعديل (تعمل بالمس، بخلاف النقر المزدوج). */
+function FormulaView({ node, extension, getPos, selected }: NodeViewProps) {
+  const isArabic = extension.name === 'arabicMath';
+  const value = String(isArabic ? node.attrs.value : node.attrs.latex);
+  const edit = () => {
+    const pos = getPos();
+    if (typeof pos === 'number') extension.options.onEdit?.(pos, value);
+  };
   return (
-    <NodeViewWrapper as="span" className={`formula-node ${selected ? 'selected-formula' : ''}`}>
-      {editing ? (
-        <span className="formula-popover" contentEditable={false} onMouseDown={e => e.stopPropagation()}>
-          <MathField value={draft} onChange={setDraft} />
-          <div className="popover-actions">
-            <button type="button" onClick={() => { updateAttributes({ latex: draft }); setEditing(false); }}>حفظ</button>
-            <button type="button" className="ghost" onClick={() => setEditing(false)}>إلغاء</button>
-          </div>
-        </span>
-      ) : (
-        <span className="formula-display" contentEditable={false} title="انقر مرتين لتعديل المعادلة" onDoubleClick={() => setEditing(true)}>
-          <MathPreview latex={String(node.attrs.latex)} />
-        </span>
-      )}
+    <NodeViewWrapper as="span" className={`formula-node ${isArabic ? 'arabic-formula' : ''} ${selected ? 'selected-formula' : ''}`}>
+      <span
+        className="formula-display"
+        contentEditable={false}
+        role="button"
+        tabIndex={0}
+        title="اضغط لتعديل المعادلة"
+        onClick={edit}
+        onKeyDown={e => { if (e.key === 'Enter') edit(); }}
+      >
+        {isArabic ? <ArabicMathPreview value={value} /> : <MathPreview latex={value} />}
+      </span>
     </NodeViewWrapper>
   );
 }
 
-function ArabicMathView({ node, updateAttributes, selected }: NodeViewProps) {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(String(node.attrs.value || ''));
+type EditHandler = (pos: number, value: string) => void;
 
-  useEffect(() => {
-    if (!editing) setDraft(String(node.attrs.value || ''));
-  }, [editing, node.attrs.value]);
-
-  return (
-    <NodeViewWrapper as="span" className={`formula-node arabic-formula ${selected ? 'selected-formula' : ''}`}>
-      {editing ? (
-        <span className="formula-popover arabic-popover" contentEditable={false} onMouseDown={e => e.stopPropagation()}>
-          <textarea
-            dir="rtl"
-            className="arabic-math-editor"
-            value={draft}
-            onChange={event => setDraft(event.target.value)}
-            spellCheck={false}
-            rows={3}
-          />
-          <div className="popover-preview">
-            <ArabicMathPreview value={draft} />
-          </div>
-          <div className="popover-actions">
-            <button type="button" onClick={() => { updateAttributes({ value: draft }); setEditing(false); }}>حفظ</button>
-            <button type="button" className="ghost" onClick={() => setEditing(false)}>إلغاء</button>
-          </div>
-        </span>
-      ) : (
-        <span className="formula-display arabic-display" contentEditable={false} title="انقر مرتين لتعديل المعادلة العربية" onDoubleClick={() => setEditing(true)}>
-          <ArabicMathPreview value={String(node.attrs.value)} />
-        </span>
-      )}
-    </NodeViewWrapper>
-  );
-}
-
-export const MathNode = Node.create({
+export const MathNode = Node.create<{ onEdit?: EditHandler }>({
   name: 'math',
   group: 'inline',
   inline: true,
   atom: true,
   selectable: true,
+  addOptions() {
+    return { onEdit: undefined };
+  },
   addAttributes() {
     return {
       latex: {
@@ -153,16 +115,19 @@ export const MathNode = Node.create({
     return ['span', mergeAttributes(HTMLAttributes, { 'data-type': 'math', dir: 'ltr' }), String(HTMLAttributes['data-latex'] || '')];
   },
   addNodeView() {
-    return ReactNodeViewRenderer(MathView);
+    return ReactNodeViewRenderer(FormulaView);
   },
 });
 
-export const ArabicMathNode = Node.create({
+export const ArabicMathNode = Node.create<{ onEdit?: EditHandler }>({
   name: 'arabicMath',
   group: 'inline',
   inline: true,
   atom: true,
   selectable: true,
+  addOptions() {
+    return { onEdit: undefined };
+  },
   addAttributes() {
     return {
       value: {
@@ -179,47 +144,6 @@ export const ArabicMathNode = Node.create({
     return ['span', mergeAttributes(HTMLAttributes, { 'data-type': 'arabic-math', dir: 'rtl' }), String(HTMLAttributes['data-value'] || '')];
   },
   addNodeView() {
-    return ReactNodeViewRenderer(ArabicMathView);
-  },
-});
-
-export const Direction = Extension.create({
-  name: 'textDirection',
-  addGlobalAttributes() {
-    return [
-      {
-        types: ['paragraph', 'heading', 'listItem', 'tableCell', 'tableHeader'],
-        attributes: {
-          dir: {
-            default: null,
-            parseHTML: element => element.getAttribute('dir'),
-            renderHTML: attrs => (attrs.dir ? { dir: attrs.dir } : {}),
-          },
-        },
-      },
-    ];
-  },
-});
-
-export const FontAttributes = Extension.create({
-  name: 'fontAttributes',
-  addGlobalAttributes() {
-    return [
-      {
-        types: ['textStyle'],
-        attributes: {
-          fontSize: {
-            default: null,
-            parseHTML: element => (element as HTMLElement).style.fontSize || null,
-            renderHTML: attrs => (attrs.fontSize ? { style: `font-size: ${attrs.fontSize}` } : {}),
-          },
-          fontFamily: {
-            default: null,
-            parseHTML: element => (element as HTMLElement).style.fontFamily || null,
-            renderHTML: attrs => (attrs.fontFamily ? { style: `font-family: ${attrs.fontFamily}` } : {}),
-          },
-        },
-      },
-    ];
+    return ReactNodeViewRenderer(FormulaView);
   },
 });

@@ -1,15 +1,17 @@
 {
   "name": "arabic-examination-studio",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.3.0",
   "type": "module",
-  "description": "Mobile-first Arabic exam editor with PDF export, theme system, draggable header logo, and separate Arabic/English equations.",
+  "description": "Arabic exam editor with a true A4 preview, PDF export, themes, draggable header logo, and Arabic/English equations.",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@fontsource/cairo": "^5.3.0",
+    "@fontsource/noto-naskh-arabic": "^5.3.0",
     "@tiptap/core": "^2.27.1",
     "@tiptap/extension-color": "^2.27.1",
     "@tiptap/extension-table": "^2.27.1",
