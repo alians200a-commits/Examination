@@ -1,0 +1,37 @@
+name: Import Examination v0.2
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.source/exam-v02-patch.tar.xz.b64'
+permissions:
+  contents: write
+jobs:
+  import-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Extract updated source
+        shell: bash
+        run: |
+          mkdir -p .temp-import
+          base64 -d .source/exam-v02-patch.tar.xz.b64 > .temp-import/source.tar.xz
+          tar -xJf .temp-import/source.tar.xz -C .
+          rm -rf .temp-import .source
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Type check and production build
+        run: npm run build
+      - name: Commit verified source
+        shell: bash
+        run: |
+          git add -A
+          if ! git diff --cached --quiet; then
+            git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'feat: responsive PDF-only exam editor v0.2'
+            git push origin HEAD:main
+          fi
