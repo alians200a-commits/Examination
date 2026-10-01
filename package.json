@@ -1,38 +1,37 @@
 {
-  "name": "examination-arabic-studio",
+  "name": "arabic-examination-studio",
   "private": true,
   "version": "0.2.0",
   "type": "module",
+  "description": "Mobile-first Arabic exam editor with PDF export, theme system, draggable header logo, and separate Arabic/English equations.",
   "scripts": {
-    "dev": "vite --host 0.0.0.0 --port 3000",
+    "dev": "vite",
     "build": "tsc -b && vite build",
-    "preview": "vite preview --host 0.0.0.0 --port 3000"
+    "preview": "vite preview"
   },
   "dependencies": {
-    "@tiptap/core": "^2.11.5",
-    "@tiptap/extension-color": "^2.11.5",
-    "@tiptap/extension-table": "^2.11.5",
-    "@tiptap/extension-table-cell": "^2.11.5",
-    "@tiptap/extension-table-header": "^2.11.5",
-    "@tiptap/extension-table-row": "^2.11.5",
-    "@tiptap/extension-text-align": "^2.11.5",
-    "@tiptap/extension-text-style": "^2.11.5",
-    "@tiptap/extension-underline": "^2.11.5",
-    "@tiptap/react": "^2.11.5",
-    "@tiptap/starter-kit": "^2.11.5",
-    "katex": "^0.16.11",
+    "@tiptap/core": "^2.27.1",
+    "@tiptap/extension-color": "^2.27.1",
+    "@tiptap/extension-table": "^2.27.1",
+    "@tiptap/extension-table-cell": "^2.27.1",
+    "@tiptap/extension-table-header": "^2.27.1",
+    "@tiptap/extension-table-row": "^2.27.1",
+    "@tiptap/extension-text-align": "^2.27.1",
+    "@tiptap/extension-text-style": "^2.27.1",
+    "@tiptap/extension-underline": "^2.27.1",
+    "@tiptap/react": "^2.27.1",
+    "@tiptap/starter-kit": "^2.27.1",
+    "katex": "^0.16.22",
     "lucide-react": "^0.468.0",
-    "mathlive": "^0.104.0",
+    "mathlive": "^0.105.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
-    "@types/katex": "^0.16.7",
-    "@types/react": "^18.3.18",
-    "@types/react-dom": "^18.3.5",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",
-    "typescript": "^5.6.3",
-    "vite": "^5.4.11"
-  },
-  "description": "Mobile-first Arabic exam editor with PDF export, theme system, draggable header logo, and separate Arabic/English equations."
+    "typescript": "~5.6.2",
+    "vite": "^6.0.1"
+  }
 }
