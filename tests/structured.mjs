@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import typescript from 'typescript';
+const ts=fs.readFileSync(new URL('../src/formExam.ts',import.meta.url),'utf8');
+const output=typescript.transpileModule(ts,{compilerOptions:{module:typescript.ModuleKind.ESNext,target:typescript.ScriptTarget.ES2020}}).outputText;
+const {newExam,newQuestion,newPart,sanitizeStructured}=await import('data:text/javascript;base64,'+Buffer.from(output).toString('base64'));
+const exam=newExam();
+exam.questions.push(newQuestion());
+exam.questions[2].parts.push(newPart());
+exam.questions[2].parts[0].score=10;
+exam.questions[2].parts[0].formula={language:'arabic',value:'(س+١)/(ص+٢)'};
+assert.equal(sanitizeStructured(exam).questions[2].parts[0].score,10);
+assert.equal(sanitizeStructured(exam).questions[2].parts[0].formula.language,'arabic');
+assert.equal(sanitizeStructured({...exam,questions:[{...exam.questions[0],score:-2}]}),null);
+assert.equal(sanitizeStructured({...exam,questions:[{...exam.questions[0],parts:[{id:'a',text:'x',formula:{language:'script',value:'alert(1)'}}]}]}),null);
+console.log('Structured exam schema validation passed.');

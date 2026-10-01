@@ -13,7 +13,7 @@ import TableHeader from '@tiptap/extension-table-header';
 import {
   AlignCenter, AlignLeft, AlignRight, Bold, BookOpen, Check, Heading2, ImagePlus, Italic, List, ListOrdered,
   Minus, PanelRightOpen, PenTool, Plus, Printer, Redo2, Save, SeparatorHorizontal, Sigma, Table2,
-  Trash2, Type, Underline as UnderlineIcon, Undo2, Upload,
+  Trash2, Type, Underline as UnderlineIcon, Undo2, Upload, ClipboardList, FilePenLine, Eye,
 } from 'lucide-react';
 import { defaultLogo, defaults, logoHome, paperPresets, questionTemplates, sampleDocument } from './data';
 import type { ExamMeta, LogoSettings, Project, Theme } from './data';
@@ -26,6 +26,9 @@ import { Stage } from './components/Stage';
 import { ExamSheet } from './components/ExamSheet';
 import { SettingsPanel } from './components/SettingsPanel';
 import { ArabicMathDialog, ConfirmDialog, LatinMathDialog } from './components/Dialogs';
+import { QuestionBuilder, type FormulaTarget } from './components/QuestionBuilder';
+import { StructuredSheet } from './components/StructuredSheet';
+import { newExam, type StructuredExam, type QuestionFormula } from './formExam';
 
 
 type RibbonTab = 'home' | 'insert' | 'questions';
@@ -62,6 +65,10 @@ export default function App() {
   const [theme, setTheme] = useState<Theme>(initial.theme || 'official');
   const [logo, setLogo] = useState<LogoSettings>(() => ({ ...defaultLogo, ...initial.logo }));
   const [ribbon, setRibbon] = useState<RibbonTab>('home');
+  const [mode, setMode] = useState<'form' | 'free'>(() => initial.mode || (initial.document && !initial.structured ? 'free' : 'form'));
+  const [structured, setStructured] = useState<StructuredExam>(() => initial.structured || newExam());
+  const [mobileView, setMobileView] = useState<'builder' | 'preview'>('builder');
+  const [formTarget, setFormTarget] = useState<FormulaTarget | null>(null);
   const [panelOpen, setPanelOpen] = useState(false);
   const [latexDialog, setLatexDialog] = useState<FormulaState>(null);
   const [arabicDialog, setArabicDialog] = useState<FormulaState>(null);
@@ -108,8 +115,8 @@ export default function App() {
   }) ?? NO_UI;
 
   const buildProject = useCallback((): Project => ({
-    version: 2, meta, theme, logo, document: editor?.getJSON() ?? { type: 'doc', content: [] },
-  }), [editor, meta, theme, logo]);
+    version: 2, meta, theme, logo, document: editor?.getJSON() ?? { type: 'doc', content: [] }, mode, structured,
+  }), [editor, meta, theme, logo, mode, structured]);
 
   useEffect(() => {
     if (!editor) return;
@@ -141,6 +148,7 @@ export default function App() {
       run: () => {
         setMeta(v => ({ ...v, ...preset.meta }));
         editor?.commands.setContent(preset.content);
+        setMode('free');
         setPanelOpen(false);
         notify(`تم تحميل ${preset.label}`);
       },
@@ -175,12 +183,32 @@ export default function App() {
         setTheme(p.theme || 'official');
         setLogo({ ...defaultLogo, ...p.logo });
         editor?.commands.setContent(p.document!);
+        setStructured(p.structured || newExam());
+        setMode(p.mode || 'free');
         notify('تم استيراد المشروع');
       },
     });
   };
 
+  const editFormFormula = useCallback((target: FormulaTarget) => {
+    setFormTarget(target);
+    if (target.language === 'arabic') setArabicDialog({ mode: 'insert' });
+    else setLatexDialog({ mode: 'insert' });
+  }, []);
+  const setFormFormula = (target: FormulaTarget, value: string) => {
+    const formula: QuestionFormula = { language: target.language, value };
+    setStructured(previous => ({ ...previous,
+      questions: previous.questions.map(q => {
+        if (q.id !== target.questionId) return q;
+        if (!target.partId) return { ...q, formula };
+        return { ...q, parts: q.parts.map(p => p.id === target.partId ? { ...p, formula } : p) };
+      }),
+    }));
+    setFormTarget(null);
+  };
+
   const submitLatex = (latex: string) => {
+    if (formTarget?.language === 'latin') { setFormFormula(formTarget, latex); setLatexDialog(null); return; }
     if (!editor || !latexDialog) return;
     if (latexDialog.mode === 'edit') {
       const pos = latexDialog.pos;
@@ -191,6 +219,7 @@ export default function App() {
     setLatexDialog(null);
   };
   const submitArabic = (value: string) => {
+    if (formTarget?.language === 'arabic') { setFormFormula(formTarget, value); setArabicDialog(null); return; }
     if (!editor || !arabicDialog) return;
     if (arabicDialog.mode === 'edit') {
       const pos = arabicDialog.pos;
@@ -214,7 +243,7 @@ export default function App() {
   const saveLabel = saveState === 'saving' ? 'جارٍ الحفظ…' : saveState === 'error' ? 'تعذر الحفظ التلقائي — احفظ المشروع كملف' : 'تم الحفظ تلقائيًا';
 
   return (
-    <div className="app">
+    <div className={`app mode-${mode}`}>
       <header className="topbar">
         <div className="brand">
           <span className="brand-mark"><BookOpen size={20} /></span>
@@ -230,7 +259,12 @@ export default function App() {
         <input ref={logoRef} type="file" accept="image/*" hidden onChange={onLogoUpload} />
       </header>
 
-      <div className="ribbon">
+      <nav className="mode-switch" aria-label="طريقة إنشاء الامتحان">
+        <button type="button" className={mode === 'form' ? 'active' : ''} onClick={() => { setMode('form'); setFormTarget(null); }}><ClipboardList size={17}/> إدخال الأسئلة مثل الفيديو</button>
+        <button type="button" className={mode === 'free' ? 'active' : ''} onClick={() => { setMode('free'); setFormTarget(null); }}><FilePenLine size={17}/> محرّر حر</button>
+      </nav>
+
+      {mode === 'free' && <div className="ribbon">
         <nav className="ribbon-tabs" role="tablist">
           {(Object.keys(RIBBON_LABELS) as RibbonTab[]).map(k => (
             <button key={k} type="button" role="tab" aria-selected={ribbon === k} className={ribbon === k ? 'current' : ''} onClick={() => setRibbon(k)}>{RIBBON_LABELS[k]}</button>
@@ -288,12 +322,23 @@ export default function App() {
             <button key={q.id} type="button" className="chip" onClick={() => { run()?.insertContent(q.html).run(); notify('تم إدراج القالب'); }}>{q.label}</button>
           ))}
         </div>
-      </div>
+      </div>}
 
-      <div className="workspace">
-        <Stage>
-          <ExamSheet editor={editor} meta={meta} theme={theme} logo={logo} setLogo={setLogo} />
-        </Stage>
+      <div className={`workspace ${mode === 'form' ? 'form-workspace' : ''}`}>
+        {mode === 'form' ? <div className="form-workflow">
+          <nav className="form-mobile-switch" aria-label="إنشاء ومعاينة الامتحان">
+            <button type="button" className={mobileView === 'builder' ? 'active' : ''} onClick={() => setMobileView('builder')}><ClipboardList size={16}/> كتابة الأسئلة</button>
+            <button type="button" className={mobileView === 'preview' ? 'active' : ''} onClick={() => setMobileView('preview')}><Eye size={16}/> معاينة A4</button>
+          </nav>
+          <div className={`form-builder-pane ${mobileView === 'builder' ? 'mobile-active' : ''}`}>
+            <QuestionBuilder exam={structured} setExam={setStructured} meta={meta} onMeta={updateMeta} onFormula={editFormFormula} onPrint={printToPDF}/>
+          </div>
+          <div className={`form-preview-pane ${mobileView === 'preview' ? 'mobile-active' : ''}`}>
+            <Stage><ExamSheet editor={editor} body={<StructuredSheet exam={structured}/>} closing={structured.closing} showNameLine={false} meta={meta} theme={theme} logo={logo} setLogo={setLogo}/></Stage>
+          </div>
+        </div> : <Stage>
+          <ExamSheet editor={editor} meta={meta} theme={theme} logo={logo} setLogo={setLogo}/>
+        </Stage>}
         <SettingsPanel
           open={panelOpen} onClose={() => setPanelOpen(false)}
           meta={meta} onMeta={updateMeta} theme={theme} onTheme={setTheme}
@@ -303,21 +348,21 @@ export default function App() {
 
       <div className="statusbar">
         <span className={`save-state ${saveState}`}>{saveState === 'saved' && <Check size={13} />} {saveLabel}</span>
-        <span>{editor?.getText().length ?? 0} حرف</span>
+        <span>{mode === 'form' ? structured.questions.reduce((sum, q) => sum + q.prompt.length + q.parts.reduce((n, p) => n + p.text.length, 0), 0) : (editor?.getText().length ?? 0)} حرف</span>
       </div>
       {toast && <div className="toast" role="status">{toast}</div>}
 
       {latexDialog && (
         <LatinMathDialog
-          mode={latexDialog.mode} initial={latexDialog.mode === 'edit' ? latexDialog.value : '\\frac{a}{b}'}
-          onSubmit={submitLatex} onClose={() => setLatexDialog(null)}
+          mode={latexDialog.mode} initial={formTarget?.language === 'latin' ? (formTarget.initial || '\\frac{a}{b}') : latexDialog.mode === 'edit' ? latexDialog.value : '\\frac{a}{b}'}
+          onSubmit={submitLatex} onClose={() => { setLatexDialog(null); setFormTarget(null); }}
           onDelete={() => deleteFormula(latexDialog, () => setLatexDialog(null))}
         />
       )}
       {arabicDialog && (
         <ArabicMathDialog
-          mode={arabicDialog.mode} initial={arabicDialog.mode === 'edit' ? arabicDialog.value : 'س² + ٣س + ١ = ٠'}
-          onSubmit={submitArabic} onClose={() => setArabicDialog(null)}
+          mode={arabicDialog.mode} initial={formTarget?.language === 'arabic' ? (formTarget.initial || 'س² + ٣س + ١ = ٠') : arabicDialog.mode === 'edit' ? arabicDialog.value : 'س² + ٣س + ١ = ٠'}
+          onSubmit={submitArabic} onClose={() => { setArabicDialog(null); setFormTarget(null); }}
           onDelete={() => deleteFormula(arabicDialog, () => setArabicDialog(null))}
         />
       )}

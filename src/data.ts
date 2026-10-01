@@ -1,4 +1,5 @@
 import type { JSONContent } from '@tiptap/core';
+import type { StructuredExam } from './formExam';
 
 export type Theme = 'official' | 'graphite' | 'emerald' | 'burgundy' | 'indigo';
 
@@ -11,6 +12,8 @@ export interface ExamMeta {
   grade: string;
   subject: string;
   examDate: string;
+  day: string;
+  schoolFooter: string;
   round: string;
   duration: string;
   teacher: string;
@@ -33,6 +36,8 @@ export interface Project {
   theme: Theme;
   logo: LogoSettings;
   document: JSONContent;
+  mode?: 'form' | 'free';
+  structured?: StructuredExam;
 }
 
 function currentSchoolYear(): string {
@@ -50,6 +55,8 @@ export const defaults: ExamMeta = {
   grade: 'الصف السادس الابتدائي',
   subject: 'العلوم',
   examDate: currentSchoolYear(),
+  day: '',
+  schoolFooter: 'no',
   round: 'الدور الأول',
   duration: 'ساعة واحدة',
   teacher: '',

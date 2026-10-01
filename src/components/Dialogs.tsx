@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { PenTool, Sigma, Trash2, X } from 'lucide-react';
 import { ArabicMathPreview, MathField, MathPreview } from '../MathSupport';
+import { arabicDigits, arabicEquationToLatex, normalizeArabicEquation } from '../arabicMath';
 
 function Modal({ title, icon, onClose, children }: { title: string; icon: ReactNode; onClose: () => void; children: ReactNode }) {
   useEffect(() => {
@@ -31,13 +32,13 @@ interface FormulaDialogProps {
   onClose: () => void;
 }
 
-function Actions({ mode, onClose, onDelete, onSubmit }: { mode: 'insert' | 'edit'; onClose: () => void; onDelete: () => void; onSubmit: () => void }) {
+function Actions({ mode, onClose, onDelete, onSubmit, disabled = false }: { mode: 'insert' | 'edit'; onClose: () => void; onDelete: () => void; onSubmit: () => void; disabled?: boolean }) {
   return (
     <div className="dialog-actions">
       {mode === 'edit' && <button type="button" className="btn danger" onClick={onDelete}><Trash2 size={16} /> حذف</button>}
       <span className="grow" />
       <button type="button" className="btn" onClick={onClose}>إلغاء</button>
-      <button type="button" className="btn primary" onClick={onSubmit}>{mode === 'edit' ? 'تحديث' : 'إدراج'}</button>
+      <button type="button" className="btn primary" disabled={disabled} onClick={onSubmit}>{mode === 'edit' ? 'تحديث' : 'إدراج'}</button>
     </div>
   );
 }
@@ -59,33 +60,70 @@ export function LatinMathDialog({ mode, initial, onSubmit, onDelete, onClose }: 
 
 const ARABIC_SYMBOLS = [
   'س', 'ص', 'ع', 'ل', 'م', 'ن', 'أ', 'ب', 'ج',
-  '²', '³', '√', '×', '÷', '±', '=', '≠', '≈', '≤', '≥', '<', '>',
-  '∈', '∉', '⊂', '∪', '∩', '∅', 'ℝ', 'ℕ', 'ℤ', 'ℚ',
-  'π', '∞', '°', '→', '⟹', '∑', '∫', 'جا', 'جتا', 'ظا', 'لو',
+  '٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩', '٫',
+  '²', '³', '×', '÷', '±', '=', '≠', '≈', '≤', '≥', '<', '>',
+  '∈', '∉', '∪', '∩', '∞', '∑', '∫', '°', 'جا', 'جتا', 'ظا',
+];
+
+const ARABIC_STRUCTURES = [
+  { label: 'كسر عمودي', body: '(س)/(ص)', icon: '½' },
+  { label: 'جذر تربيعي', body: '√(س+١)', icon: '√' },
+  { label: 'جذر تكعيبي', body: '∛(س+١)', icon: '∛' },
+  { label: 'أسّ', body: '(س)^(٢)', icon: 'س²' },
+  { label: 'قيمة مطلقة', body: '|س-٣|', icon: '|س|' },
+  { label: 'كسر مركب', body: '(س+١)/(ص-٢)', icon: '▤' },
 ];
 
 export function ArabicMathDialog({ mode, initial, onSubmit, onDelete, onClose }: FormulaDialogProps) {
-  const [value, setValue] = useState(initial);
+  const [value, setValue] = useState(normalizeArabicEquation(initial));
   const areaRef = useRef<HTMLTextAreaElement>(null);
+  const parsed = arabicEquationToLatex(value);
 
-  // الإدراج عند موضع المؤشر (كان يُضاف دائمًا في نهاية النص).
-  const insert = (text: string) => {
-    const el = areaRef.current;
-    if (!el) { setValue(v => v + text); return; }
-    const start = el.selectionStart;
-    const end = el.selectionEnd;
-    setValue(value.slice(0, start) + text + value.slice(end));
-    requestAnimationFrame(() => { el.focus(); el.setSelectionRange(start + text.length, start + text.length); });
+  const insert = (text: string, wrap?: 'fraction' | 'root' | 'square' | 'absolute') => {
+    const area = areaRef.current;
+    if (!area) return;
+    const start = area.selectionStart;
+    const end = area.selectionEnd;
+    const selected = value.slice(start, end);
+    const output = wrap === 'fraction' ? `(${selected || 'س'})/(ص)`
+      : wrap === 'root' ? `√(${selected || 'س'})`
+      : wrap === 'square' ? `(${selected || 'س'})^(٢)`
+      : wrap === 'absolute' ? `|${selected || 'س'}|` : text;
+    setValue(previous => normalizeArabicEquation(previous.slice(0, start) + output + previous.slice(end)));
+    requestAnimationFrame(() => { area.focus(); area.setSelectionRange(start + output.length, start + output.length); });
   };
 
   return (
-    <Modal title="معادلة عربية" icon={<PenTool size={20} />} onClose={onClose}>
-      <textarea ref={areaRef} className="arabic-math-editor" dir="rtl" rows={3} value={value} onChange={e => setValue(e.target.value)} />
-      <div className="symbol-row">
+    <Modal title="محرّر المعادلات العربية" icon={<PenTool size={20} />} onClose={onClose}>
+      <p className="math-help">اكتب س، ص والأرقام العربية. للكسور والجذور والأسس استخدم الأزرار؛ يُرسَم الكسر عموديًا والجذر بصيغته الرياضية الصحيحة.</p>
+      <div className="math-structure-row">
+        {ARABIC_STRUCTURES.map(item => (
+          <button type="button" key={item.label} onClick={() => insert(item.body,
+            item.label === 'كسر عمودي' ? 'fraction'
+              : item.label === 'جذر تربيعي' ? 'root'
+              : item.label === 'أسّ' ? 'square'
+              : item.label === 'قيمة مطلقة' ? 'absolute' : undefined
+          )} title={item.label}>
+            <span aria-hidden>{item.icon}</span>{item.label}
+          </button>
+        ))}
+      </div>
+      <label className="math-entry-label" htmlFor="arabic-expression">نص المعادلة بالعربية</label>
+      <textarea id="arabic-expression" ref={areaRef} className="arabic-math-editor" dir="rtl" rows={3}
+        value={value} onChange={e => setValue(arabicDigits(e.target.value))} spellCheck={false} />
+      <div className="symbol-row" dir="rtl">
         {ARABIC_SYMBOLS.map(s => <button type="button" key={s} onClick={() => insert(s)}>{s}</button>)}
       </div>
-      <div className="math-sample"><span>المعاينة:</span><ArabicMathPreview value={value} /></div>
-      <Actions mode={mode} onClose={onClose} onDelete={onDelete} onSubmit={() => onSubmit(value)} />
+      <div className="math-sample"><strong>معاينة الطباعة:</strong> <ArabicMathPreview value={value} displayMode /></div>
+      {parsed.error && <p className="math-parse-error" role="alert">{parsed.error}</p>}
+      <div className="math-examples">
+        <span>أمثلة جاهزة:</span>
+        {['س² + ٣س + ١ = ٠', '(س+١)/(ص-٢)', '√(س²+٩)', '٣س + ٢ص = ٩'].map(example => (
+          <button type="button" key={example} onClick={() => setValue(example)}><ArabicMathPreview value={example} /></button>
+        ))}
+      </div>
+      <Actions mode={mode} onClose={onClose} onDelete={onDelete} disabled={!!parsed.error || !value.trim()}
+        onSubmit={() => onSubmit(normalizeArabicEquation(value))} />
     </Modal>
   );
 }

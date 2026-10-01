@@ -207,3 +207,130 @@ math-field.math-input, .math-host .math-input { display: block; width: 100%; min
   .page-break::before { display: none; }
   .formula-display { background: none !important; }
 }
+
+/* v0.4 — video-inspired question form and Arabic math typesetting */
+.mode-switch {
+  display: flex; gap: 6px; padding: 7px 12px; background: #f8faff;
+  border-bottom: 1px solid var(--line); overflow-x: auto; flex: none;
+}
+.mode-switch button {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  border: 1px solid transparent; background: transparent; color: var(--muted);
+  border-radius: 10px; padding: 8px 14px; font-weight: 700; white-space: nowrap;
+  min-height: 40px;
+}
+.mode-switch button.active { border-color: #b5c8e2; color: var(--primary); background: #e8eef6; }
+.mode-form .settings-toggle { display: inline-flex; }
+.form-workspace { min-width: 0; }
+.form-workflow { display: grid; grid-template-columns: minmax(0, 1fr); flex: 1; min-width: 0; min-height: 0; }
+.form-builder-pane { height: 100%; min-height: 0; overflow-y: auto; overscroll-behavior: contain; background: #eef2f8; }
+.form-preview-pane { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.form-preview-pane .stage { min-height: 0; }
+.form-mobile-switch { display: flex; gap: 6px; padding: 9px; background: #fff; border-bottom: 1px solid var(--line); }
+.form-mobile-switch button { flex: 1; border: 1px solid #e0e7f1; background: #fff; color: #44536a; border-radius: 10px; padding: 9px; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; }
+.form-mobile-switch button.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+.form-builder-pane:not(.mobile-active), .form-preview-pane:not(.mobile-active) { display: none; }
+.qb { padding: 12px; max-width: 780px; margin: auto; direction: rtl; }
+.qb-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.qb-heading h2 { margin: 0; font-size: 1.12rem; }
+.qb-heading p { margin: 4px 0 0; color: var(--muted); font-size: .8rem; }
+.qb-meta, .qb-question, .qb-ending { background: #fff; border: 1px solid #d4dfed; border-radius: 15px; box-shadow: 0 3px 16px rgba(15,23,42,.045); }
+.qb-meta { margin-bottom: 12px; overflow: clip; }
+.qb-meta summary { font-weight: 800; cursor: pointer; padding: 13px 15px; background: #f6f9fc; }
+.qb-meta summary small { font-weight: 400; color: var(--muted); margin-inline-start: 10px; }
+.qb-meta-grid, .qb-question-fields { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; padding: 12px; }
+.qb-meta-grid label, .qb-question-fields label, .qb-ending { display: grid; gap: 5px; min-width: 0; }
+.qb label>span { font-weight: 700; font-size: .82rem; color: #33445e; }
+.qb input, .qb textarea { display: block; width: 100%; border: 1px solid #cad6e7; border-radius: 9px; padding: 10px; font-size: 16px; color: #1b2637; background: #fff; }
+.qb input:focus, .qb textarea:focus { border-color: #527eb4; outline: 3px solid #e4effd; }
+.qb textarea { resize: vertical; min-height: 65px; }
+.qb .qb-full { grid-column: 1 / -1; }
+.qb-summary { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin: 12px 0; color: #0e3d74; background: #e7eff9; border-radius: 10px; padding: 10px 12px; font-size: .86rem; }
+.qb-question { margin-bottom: 12px; overflow: hidden; }
+.qb-question-head { background: #eff4fb; border-bottom: 1px solid #d4dfed; padding: 10px 13px; display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+.qb-question-head strong { font-size: .94rem; white-space: nowrap; }
+.qb-question-tools { display: flex; align-items: center; gap: 3px; }
+.qb-question-tools button, .qb-delete-part { flex: none; display: grid; place-items: center; background: #fff; border: 1px solid #cfdaea; border-radius: 8px; width: 35px; height: 35px; }
+.qb-question-tools button.danger, .qb-delete-part { color: #a92724; }
+.qb-question-fields { grid-template-columns: minmax(0,1fr) 91px; }
+.qb-formula-actions { display: flex; flex-wrap: wrap; gap: 7px; padding: 0 12px 11px; }
+.qb-formula-actions button { min-height: 37px; padding: 0 10px; font-size: .78rem; border: 1px solid #ccdaeb; color: #1d4d7f; background: #f7faff; border-radius: 9px; display: inline-flex; align-items: center; gap: 5px; }
+.qb-formula-actions button.danger { color: #ad2725; }
+.qb-formula-preview { display: inline-block; max-width: 100%; margin: 0 12px 10px; padding: 7px 11px; background: #fafcff; border: 1px solid #e0e8f2; border-radius: 9px; overflow-x: auto; }
+.qb-parts-title { display: flex; align-items: center; gap: 8px; padding: 10px 13px; font-weight: 800; background: #f9fbfe; border-top: 1px solid #e1e7f0; }
+.qb-parts-title small { font-weight: 400; color: var(--muted); font-size: .72rem; }
+.qb-parts { padding: 6px 10px 0; }
+.qb-part { display: flex; align-items: flex-start; gap: 8px; padding: 9px 2px; border-bottom: 1px solid #edf1f7; }
+.qb-part-index { width: 28px; min-width: 28px; height: 34px; display: grid; place-items: center; border-radius: 9px; background: #e9f1fc; color: #18477c; font-weight: 800; }
+.qb-part-fields { min-width: 0; flex: 1; }
+.qb-part-fields .qb-formula-actions { padding: 7px 0 0; }
+.qb-part-fields .qb-formula-preview { margin: 7px 0 0; }
+.qb-add-part { margin: 10px 12px 12px; color: #105ca5; border-color: #b6cee7; background: #f4f9ff; }
+.qb-add-question { display: flex; width: 100%; min-height: 49px; font-weight: 800; margin: 14px 0; }
+.qb-ending { padding: 13px; margin-bottom: 16px; }
+.sq-exam { margin-top: 13px; font-family: 'Noto Naskh Arabic', serif; line-height: 1.72; color: #151515; font-size: 1.09rem; }
+.sq-question { padding: 14px 0 19px; border-top: 1px solid #222; }
+.sq-heading { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 10px; break-after: avoid; }
+.sq-heading strong { font-weight: 700; }
+.sq-grade { font-size: .9em; white-space: nowrap; font-weight: 700; }
+.sq-prompt { margin: 8px 0; white-space: pre-wrap; }
+.sq-part { display: flex; align-items: flex-start; gap: 8px; padding: 5px 0; break-inside: avoid; }
+.sq-letter { flex: none; min-width: 26px; font-weight: 700; }
+.sq-part-content { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; white-space: pre-wrap; }
+.sq-formula { display: inline-flex; vertical-align: middle; min-width: 0; direction: ltr; }
+.sq-question-formula { display: block; padding: 9px 0; text-align: center; }
+.sq-answer-space { border-bottom: 1px dotted #8b96a4; height: 14px; margin: 7px 0 0; }
+.sq-empty { text-align: center; padding: 40px 10px; color: #677386; }
+.arabic-math-render { display: inline-flex; max-width: 100%; vertical-align: middle; direction: rtl; unicode-bidi: isolate; font-family: 'Noto Naskh Arabic', serif; font-weight: 500; }
+.arabic-math-render .katex { direction: ltr; unicode-bidi: isolate; text-align: center; font-size: 1.2em; }
+.arabic-math-render .katex .mord.text { font-family: 'Noto Naskh Arabic', sans-serif; font-weight: 700; }
+.arabic-math-render .katex .mord.text .arabic { font-family: 'Noto Naskh Arabic', sans-serif; }
+.arabic-math-error { color: #9b2828; background: #fff0ed; outline: 1px dotted #b42318; }
+.math-help { font-size: .85rem; color: var(--muted); line-height: 1.7; }
+.math-structure-row { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 7px; }
+.math-structure-row button { min-height: 62px; border: 1px solid #bfcfdf; border-radius: 9px; background: #f9fbff; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 5px; gap: 1px; font-size: .78rem; color: #203952; }
+.math-structure-row button span { font-size: 1.2rem; font-family: 'Noto Naskh Arabic',serif; font-weight: 700; }
+.math-entry-label { display: block; margin-top: 14px; font-weight: 700; }
+.math-parse-error { color: #a92724; background: #fff0ee; border-radius: 9px; padding: 7px 12px; }
+.math-examples { margin-top: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 7px; font-size: .84rem; }
+.math-examples button { max-width: 100%; min-height: 40px; background: #f4f7fc; border: 1px solid #d4e0ee; border-radius: 10px; padding: 5px 10px; }
+@media (max-width: 479px) {
+  .qb { padding: 9px; }
+  .qb-meta-grid { grid-template-columns: minmax(0,1fr); }
+  .qb-question-fields { gap: 7px; }
+  .qb-question-tools button { width: 32px; height: 32px; }
+  .qb-formula-actions button { flex: 1; min-width: 110px; }
+  .math-structure-row { grid-template-columns: repeat(2, minmax(0,1fr)); }
+}
+@media (min-width: 1100px) {
+  .form-workflow { grid-template-columns: minmax(400px, .85fr) minmax(0,1.15fr); }
+  .form-builder-pane, .form-preview-pane { display: flex !important; flex-direction: column; }
+  .form-builder-pane { display: block !important; }
+  .form-mobile-switch { display: none; }
+  .form-workspace .inspector { display: none; }
+  .form-workspace .inspector.open { display: flex; position: fixed; inset-inline-end: 0; top: 70px; bottom: 0; z-index: 45; width: min(400px,100%); box-shadow: -12px 0 40px rgba(15,23,42,.22); }
+  .form-workspace .backdrop { display: block; position: fixed; inset: 0; z-index: 44; background: rgba(15,23,42,.5); }
+  .form-workspace .close-panel { display: inline-flex; }
+}
+@media print {
+  .mode-switch, .form-mobile-switch, .form-builder-pane, .form-workspace .backdrop { display: none !important; }
+  .form-workflow { display: block !important; }
+  .form-preview-pane { display: block !important; height: auto; width: auto; overflow: visible; }
+  .form-preview-pane .stage { display: block !important; height: auto; }
+  .sq-question { break-inside: auto; }
+  .sq-heading { break-after: avoid; }
+  .sq-part { break-inside: avoid; }
+  .math-parse-error, .arabic-math-error { color: #111; background: transparent; outline: none; }
+  .arabic-math-render .katex .mord.text { color: #111; }
+}
+.qb-part-score { display: grid; gap: 3px; width: 76px; flex: none; }
+.qb-part-score>span { font-size: .7rem !important; }
+.qb .qb-part-score input { width: 100%; padding: 7px 5px; text-align: center; min-height: 39px; }
+.qb-checkbox { display: flex !important; flex-direction: row; align-items: center; gap: 10px; font-weight: 600; }
+.qb .qb-checkbox input { width: 18px; height: 18px; }
+.sq-part-grade { margin-inline-start: auto; font-weight: 700; white-space: nowrap; font-size: .85em; }
+.footer-school { display: block; font-size: .85em; margin-top: 3px; }
+@media print { .qb-checkbox { display: none !important; } }
+.qb-delete-confirm { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 12px; background: #fff3f0; border-bottom: 1px solid #f5c5bb; }
+.qb-delete-confirm button { border: 1px solid #ded5d0; border-radius: 9px; min-height: 37px; background: #fff; padding: 0 12px; }
+.qb-delete-confirm button.danger { background: #b42318; color: #fff; border-color: #b42318; }

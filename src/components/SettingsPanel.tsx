@@ -9,7 +9,7 @@ const TABS: [Tab, string][] = [['details', 'البيانات'], ['logo', 'الش
 
 const FIELDS: [keyof ExamMeta, string][] = [
   ['country', 'الدولة'], ['ministry', 'الوزارة'], ['directorate', 'المديرية'], ['school', 'المدرسة'],
-  ['examTitle', 'عنوان الامتحان'], ['grade', 'الصف'], ['subject', 'المادة'], ['examDate', 'العام الدراسي'],
+  ['examTitle', 'عنوان الامتحان'], ['grade', 'الصف'], ['subject', 'المادة'], ['examDate', 'العام الدراسي'], ['day', 'التاريخ'],
   ['round', 'الدور'], ['duration', 'الوقت'], ['teacher', 'مدرس المادة'],
 ];
 

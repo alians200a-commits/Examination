@@ -1,6 +1,7 @@
 import type { JSONContent } from '@tiptap/core';
 import { defaultLogo, defaults, STORAGE_KEY, THEME_OPTIONS } from './data';
 import type { ExamMeta, LogoSettings, Project, Theme } from './data';
+import { sanitizeStructured } from './formExam';
 
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
 const isTheme = (v: unknown): v is Theme => THEME_OPTIONS.some(t => t.id === v);
@@ -35,7 +36,10 @@ export function sanitizeProject(value: unknown): Partial<Project> | null {
     };
   }
 
-  return { version: 2, meta: meta as ExamMeta, theme: isTheme(raw.theme) ? raw.theme : 'official', logo, document: doc };
+  const structured = raw.structured === undefined ? undefined : sanitizeStructured(raw.structured);
+  if (raw.structured !== undefined && !structured) return null;
+  const mode = raw.mode === 'free' || raw.mode === 'form' ? raw.mode : undefined;
+  return { version: 2, meta: meta as ExamMeta, theme: isTheme(raw.theme) ? raw.theme : 'official', logo, document: doc, mode, structured: structured || undefined };
 }
 
 export function loadProject(): Partial<Project> {

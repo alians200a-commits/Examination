@@ -3,6 +3,7 @@ import { Node, mergeAttributes } from '@tiptap/core';
 import { NodeViewWrapper, ReactNodeViewRenderer, type NodeViewProps } from '@tiptap/react';
 import katex from 'katex';
 import 'mathlive';
+import { arabicEquationToLatex, normalizeArabicEquation } from './arabicMath';
 
 type MathElement = HTMLElement & {
   value: string;
@@ -59,8 +60,20 @@ export function MathPreview({ latex, displayMode = false }: { latex: string; dis
   return <span className="math-render" dir="ltr" dangerouslySetInnerHTML={{ __html: markup }} />;
 }
 
-export function ArabicMathPreview({ value }: { value: string }) {
-  return <span className="arabic-math-render" dir="rtl">{value || 'س² + ٣س + ١ = ٠'}</span>;
+export function ArabicMathPreview({ value, displayMode = false }: { value: string; displayMode?: boolean }) {
+  const input = normalizeArabicEquation(value || 'س² + ٣س + ١ = ٠');
+  const parsed = arabicEquationToLatex(input);
+  if (parsed.error) {
+    return <span className="arabic-math-error" dir="rtl" title={parsed.error}>{input}</span>;
+  }
+  try {
+    const markup = katex.renderToString(parsed.latex, {
+      throwOnError: true, strict: 'ignore', output: 'htmlAndMathml', displayMode,
+    });
+    return <span className="arabic-math-render" dir="rtl" dangerouslySetInnerHTML={{ __html: markup }} />;
+  } catch {
+    return <span className="arabic-math-error" dir="rtl" title="صيغة رياضية غير مدعومة">{input}</span>;
+  }
 }
 
 /** المعادلة داخل الورقة: النقر يفتح نافذة التعديل (تعمل بالمس، بخلاف النقر المزدوج). */

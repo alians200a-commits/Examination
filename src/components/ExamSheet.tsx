@@ -1,4 +1,5 @@
 import { useRef } from 'react';
+import type { ReactNode } from 'react';
 import type { Dispatch, PointerEvent as ReactPointerEvent, SetStateAction } from 'react';
 import { EditorContent } from '@tiptap/react';
 import type { Editor } from '@tiptap/react';
@@ -10,13 +11,16 @@ const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(mi
 
 interface Props {
   editor: Editor | null;
+  body?: ReactNode;
+  closing?: string;
+  showNameLine?: boolean;
   meta: ExamMeta;
   theme: Theme;
   logo: LogoSettings;
   setLogo: Dispatch<SetStateAction<LogoSettings>>;
 }
 
-export function ExamSheet({ editor, meta, theme, logo, setLogo }: Props) {
+export function ExamSheet({ editor, body, closing, showNameLine = true, meta, theme, logo, setLogo }: Props) {
   const headerRef = useRef<HTMLDivElement>(null);
 
   const dragLogo = (e: ReactPointerEvent<HTMLDivElement>) => {
@@ -47,7 +51,7 @@ export function ExamSheet({ editor, meta, theme, logo, setLogo }: Props) {
           <strong>{meta.country}</strong>
           <span>{meta.ministry}</span>
           <span>{meta.directorate}</span>
-          <span>المدرسة: {meta.school || '..................'}</span>
+          {meta.schoolFooter !== 'yes' && <span>المدرسة: {meta.school || '..................'}</span>}
         </div>
         <div className="header-center">
           <h1>{meta.examTitle}</h1>
@@ -58,14 +62,15 @@ export function ExamSheet({ editor, meta, theme, logo, setLogo }: Props) {
           <span><b>المادة:</b> {meta.subject}</span>
           <span><b>الصف:</b> {meta.grade}</span>
           <span><b>الوقت:</b> {meta.duration}</span>
+          {meta.day && <span><b>التاريخ:</b> {meta.day}</span>}
         </div>
       </div>
       {meta.note && <div className="exam-note">{meta.note}</div>}
-      <div className="name-line"><b>اسم الطالب/ة:</b><span className="dotted-line" /></div>
-      <EditorContent editor={editor} />
+      {showNameLine && <div className="name-line"><b>اسم الطالب/ة:</b><span className="dotted-line" /></div>}
+      {body || <EditorContent editor={editor} />}
       <footer className="paper-footer">
         <span>مدرس المادة: {meta.teacher || '........................'}</span>
-        <span>مع تمنياتنا لكم بالتوفيق والنجاح</span>
+        <span>{closing || 'مع تمنياتنا لكم بالتوفيق والنجاح'}{meta.schoolFooter === 'yes' && <span className="footer-school">إدارة المدرسة: {meta.school || '..................'}</span>}</span>
       </footer>
     </div>
   );
