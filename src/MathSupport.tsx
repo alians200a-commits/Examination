@@ -10,7 +10,15 @@ type MathElement = HTMLElement & { value: string; getValue: (format?: string) =>
 export function MathField({ value, onChange }: { value: string; onChange: (value: string) => void }) {
   const host = useRef<HTMLDivElement>(null);
   const onChangeRef = useRef(onChange);
+  const fieldRef = useRef<MathElement | null>(null);
+  const currentValue = useRef(value);
   onChangeRef.current = onChange;
+  useEffect(() => {
+    if (fieldRef.current && currentValue.current !== value) {
+      fieldRef.current.setValue(value);
+      currentValue.current = value;
+    }
+  }, [value]);
   useEffect(() => {
     const field = document.createElement('math-field') as MathElement;
     field.setAttribute('aria-label', 'محرّر المعادلة الرياضية');
@@ -18,10 +26,14 @@ export function MathField({ value, onChange }: { value: string; onChange: (value
     field.setAttribute('smart-fence', '');
     field.className = 'math-input';
     field.value = value;
-    const handleInput = () => onChangeRef.current(field.getValue('latex'));
+    fieldRef.current = field;
+    const handleInput = () => {
+      currentValue.current = field.getValue('latex');
+      onChangeRef.current(currentValue.current);
+    };
     field.addEventListener('input', handleInput);
     host.current?.appendChild(field);
-    return () => { field.removeEventListener('input', handleInput); field.remove(); };
+    return () => { field.removeEventListener('input', handleInput); field.remove(); fieldRef.current = null; };
   }, []);
   return <div className="math-host" dir="ltr" ref={host} />;
 }
