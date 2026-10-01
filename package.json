@@ -1,7 +1,7 @@
 {
   "name": "examination-arabic-studio",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port 3000",
@@ -20,7 +20,6 @@
     "@tiptap/extension-underline": "^2.11.5",
     "@tiptap/react": "^2.11.5",
     "@tiptap/starter-kit": "^2.11.5",
-    "html-to-image": "^1.11.13",
     "katex": "^0.16.11",
     "lucide-react": "^0.468.0",
     "mathlive": "^0.104.0",
@@ -34,5 +33,6 @@
     "@vitejs/plugin-react": "^4.3.4",
     "typescript": "^5.6.3",
     "vite": "^5.4.11"
-  }
+  },
+  "description": "Mobile-first Arabic exam editor with PDF export, theme system, draggable header logo, and separate Arabic/English equations."
 }
