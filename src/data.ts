@@ -182,7 +182,7 @@ export const paperPresets = [
     },
     content: `
 <h2>س/1 ـ أجب عن خمسة أسئلة فقط: <strong>(20 درجة)</strong></h2>
-<p>أثبت أن: <span data-type="math" data-latex="P \to Q \equiv \neg P \vee Q"></span></p>
+<p>أثبت أن: <span data-type="math" data-latex="P \\to Q \\equiv \\neg P \\vee Q"></span></p>
 <h2>س/2 ـ جد مجموعة الحل: <strong>(20 درجة)</strong></h2>
 <p><span data-type="math" data-latex="x|x|+4=0"></span></p>
 <h2>س/3 ـ حل المعادلة الآتية: <strong>(20 درجة)</strong></h2>
