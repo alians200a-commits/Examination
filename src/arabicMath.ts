@@ -23,7 +23,7 @@ const DIGIT = /[0-9٠-٩۰-۹]/;
 const SPECIAL = new Set(['+', '-', '−', '×', '*', '÷', '/', '^', '_', '=', '≠', '≈', '<', '>', '≤', '≥', '(', ')', '[', ']', '√', '∛', '²', '³', '⁴', '°', '±', '|', '∈', '∉', '∪', '∩', '∞', '∑', '∫', ',', '،']);
 
 export function normalizeArabicEquation(value: string): string {
-  return arabicDigits(value.replace(/[\u200e\u200f\u2066-\u2069]/g, '').replace(/\u2212/g, '-').replace(/\u00d7/g, '×'));
+  return arabicDigits(value.replace(/[\u200e\u200f\u2066-\u2069]/g, '').replace(/\u2212/g, '-').replace(/\u00d7/g, '×').replace(/<=/g, '≤').replace(/>=/g, '≥').replace(/!=/g, '≠'));
 }
 
 function tokenize(source: string): Token[] {
@@ -178,9 +178,20 @@ class Parser {
   }
 }
 
+/** A purpose-built RTL long-division block; the preview renders this as a bracket, not as a slash. */
+export function parseArabicLongDivision(raw: string): { dividend: string; divisor: string; quotient: string } | null {
+  const value = normalizeArabicEquation(raw).trim();
+  if (!value.startsWith('قسمة(') || !value.endsWith(')')) return null;
+  const chunks = value.slice(5, -1).split(/[،,]/).map(x => x.trim());
+  if (chunks.length < 2 || chunks.length > 3 || chunks.some(x => !x || !/^[٠-٩\p{L}\p{M}+×÷^²³\s-]+$/u.test(x))) return null;
+  return { dividend:chunks[0], divisor:chunks[1], quotient:chunks[2] || '' };
+}
 export function arabicEquationToLatex(raw: string): ArabicMathResult {
   try {
     const value = normalizeArabicEquation(raw).trim();
+    const division = parseArabicLongDivision(value);
+    if (division) return {latex: `\\text{${division.dividend}÷${division.divisor}}`, error:null};
+    if (value.startsWith('قسمة(')) throw new Error('القسمة الطويلة: اكتب قسمة(المقسوم،المقسوم عليه،خارج القسمة).');
     if (value.length > LIMIT) throw new Error('الحد الأقصى للمعادلة هو ٦٠٠ حرف.');
     const latex = new Parser(tokenize(value)).parse();
     return { latex, error: null };

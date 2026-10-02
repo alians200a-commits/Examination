@@ -52,3 +52,29 @@ export async function logoFromFile(file: File, maxSide = 480): Promise<LogoImage
     URL.revokeObjectURL(url);
   }
 }
+
+/** Exam diagrams/photo attachments are rasterized to predictable, safe data URLs before saving. */
+export async function imageForQuestion(file: File): Promise<string> {
+  if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type) || file.size > 14_000_000)
+    throw new Error('اختر صورة PNG أو JPG أو WebP بحجم أقل من 14 ميغابايت.');
+  const url = URL.createObjectURL(file);
+  try {
+    const image = await loadImage(url);
+    const scale = Math.min(1, 1400 / Math.max(image.naturalWidth, image.naturalHeight));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+    canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('تعذر معالجة الصورة.');
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+    let quality = 0.85;
+    let src = canvas.toDataURL('image/jpeg', quality);
+    while (src.length > 1_400_000 && quality > 0.5) {
+      quality -= 0.1;
+      src = canvas.toDataURL('image/jpeg', quality);
+    }
+    if (src.length > 1_700_000) throw new Error('الصورة كبيرة جدًا بعد الضغط، اختر صورة أصغر.');
+    return src;
+  } finally { URL.revokeObjectURL(url); }
+}

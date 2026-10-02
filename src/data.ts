@@ -1,5 +1,6 @@
 import type { JSONContent } from '@tiptap/core';
 import type { StructuredExam } from './formExam';
+import type { Stage, ExamKind, NumberingChoice } from './curriculum';
 
 export type Theme = 'official' | 'graphite' | 'emerald' | 'burgundy' | 'indigo';
 
@@ -18,6 +19,14 @@ export interface ExamMeta {
   duration: string;
   teacher: string;
   note: string;
+  stage: Stage;
+  examKind: ExamKind;
+  hijriDate: string;
+  numbering: NumberingChoice;
+  fontFamily: string;
+  fontSize: string;
+  customFontSrc: string;
+  customFontName: string;
 }
 
 export interface LogoSettings {
@@ -40,27 +49,29 @@ export interface Project {
   structured?: StructuredExam;
 }
 
-function currentSchoolYear(): string {
-  const now = new Date();
-  const start = now.getMonth() >= 7 ? now.getFullYear() : now.getFullYear() - 1;
-  return `${start} - ${start + 1}`;
-}
-
 export const defaults: ExamMeta = {
   country: 'جمهورية العراق',
   ministry: 'وزارة التربية',
   directorate: 'المديرية العامة للتربية',
   school: '',
-  examTitle: 'أسئلة الامتحان',
+  examTitle: 'أسئلة امتحانات الشهر الأول',
   grade: 'الصف السادس الابتدائي',
   subject: 'العلوم',
-  examDate: currentSchoolYear(),
+  examDate: '2027-2026',
   day: '',
   schoolFooter: 'no',
-  round: 'الدور الأول',
+  round: '',
   duration: 'ساعة واحدة',
   teacher: '',
   note: 'ملاحظة: الإجابة عن خمسة أسئلة فقط ولكل سؤال 20 درجة ولكل فرع 10 درجات.',
+  stage: 'primary',
+  examKind: 'الشهر الأول',
+  hijriDate: '',
+  numbering: 'auto',
+  fontFamily: "'Noto Naskh Arabic', serif",
+  fontSize: '12',
+  customFontSrc: '',
+  customFontName: '',
 };
 
 /** المساحة (كنسبة من عرض الترويسة) التي تُحجز أعلى الترويسة حتى لا يغطي الشعار النص. */
@@ -155,6 +166,14 @@ export const paperPresets = [
       subject: 'العلوم',
       duration: 'ساعة واحدة',
       note: 'ملاحظة: الإجابة عن خمسة أسئلة فقط ولكل سؤال 20 درجة ولكل فرع 10 درجات.',
+  stage: 'primary',
+  examKind: 'الشهر الأول',
+  hijriDate: '',
+  numbering: 'auto',
+  fontFamily: "'Noto Naskh Arabic', serif",
+  fontSize: '12',
+  customFontSrc: '',
+  customFontName: '',
     },
     content: sampleDocument,
   },
@@ -168,6 +187,14 @@ export const paperPresets = [
       subject: 'الكيمياء',
       duration: 'ساعة ونصف',
       note: 'ملاحظة: الإجابة عن خمسة أسئلة فقط ولكل سؤال 20 درجة ولكل فرع 10 درجات.',
+  stage: 'primary',
+  examKind: 'الشهر الأول',
+  hijriDate: '',
+  numbering: 'auto',
+  fontFamily: "'Noto Naskh Arabic', serif",
+  fontSize: '12',
+  customFontSrc: '',
+  customFontName: '',
     },
     content: `
 <h2>س/1 ـ عرّف ما يأتي (لخمسة فقط): <strong>(20 درجة)</strong></h2>

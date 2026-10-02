@@ -5,6 +5,7 @@ import { EditorContent } from '@tiptap/react';
 import type { Editor } from '@tiptap/react';
 import { Grip } from 'lucide-react';
 import { logoBand } from '../data';
+import { digitsFor, numberingFor } from '../curriculum';
 import type { ExamMeta, LogoSettings, Theme } from '../data';
 
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
@@ -14,14 +15,19 @@ interface Props {
   body?: ReactNode;
   closing?: string;
   showNameLine?: boolean;
+  showHeader?: boolean;
+  showFooter?: boolean;
+  flipPage?: boolean;
+  pageIndex?: number;
   meta: ExamMeta;
   theme: Theme;
   logo: LogoSettings;
   setLogo: Dispatch<SetStateAction<LogoSettings>>;
 }
 
-export function ExamSheet({ editor, body, closing, showNameLine = true, meta, theme, logo, setLogo }: Props) {
+export function ExamSheet({ editor, body, closing, showNameLine = true, showHeader = true, showFooter = true, flipPage = false, pageIndex = 0, meta, theme, logo, setLogo }: Props) {
   const headerRef = useRef<HTMLDivElement>(null);
+  const numbering = meta.numbering && meta.numbering !== 'auto' ? meta.numbering : numberingFor(meta.stage,meta.subject);
 
   const dragLogo = (e: ReactPointerEvent<HTMLDivElement>) => {
     if (!e.currentTarget.hasPointerCapture(e.pointerId) || !headerRef.current) return;
@@ -34,8 +40,8 @@ export function ExamSheet({ editor, body, closing, showNameLine = true, meta, th
   };
 
   return (
-    <div className={`exam-paper theme-${theme}`} dir="rtl">
-      <div className="paper-header" ref={headerRef} style={logo.src ? { paddingTop: `${logoBand(logo.width, logo.ratio)}%` } : undefined}>
+    <div className={`exam-paper theme-${theme}`} dir="rtl" data-page={pageIndex} style={{ fontFamily: meta.fontFamily || undefined, fontSize: `${Math.max(10, Math.min(24, Number(meta.fontSize)||12))}pt` }}>
+      {showHeader && <div className="paper-header" ref={headerRef} style={logo.src ? { paddingTop: `${logoBand(logo.width, logo.ratio)}%` } : undefined}>
         {logo.src && (
           <div
             className="paper-logo"
@@ -55,23 +61,25 @@ export function ExamSheet({ editor, body, closing, showNameLine = true, meta, th
         </div>
         <div className="header-center">
           <h1>{meta.examTitle}</h1>
-          {meta.examDate && <strong>العام الدراسي <bdi dir="ltr">{meta.examDate}</bdi></strong>}
-          <span>{meta.round}</span>
+          {meta.examDate && <strong>العام الدراسي <bdi dir="ltr">{digitsFor(meta.examDate,numbering)}</bdi></strong>}
+          {!!meta.round && !meta.examKind?.includes('الشهر') && <span>{meta.round}</span>}
         </div>
         <div className="header-details">
           <span><b>المادة:</b> {meta.subject}</span>
           <span><b>الصف:</b> {meta.grade}</span>
           <span><b>الوقت:</b> {meta.duration}</span>
           {meta.day && <span><b>التاريخ:</b> {meta.day}</span>}
+          {meta.hijriDate && <span><b>هجري:</b> {meta.hijriDate}</span>}
         </div>
-      </div>
-      {meta.note && <div className="exam-note">{meta.note}</div>}
-      {showNameLine && <div className="name-line"><b>اسم الطالب/ة:</b><span className="dotted-line" /></div>}
-      {body || <EditorContent editor={editor} />}
-      <footer className="paper-footer">
+      </div>}
+      {showHeader && meta.note && <div className="exam-note">{digitsFor(meta.note,numbering)}</div>}
+      {showHeader && showNameLine && <div className="name-line"><b>اسم الطالب/ة:</b><span className="dotted-line" /></div>}
+      <div className="page-content">{body || <EditorContent editor={editor} />}</div>
+      {flipPage && <div className="flip-page">— اقلب الصفحة —</div>}
+      {showFooter && <footer className="paper-footer">
         <span>مدرس المادة: {meta.teacher || '........................'}</span>
         <span>{closing || 'مع تمنياتنا لكم بالتوفيق والنجاح'}{meta.schoolFooter === 'yes' && <span className="footer-school">إدارة المدرسة: {meta.school || '..................'}</span>}</span>
-      </footer>
+      </footer>}
     </div>
   );
 }

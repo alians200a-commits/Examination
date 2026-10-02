@@ -17,3 +17,4 @@ jobs:
       - run: npm ci --no-audit --no-fund
       - run: npm run test:math
       - run: npm run build
+      - run: npm run test:print

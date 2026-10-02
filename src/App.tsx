@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ChangeEvent, ReactNode } from 'react';
-import { useEditor, useEditorState } from '@tiptap/react';
+import { EditorContent, useEditor, useEditorState } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import TextAlign from '@tiptap/extension-text-align';
@@ -13,9 +13,9 @@ import TableHeader from '@tiptap/extension-table-header';
 import {
   AlignCenter, AlignLeft, AlignRight, Bold, BookOpen, Check, Heading2, ImagePlus, Italic, List, ListOrdered,
   Minus, PanelRightOpen, PenTool, Plus, Printer, Redo2, Save, SeparatorHorizontal, Sigma, Table2,
-  Trash2, Type, Underline as UnderlineIcon, Undo2, Upload, ClipboardList, FilePenLine, Eye,
+  Trash2, Type, Underline as UnderlineIcon, Undo2, Upload, ClipboardList, Eye,
 } from 'lucide-react';
-import { defaultLogo, defaults, logoHome, paperPresets, questionTemplates, sampleDocument } from './data';
+import { defaultLogo, defaults, logoHome } from './data';
 import type { ExamMeta, LogoSettings, Project, Theme } from './data';
 import { ArabicMathNode, MathNode } from './MathSupport';
 import { Direction, FontAttributes, PageBreak } from './extensions';
@@ -29,10 +29,11 @@ import { ArabicMathDialog, ConfirmDialog, LatinMathDialog } from './components/D
 import { QuestionBuilder, type FormulaTarget } from './components/QuestionBuilder';
 import { StructuredSheet } from './components/StructuredSheet';
 import { newExam, type StructuredExam, type QuestionFormula } from './formExam';
+import { numberingFor } from './curriculum';
 
 
-type RibbonTab = 'home' | 'insert' | 'questions';
-const RIBBON_LABELS: Record<RibbonTab, string> = { home: 'الرئيسية', insert: 'إدراج', questions: 'قوالب أسئلة' };
+type RibbonTab = 'home' | 'insert';
+const RIBBON_LABELS: Record<RibbonTab, string> = { home: 'الرئيسية', insert: 'إدراج' };
 
 const FONTS = [
   { label: 'الخط الافتراضي', value: '' },
@@ -65,9 +66,17 @@ export default function App() {
   const [theme, setTheme] = useState<Theme>(initial.theme || 'official');
   const [logo, setLogo] = useState<LogoSettings>(() => ({ ...defaultLogo, ...initial.logo }));
   const [ribbon, setRibbon] = useState<RibbonTab>('home');
-  const [mode, setMode] = useState<'form' | 'free'>(() => initial.mode || (initial.document && !initial.structured ? 'free' : 'form'));
-  const [structured, setStructured] = useState<StructuredExam>(() => initial.structured || newExam());
-  const [mobileView, setMobileView] = useState<'builder' | 'preview'>('builder');
+  const mode = 'form' as const;
+  const [structured, setStructured] = useState<StructuredExam>(() => {
+    if(initial.structured) return {...initial.structured,showFreeText:initial.structured.showFreeText||initial.mode==='free'};
+    const start=newExam();
+    return {...start,questions:initial.mode==='free'?[]:start.questions,
+      pageCount:import.meta.env.DEV && new URLSearchParams(location.search).get('smokePages')==='2'?2:1,
+      showFreeText:initial.mode==='free'};
+  });
+  const [mobileView, setMobileView] = useState<'builder' | 'preview'>(() => import.meta.env.DEV && new URLSearchParams(location.search).has('smokePreview') ? 'preview' : 'builder');
+  const [activePage,setActivePage]=useState(0);
+  const [overflowPages,setOverflowPages]=useState<number[]>([]);
   const [formTarget, setFormTarget] = useState<FormulaTarget | null>(null);
   const [panelOpen, setPanelOpen] = useState(false);
   const [latexDialog, setLatexDialog] = useState<FormulaState>(null);
@@ -78,6 +87,7 @@ export default function App() {
   const [toast, setToast] = useState('');
   const importRef = useRef<HTMLInputElement>(null);
   const logoRef = useRef<HTMLInputElement>(null);
+  const fontRef = useRef<HTMLInputElement>(null);
   const toastTimer = useRef<number>();
 
   const notify = useCallback((text: string) => {
@@ -96,7 +106,7 @@ export default function App() {
       ArabicMathNode.configure({ onEdit: (pos, value) => setArabicDialog({ mode: 'edit', pos, value }) }),
       Direction, FontAttributes, PageBreak,
     ],
-    content: initial.document ?? sampleDocument,
+    content: initial.document ?? '<p></p>',
     editorProps: { attributes: { class: 'exam-editor', dir: 'rtl', spellcheck: 'false', 'aria-label': 'محرّر ورقة الامتحان' } },
     onUpdate: () => setRevision(v => v + 1),
   });
@@ -140,21 +150,25 @@ export default function App() {
 
   const updateMeta = (key: keyof ExamMeta, value: string) => setMeta(v => ({ ...v, [key]: value }));
 
-  const loadPreset = (id: string) => {
-    const preset = paperPresets.find(p => p.id === id);
-    if (!preset) return;
-    setConfirm({
-      message: `سيتم استبدال محتوى الورقة الحالي بـ «${preset.label}». يمكنك التراجع بزر التراجع. متابعة؟`,
-      run: () => {
-        setMeta(v => ({ ...v, ...preset.meta }));
-        editor?.commands.setContent(preset.content);
-        setMode('free');
-        setPanelOpen(false);
-        notify(`تم تحميل ${preset.label}`);
-      },
-    });
+  useEffect(()=>{
+    if(!meta.customFontSrc)return;
+    let live=true;
+    const font=new FontFace('ExamUserFont', `url(${meta.customFontSrc})`);
+    document.fonts.add(font);
+    font.load().catch(()=>{if(live)notify('تعذر تحميل الخط المرفوع، اختر ملف خط صالحًا.');});
+    return()=>{live=false;document.fonts.delete(font);};
+  },[meta.customFontSrc,notify]);
+  const onFontUpload=async(e:ChangeEvent<HTMLInputElement>)=>{
+    const file=e.currentTarget.files?.[0];e.currentTarget.value='';if(!file)return;
+    if(!/\.(ttf|otf|woff2?)$/i.test(file.name)||file.size>1_000_000){notify('الخط يجب أن يكون TTF أو OTF أو WOFF2 وأقل من 1 ميغابايت.');return;}
+    const reader=new FileReader();
+    reader.onload=()=>{
+      setMeta(v=>({...v,customFontSrc:String(reader.result),customFontName:file.name,fontFamily:"'ExamUserFont', serif"}));
+      notify('تم رفع الخط؛ سيظهر في المعاينة والطباعة.');
+    };
+    reader.onerror=()=>notify('تعذر قراءة الخط.');
+    reader.readAsDataURL(file);
   };
-
   const onLogoUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.currentTarget.files?.[0];
     e.currentTarget.value = '';
@@ -183,8 +197,8 @@ export default function App() {
         setTheme(p.theme || 'official');
         setLogo({ ...defaultLogo, ...p.logo });
         editor?.commands.setContent(p.document!);
-        setStructured(p.structured || newExam());
-        setMode(p.mode || 'free');
+        setStructured(p.structured ? {...p.structured,showFreeText:p.structured.showFreeText || p.mode==='free'} : {...newExam(),questions:p.mode==='free'?[]:newExam().questions,showFreeText:p.mode==='free'});
+        setActivePage(0);
         notify('تم استيراد المشروع');
       },
     });
@@ -240,6 +254,36 @@ export default function App() {
     close();
   };
 
+  const numbered = meta.numbering && meta.numbering !== 'auto' ? meta.numbering : numberingFor(meta.stage,meta.subject);
+  const pageCount = Math.max(1, Math.min(30, structured.pageCount || 1));
+  const measurePages=useCallback(()=>{
+    const nodes=Array.from(document.querySelectorAll<HTMLElement>('.a4-stack .page-content'));
+    if(!nodes.length || nodes.some(n=>n.clientHeight===0))return [];
+    const result=nodes.flatMap((n,i)=>n.scrollHeight>n.clientHeight+2?[i]:[]);
+    setOverflowPages(previous=>previous.join(',')===result.join(',')?previous:result);
+    return result;
+  },[]);
+  useEffect(()=>{
+    if(mobileView==='builder' && window.matchMedia('(max-width:1099px)').matches)return;
+    const roots=Array.from(document.querySelectorAll<HTMLElement>('.a4-stack .sq-exam, .a4-stack .free-extra'));
+    const observer=new ResizeObserver(()=>measurePages());
+    roots.forEach(root=>observer.observe(root));
+    const raf=requestAnimationFrame(measurePages);
+    return()=>{observer.disconnect();cancelAnimationFrame(raf);};
+  },[structured,meta,logo,revision,mobileView,measurePages]);
+  const exportPDF=async()=>{
+    setMobileView('preview');
+    try{
+      await document.fonts.ready;
+      const images=Array.from(document.querySelectorAll<HTMLImageElement>('.a4-stack img'));
+      await Promise.all(images.map(img=>img.decode().catch(()=>undefined)));
+      await new Promise<void>(res=>requestAnimationFrame(()=>requestAnimationFrame(()=>res())));
+      const over=measurePages();
+      if(over.length){notify('الصفحة '+over.map(i=>i+1).join('، ')+' ممتلئة؛ انقل الأسئلة أو قلّل حجم المحتوى قبل تصدير PDF.');return;}
+      printToPDF();
+    }catch{notify('تعذّر إعداد الطباعة. افتح البرنامج في Chrome ثم حاول مرة أخرى.');}
+  };
+
   const saveLabel = saveState === 'saving' ? 'جارٍ الحفظ…' : saveState === 'error' ? 'تعذر الحفظ التلقائي — احفظ المشروع كملف' : 'تم الحفظ تلقائيًا';
 
   return (
@@ -253,18 +297,14 @@ export default function App() {
           <button type="button" className="btn compact settings-toggle" onClick={() => setPanelOpen(true)} aria-label="الإعدادات"><PanelRightOpen size={17} /><span className="lbl">الإعدادات</span></button>
           <button type="button" className="btn compact" onClick={() => importRef.current?.click()} aria-label="فتح مشروع"><Upload size={17} /><span className="lbl">فتح</span></button>
           <button type="button" className="btn compact" onClick={() => saveJSON(buildProject())} aria-label="حفظ مشروع"><Save size={17} /><span className="lbl">حفظ</span></button>
-          <button type="button" className="btn compact primary" onClick={printToPDF} aria-label="تصدير PDF"><Printer size={17} /><span className="lbl">PDF</span></button>
+          <button type="button" className="btn compact primary" onClick={()=>void exportPDF()} aria-label="تصدير PDF"><Printer size={17} /><span className="lbl">PDF</span></button>
         </div>
         <input ref={importRef} type="file" accept=".json,application/json" hidden onChange={onImport} />
         <input ref={logoRef} type="file" accept="image/*" hidden onChange={onLogoUpload} />
+        <input ref={fontRef} type="file" accept=".ttf,.otf,.woff,.woff2" hidden onChange={onFontUpload} />
       </header>
 
-      <nav className="mode-switch" aria-label="طريقة إنشاء الامتحان">
-        <button type="button" className={mode === 'form' ? 'active' : ''} onClick={() => { setMode('form'); setFormTarget(null); }}><ClipboardList size={17}/> إدخال الأسئلة مثل الفيديو</button>
-        <button type="button" className={mode === 'free' ? 'active' : ''} onClick={() => { setMode('free'); setFormTarget(null); }}><FilePenLine size={17}/> محرّر حر</button>
-      </nav>
-
-      {mode === 'free' && <div className="ribbon">
+      {structured.showFreeText && <div className="ribbon">
         <nav className="ribbon-tabs" role="tablist">
           {(Object.keys(RIBBON_LABELS) as RibbonTab[]).map(k => (
             <button key={k} type="button" role="tab" aria-selected={ribbon === k} className={ribbon === k ? 'current' : ''} onClick={() => setRibbon(k)}>{RIBBON_LABELS[k]}</button>
@@ -303,7 +343,7 @@ export default function App() {
             <Tool title="عنوان سؤال" active={ui.h2} onClick={() => run()?.toggleHeading({ level: 2 }).run()}><Heading2 size={18} /></Tool>
             <Tool title="جدول" onClick={() => run()?.insertTable({ rows: 2, cols: 3, withHeaderRow: false }).run()}><Table2 size={18} /></Tool>
             <Tool title="خط فاصل" onClick={() => run()?.setHorizontalRule().run()}><Minus size={18} /></Tool>
-            <Tool title="فاصل صفحة" onClick={() => run()?.insertContent([{ type: 'pageBreak' }, { type: 'paragraph' }]).run()}><SeparatorHorizontal size={18} /></Tool>
+            <Tool title="إضافة صفحة A4" onClick={() => setStructured(p=>({...p,pageCount:Math.min(30,(p.pageCount||1)+1)}))}><SeparatorHorizontal size={18} /></Tool>
             <Tool title="إدراج شعار" onClick={() => { setPanelOpen(true); logoRef.current?.click(); }}><ImagePlus size={18} /></Tool>
             <Sep />
             <button type="button" className="chip" onClick={() => setLatexDialog({ mode: 'insert' })}><Sigma size={15} /> معادلة</button>
@@ -318,37 +358,38 @@ export default function App() {
             </>}
           </>}
 
-          {ribbon === 'questions' && questionTemplates.map(q => (
-            <button key={q.id} type="button" className="chip" onClick={() => { run()?.insertContent(q.html).run(); notify('تم إدراج القالب'); }}>{q.label}</button>
-          ))}
         </div>
       </div>}
 
-      <div className={`workspace ${mode === 'form' ? 'form-workspace' : ''}`}>
-        {mode === 'form' ? <div className="form-workflow">
-          <nav className="form-mobile-switch" aria-label="إنشاء ومعاينة الامتحان">
-            <button type="button" className={mobileView === 'builder' ? 'active' : ''} onClick={() => setMobileView('builder')}><ClipboardList size={16}/> كتابة الأسئلة</button>
-            <button type="button" className={mobileView === 'preview' ? 'active' : ''} onClick={() => setMobileView('preview')}><Eye size={16}/> معاينة A4</button>
+      <div className="workspace form-workspace">
+        <div className="form-workflow">
+          <nav className="form-mobile-switch" aria-label="كتابة ومعاينة الامتحان">
+            <button type="button" className={mobileView==='builder'?'active':''} onClick={()=>setMobileView('builder')}><ClipboardList size={16}/> كتابة الأسئلة</button>
+            <button type="button" className={mobileView==='preview'?'active':''} onClick={()=>setMobileView('preview')}><Eye size={16}/> معاينة A4</button>
           </nav>
-          <div className={`form-builder-pane ${mobileView === 'builder' ? 'mobile-active' : ''}`}>
-            <QuestionBuilder exam={structured} setExam={setStructured} meta={meta} onMeta={updateMeta} onFormula={editFormFormula} onPrint={printToPDF}/>
+          <div className={`form-builder-pane ${mobileView==='builder'?'mobile-active':''}`}>
+            <QuestionBuilder exam={structured} setExam={setStructured} meta={meta} onMeta={updateMeta} onFormula={editFormFormula}
+              onPrint={()=>void exportPDF()} onError={notify} onFontUpload={()=>fontRef.current?.click()} activePage={activePage} onActivePage={page=>setActivePage(page)} overflowPages={overflowPages}/>
           </div>
-          <div className={`form-preview-pane ${mobileView === 'preview' ? 'mobile-active' : ''}`}>
-            <Stage><ExamSheet editor={editor} body={<StructuredSheet exam={structured}/>} closing={structured.closing} showNameLine={false} meta={meta} theme={theme} logo={logo} setLogo={setLogo}/></Stage>
+          <div className={`form-preview-pane ${mobileView==='preview'?'mobile-active':''}`}>
+            <Stage><div className="a4-stack">{Array.from({length:pageCount},(_,index)=><ExamSheet key={index} editor={editor}
+              body={<><StructuredSheet exam={structured} page={index} numbering={numbered}/>
+                {index===pageCount-1 && structured.showFreeText && <section className="free-extra"><h3>نص إضافي — تحرير حر</h3><EditorContent editor={editor}/></section>}
+              </>}
+              closing={structured.closing} showNameLine={index===0} showHeader={index===0} showFooter={index===pageCount-1}
+              flipPage={index<pageCount-1} pageIndex={index} meta={meta} theme={theme} logo={logo} setLogo={setLogo}/>)}</div></Stage>
           </div>
-        </div> : <Stage>
-          <ExamSheet editor={editor} meta={meta} theme={theme} logo={logo} setLogo={setLogo}/>
-        </Stage>}
+        </div>
         <SettingsPanel
           open={panelOpen} onClose={() => setPanelOpen(false)}
-          meta={meta} onMeta={updateMeta} theme={theme} onTheme={setTheme}
-          logo={logo} setLogo={setLogo} onPickLogo={() => logoRef.current?.click()} onPreset={loadPreset}
+          theme={theme} onTheme={setTheme}
+          logo={logo} setLogo={setLogo} onPickLogo={() => logoRef.current?.click()}
         />
       </div>
 
       <div className="statusbar">
         <span className={`save-state ${saveState}`}>{saveState === 'saved' && <Check size={13} />} {saveLabel}</span>
-        <span>{mode === 'form' ? structured.questions.reduce((sum, q) => sum + q.prompt.length + q.parts.reduce((n, p) => n + p.text.length, 0), 0) : (editor?.getText().length ?? 0)} حرف</span>
+        <span>{structured.questions.reduce((sum,q)=>sum+q.prompt.length+q.parts.reduce((n,p)=>n+p.text.length,0),0)} حرف · {pageCount} صفحة</span>
       </div>
       {toast && <div className="toast" role="status">{toast}</div>}
 

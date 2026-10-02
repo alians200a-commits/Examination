@@ -47,7 +47,10 @@ export function LatinMathDialog({ mode, initial, onSubmit, onDelete, onClose }: 
   const [latex, setLatex] = useState(initial);
   return (
     <Modal title="معادلة (LaTeX)" icon={<Sigma size={20} />} onClose={onClose}>
-      <MathField value={latex} onChange={setLatex} />
+      <MathField value={latex.startsWith('longdiv(')?'':latex} onChange={setLatex} />
+      <div className="math-symbol-strip" dir="ltr">
+        {['<','>','=','\\leq','\\geq','\\neq','\\approx','\\frac{a}{b}','longdiv(12,3,4)'].map((symbol,i)=><button key={i} type="button" onClick={()=>setLatex(symbol)}>{['<','>','=','≤','≥','≠','≈','كسر عمودي','قسمة طويلة'][i]}</button>)}
+      </div>
       <label className="latex-label">
         صيغة LaTeX
         <input dir="ltr" value={latex} onChange={e => setLatex(e.target.value)} />
@@ -72,6 +75,7 @@ const ARABIC_STRUCTURES = [
   { label: 'أسّ', body: '(س)^(٢)', icon: 'س²' },
   { label: 'قيمة مطلقة', body: '|س-٣|', icon: '|س|' },
   { label: 'كسر مركب', body: '(س+١)/(ص-٢)', icon: '▤' },
+  { label: 'قسمة طويلة', body: 'قسمة(١٢،٣،٤)', icon: '⟌' },
 ];
 
 export function ArabicMathDialog({ mode, initial, onSubmit, onDelete, onClose }: FormulaDialogProps) {

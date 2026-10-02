@@ -3,7 +3,7 @@ import { Node, mergeAttributes } from '@tiptap/core';
 import { NodeViewWrapper, ReactNodeViewRenderer, type NodeViewProps } from '@tiptap/react';
 import katex from 'katex';
 import 'mathlive';
-import { arabicEquationToLatex, normalizeArabicEquation } from './arabicMath';
+import { arabicEquationToLatex, normalizeArabicEquation, parseArabicLongDivision } from './arabicMath';
 
 type MathElement = HTMLElement & {
   value: string;
@@ -50,7 +50,16 @@ export function MathField({ value, onChange }: { value: string; onChange: (value
   return <div className="math-host" dir="ltr" ref={host} />;
 }
 
+export function LongDivision({ dividend, divisor, quotient = '', language }: {dividend:string;divisor:string;quotient?:string;language:'arabic'|'latin'}) {
+  return <span className="long-division" dir={language === 'arabic'?'rtl':'ltr'}>
+    <span className="ld-quotient">{quotient || ' '}</span>
+    <span className="ld-divisor">{divisor}</span>
+    <span className="ld-dividend">{dividend}</span>
+  </span>;
+}
 export function MathPreview({ latex, displayMode = false }: { latex: string; displayMode?: boolean }) {
+  const long=latex.trim().match(/^longdiv\(([^,،()]+)[,،]([^,،()]+)(?:[,،]([^,،()]+))?\)$/i);
+  if(long) return <LongDivision dividend={long[1]} divisor={long[2]} quotient={long[3]||''} language="latin"/>;
   const markup = katex.renderToString(latex || '\\square', {
     throwOnError: false,
     displayMode,
@@ -62,6 +71,8 @@ export function MathPreview({ latex, displayMode = false }: { latex: string; dis
 
 export function ArabicMathPreview({ value, displayMode = false }: { value: string; displayMode?: boolean }) {
   const input = normalizeArabicEquation(value || 'س² + ٣س + ١ = ٠');
+  const division=parseArabicLongDivision(input);
+  if(division)return <LongDivision {...division} language="arabic"/>;
   const parsed = arabicEquationToLatex(input);
   if (parsed.error) {
     return <span className="arabic-math-error" dir="rtl" title={parsed.error}>{input}</span>;

@@ -5,7 +5,7 @@ import katex from 'katex';
 
 const ts=fs.readFileSync(new URL('../src/arabicMath.ts',import.meta.url),'utf8');
 const compiled=typescript.transpileModule(ts,{compilerOptions:{module:typescript.ModuleKind.ESNext,target:typescript.ScriptTarget.ES2020}});
-const {arabicEquationToLatex,arabicDigits}=await import('data:text/javascript;base64,'+Buffer.from(compiled.outputText).toString('base64'));
+const {arabicEquationToLatex,arabicDigits,parseArabicLongDivision}=await import('data:text/javascript;base64,'+Buffer.from(compiled.outputText).toString('base64'));
 
 assert.equal(arabicDigits('12345 ۰۱۲۳۴'),'١٢٣٤٥ ٠١٢٣٤');
 const cases=[
@@ -31,4 +31,12 @@ for(const [expr,fragments] of cases){
 assert.equal(arabicEquationToLatex('(س+٢').error!==null,true);
 assert.equal(arabicEquationToLatex('١#٢').error!==null,true);
 assert.equal(arabicEquationToLatex('1/0').latex.includes('\\text{٠}'),true);
-console.log('Arabic equation parser and KaTeX checks passed.');
+assert.deepEqual(parseArabicLongDivision('قسمة(١٢،٣،٤)'),{dividend:'١٢',divisor:'٣',quotient:'٤'});
+assert.equal(arabicEquationToLatex('قسمة(١٢،٣،٤)').error,null);
+assert.ok(arabicEquationToLatex('قسمة(١٢،،٤)').error);
+for(const input of ['٢ >= ١','٢ <= ٣','٢ != ٣','٢ > ١','١ < ٢','٣ = ٣']) {
+  const converted=arabicEquationToLatex(input);
+  assert.equal(converted.error,null,input+': '+converted.error);
+  assert.doesNotThrow(()=>katex.renderToString(converted.latex,{throwOnError:true}),input);
+}
+console.log('Arabic equation parser, comparisons, long division and KaTeX checks passed.');

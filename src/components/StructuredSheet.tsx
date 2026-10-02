@@ -1,29 +1,48 @@
+import type { ExamImage, ExamPart, ExamQuestion, QuestionFormula, StructuredExam } from '../formExam';
+import { partLabel, digitsFor, type Numbering } from '../curriculum';
 import { ArabicMathPreview, MathPreview } from '../MathSupport';
-import { arabicDigits } from '../arabicMath';
-import type { ExamPart, QuestionFormula, StructuredExam } from '../formExam';
 
-function PrintableFormula({ value }: { value: QuestionFormula }) {
-  return <span className="sq-formula">{value.language === 'arabic'
-    ? <ArabicMathPreview value={value.value}/>
-    : <MathPreview latex={value.value}/>}</span>;
+function PrintableFormula({ formula }: { formula: QuestionFormula }) {
+  return <span className="sq-formula">{formula.language === 'arabic'
+    ? <ArabicMathPreview value={formula.value}/> : <MathPreview latex={formula.value}/>}</span>;
 }
-function PrintedPart({ part, index }: { part: ExamPart; index: number }) {
-  return <div className="sq-part">
-    <span className="sq-letter">{['أ','ب','ج','د','هـ','و','ز','ح','ط','ي'][index] || arabicDigits(String(index + 1))})</span>
-    <span className="sq-part-content"><span>{part.text || '.....................................'}</span>{part.formula && <PrintableFormula value={part.formula}/>}</span>
-    {part.score !== undefined && <span className="sq-part-grade">({arabicDigits(String(part.score))} درجات)</span>}
+function PrintableImage({ image }: { image: ExamImage }) {
+  return <div className={`sq-image sq-image-${image.align}`}>
+    <img src={image.src} alt={image.name || 'رسم توضيحي في السؤال'} style={{width:`${image.width}%`}}/>
   </div>;
 }
-
-export function StructuredSheet({ exam }: { exam: StructuredExam }) {
-  return <div className="sq-exam">
-    {exam.questions.map((question,index)=><section key={question.id} className="sq-question">
-      <div className="sq-heading"><div><strong>س/{arabicDigits(String(index+1))}</strong>{question.title && <strong> ({question.title})</strong>}</div><span className="sq-grade">({arabicDigits(String(question.score))} درجة)</span></div>
-      {question.prompt && <p className="sq-prompt">{question.prompt}</p>}
-      {question.formula && <div className="sq-question-formula"><PrintableFormula value={question.formula}/></div>}
-      {question.parts.map((part,idx)=><PrintedPart key={part.id} part={part} index={idx}/>)}
-      <div className="sq-answer-space" aria-hidden="true" />
-    </section>)}
-    {exam.questions.length===0&&<div className="sq-empty">أضف سؤالًا من لوحة إنشاء الامتحان لتظهر الورقة هنا.</div>}
+function PrintedPart({ part, index, branchStyle, defaultNumbering }: {part:ExamPart;index:number;branchStyle:ExamQuestion['branchNumbering'];defaultNumbering:Numbering}) {
+  const numbering=branchStyle === 'arabic' || branchStyle === 'latin' ? branchStyle : defaultNumbering;
+  const nested=part.subNumbering === 'arabic' || part.subNumbering === 'latin' ? part.subNumbering : defaultNumbering;
+  return <div className="sq-part">
+    {branchStyle !== 'none' && <span className="sq-letter">{partLabel(index,numbering)})</span>}
+    <div className="sq-part-content">
+      {part.text && <span className="sq-part-text" dir="auto">{part.text}</span>}
+      {part.formula && <PrintableFormula formula={part.formula}/>}
+      {part.image && <PrintableImage image={part.image}/>}
+      {part.subNumbering && part.subNumbering !== 'none' && (part.subItems?.length||0)>0 &&
+        <div className="sq-subitems">{part.subItems?.map((item,i)=><div className="sq-subitem" key={i}>
+          <strong>{partLabel(i,nested)})</strong><span dir="auto">{item}</span>
+        </div>)}</div>}
+    </div>
+    {part.score !== undefined && <span className="sq-part-grade">({digitsFor(part.score,numbering)} درجات)</span>}
+  </div>;
+}
+export function StructuredQuestion({ question, index, numbering }: {question:ExamQuestion; index:number; numbering:Numbering}) {
+  return <section className="sq-question">
+    <div className="sq-heading"><div className="sq-question-title"><strong>س:{digitsFor(index+1,numbering)})</strong>
+      {question.title && <strong>{question.title}</strong>}
+      {question.prompt && <span className="sq-heading-prompt" dir="auto">{question.prompt}</span>}
+      </div><span className="sq-grade">({digitsFor(question.score,numbering)} درجات)</span></div>
+    {question.formula && <div className="sq-question-formula"><PrintableFormula formula={question.formula}/></div>}
+    {question.image && <PrintableImage image={question.image}/>}
+    {question.parts.map((part,i)=><PrintedPart key={part.id} part={part} index={i} branchStyle={question.branchNumbering} defaultNumbering={numbering}/>)}
+  </section>;
+}
+export function StructuredSheet({exam,page,numbering}:{exam:StructuredExam;page:number;numbering:Numbering}) {
+  const questions=exam.questions.map((q,index)=>({q,index})).filter(({q})=>(q.page||0)===page);
+  return <div className="sq-exam" data-page={page}>
+    {questions.map(({q,index})=><StructuredQuestion key={q.id} question={q} index={index} numbering={numbering}/>)}
+    {questions.length===0&&<div className="sq-empty">هذه الصفحة فارغة. أضف سؤالًا أو انقله إليها من لوحة الأسئلة.</div>}
   </div>;
 }

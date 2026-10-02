@@ -1,14 +1,15 @@
 {
   "name": "arabic-examination-studio",
   "private": true,
-  "version": "0.4.0",
+  "version": "0.5.0",
   "type": "module",
-  "description": "Iraqi exam generator: question-form workflow, A4 PDF, Arabic mathematical fractions/roots/powers, optional rich editor",
+  "description": "Iraqi exam editor with exact A4 pages, structured+free content, images, Arabic/English math and configurable grades",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "test:math": "node tests/arabicMath.mjs && node tests/structured.mjs"
+    "test:math": "node tests/arabicMath.mjs && node tests/structured.mjs && node tests/curriculum.mjs",
+    "test:print": "bash tests/printSmoke.sh"
   },
   "dependencies": {
     "@fontsource/cairo": "^5.3.0",

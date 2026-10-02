@@ -19,7 +19,10 @@ export function sanitizeProject(value: unknown): Partial<Project> | null {
   if (typeof raw.meta === 'object' && raw.meta !== null) {
     for (const key of Object.keys(defaults) as (keyof ExamMeta)[]) {
       const v = (raw.meta as Record<string, unknown>)[key];
-      if (typeof v === 'string') meta[key] = v;
+      if (typeof v === 'string') {
+        if(key==='customFontSrc' && v && (!/^data:(font\/[^;,]+|application\/(font-woff|x-font-ttf|x-font-opentype|octet-stream));base64,[A-Za-z0-9+/=]+$/i.test(v)||v.length>1_600_000))return null;
+        meta[key] = v;
+      }
     }
   }
 
