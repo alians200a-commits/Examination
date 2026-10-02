@@ -1,0 +1,45 @@
+
+Cairo[slnt,wght].ttf
+Copyright 2009 The Cairo Project Authors (https://github.com/Gue3bara/Cairo)
+This Font Software is licensed under the SIL Open Font License, Version 1.1. This license is available with a FAQ at: http://scripts.sil.org/OFL
+http://scripts.sil.org/OFL
+
+NotoSansArabic[wdth,wght].ttf
+Copyright 2022 The Noto Project Authors (https://github.com/notofonts/arabic)
+This Font Software is licensed under the SIL Open Font License, Version 1.1. This license is available with a FAQ at: https://scripts.sil.org/OFL
+https://scripts.sil.org/OFL
+
+NotoNaskhArabic[wght].ttf
+Copyright 2022 The Noto Project Authors (https://github.com/notofonts/arabic)
+This Font Software is licensed under the SIL Open Font License, Version 1.1. This license is available with a FAQ at: https://openfontlicense.org
+https://openfontlicense.org
+
+Amiri-Regular.ttf
+Copyright 2010-2022 The Amiri Project Authors (https://github.com/aliftype/amiri).
+This Font Software is licensed under the SIL Open Font License, Version 1.1. This license is available with a FAQ at: https://openfontlicense.org
+https://openfontlicense.org
+
+Amiri-Bold.ttf
+Copyright 2010-2022 The Amiri Project Authors (https://github.com/aliftype/amiri).
+This Font Software is licensed under the SIL Open Font License, Version 1.1. This license is available with a FAQ at: https://openfontlicense.org
+https://openfontlicense.org
+
+Tinos-Regular.ttf
+Copyright 2026 The Tinos Project Authors (https://github.com/googlefonts/tinos)
+This Font Software is licensed under the SIL Open Font License, Version 1.1. This license is available with a FAQ at: https://openfontlicense.org
+https://openfontlicense.org
+
+Tinos-Italic.ttf
+Copyright 2026 The Tinos Project Authors (https://github.com/googlefonts/tinos)
+This Font Software is licensed under the SIL Open Font License, Version 1.1. This license is available with a FAQ at: https://openfontlicense.org
+https://openfontlicense.org
+
+Tinos-Bold.ttf
+Copyright 2026 The Tinos Project Authors (https://github.com/googlefonts/tinos)
+This Font Software is licensed under the SIL Open Font License, Version 1.1. This license is available with a FAQ at: https://openfontlicense.org
+https://openfontlicense.org
+
+STIXTwoMath-Regular.ttf
+Copyright 2001-2021 The STIX Fonts Project Authors (https://github.com/stipub/stixfonts)
+This Font Software is licensed under the SIL Open Font License, Version 1.1. This license is available with a FAQ at: https://scripts.sil.org/OFL
+https://scripts.sil.org/OFL

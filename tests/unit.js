@@ -1,0 +1,37 @@
+const fs=require('fs'),path=require('path'),assert=require('assert');
+const root=path.resolve(__dirname,'..'),src=f=>fs.readFileSync(path.join(root,'src',f),'utf8');
+const core=src('core.js').replace("(()=>{'use strict';",'').replace('/*MATH*/',()=>src('math.js'));
+const m=new Function(core+'\n'+src('render.js')+'\nreturn{texToHTML,parsePieces,piecesToTex,richHTML,texProblem,ldSteps,normProject,normImg,makeProject,makeCtx,kindTemplate,STAGES,subjectsFor,matchOrder,blockHTML,autoNumbering};')();
+const fresh=m.makeProject; m.makeProject=(stage,blank)=>fresh(stage,blank??false);
+assert(fresh('primary').questions.length===0,'fresh app must begin blank');
+let count=0;const check=(label,fn)=>{assert(fn(),label);count++;console.log('PASS',label);};
+check('correct root degree',()=>m.texToHTML('\\sqrt[3]{27}','en').includes('mr-i'));
+check('square-root index is omitted',()=>!m.texToHTML('\\sqrt[2]{9}','en').includes('mr-i'));
+check('invalid brackets do not freeze parser',()=>m.parsePieces('\\sqrt[')[0].v==='\\sqrt[');
+check('deep expressions are rejected safely',()=>!!m.texProblem('{'.repeat(50)+'x'+'}'.repeat(50)));
+for(const t of ['\\frac{1}{2}^{2}','\\sqrt{9}_{x}','\\left(\\frac{1}{2}\\right)^2','\\sqrt[3]{8}','\\ce{SO4^{2-}}','\\isotope{14}{6}{C}','{x}^{2}_{1}','\\xrightleftharpoons[Pt]{Δ}']){
+ check('round trip '+t,()=>m.piecesToTex(m.parsePieces(t)).replace(/\s/g,'')===t.replace(/\s/g,''));
+}
+check('bold spans an inline equation',()=>/^<b>/.test(m.richHTML('**قبل $x^{2}$ بعد**',x=>x,'en',true))&&m.richHTML('**قبل $x^{2}$ بعد**',x=>x,'en',true).endsWith('</b>'));
+check('underline spans an inline equation',()=>m.richHTML('__قبل $x$ بعد__',x=>x,'en',true).startsWith('<u>'));
+check('prose escapes malicious HTML',()=>!m.richHTML('<img src=x onerror=alert(1)>',x=>x,'en',true).includes('<img'));
+check('fake image URI is rejected',()=>m.normImg({src:'data:image/png;base64,abc" onerror="x'})===null);
+check('zero denominator never computes invalid quotient',()=>!!m.ldSteps('84','0').error);
+check('zero denominator in imported formula is marked',()=>m.texToHTML('\\frac{1}{0}','en').includes('math-error'));
+check('unsupported math command is marked instead of printed silently',()=>m.texToHTML('\\unsupported{a}','en').includes('math-error'));
+check('answer-space settings survive import',()=>{const p=m.makeProject('primary');p.questions[0].items[0].answerLines=4;p.questions[0].items[0].align='center';const n=m.normProject(p,'primary');return n.questions[0].items[0].answerLines===4&&n.questions[0].items[0].align==='center';});
+check('long text survives project normalization',()=>{const p=m.makeProject('primary'),txt='نص '.repeat(2500);p.questions[0].prompt=txt;p.questions[0].items[0].text=txt;p.questions[0].items[0].choices=[txt];p.questions[0].items[0].table={head:true,rows:[[txt]]};const q=m.normProject(p,'primary').questions[0];return q.prompt===txt&&q.items[0].text===txt&&q.items[0].choices[0]===txt&&q.items[0].table.rows[0][0]===txt;});
+for(const [a,b,q] of [['84','4','21'],['963','3','321'],['125','5','25'],['1005','5','201'],['7','3','2'],['0','3','0']])check('division '+a+'/'+b,()=>m.ldSteps(a,b).q===q);
+check('primary English has Latin numbering',()=>m.autoNumbering('primary','اللغة الإنكليزية')==='latin');
+check('intermediate physics has Latin branch letters',()=>m.makeCtx(m.makeProject('intermediate'),'intermediate').L(0)==='A');
+check('Arabic subject has Arabic branch letters',()=>{const p=m.makeProject('intermediate');p.meta.subject='اللغة العربية';return m.makeCtx(p,'intermediate').L(0)==='أ';});
+check('grade 4 primary has requested two subjects',()=>m.subjectsFor('primary','الرابع الابتدائي').length===2);
+check('grade 4 literary has sociology, not economics',()=>m.subjectsFor('preparatory','الرابع الأدبي').includes('علم الاجتماع')&&!m.subjectsFor('preparatory','الرابع الأدبي').includes('الاقتصاد'));
+check('grade 5 literary has philosophy and computer',()=>m.subjectsFor('preparatory','الخامس الأدبي').includes('الفلسفة وعلم النفس')&&m.subjectsFor('preparatory','الخامس الأدبي').includes('الحاسوب'));
+check('earth science belongs to grade 5 scientific',()=>m.subjectsFor('preparatory','الخامس العلمي').includes('علم الأرض')&&!m.subjectsFor('preparatory','الرابع العلمي').includes('علم الأرض'));
+check('removed classic style migrates to source',()=>m.normProject({style:'classic'},'primary').style==='source');
+check('duplicate imported IDs become unique',()=>{const p=m.makeProject('primary');p.questions[1].id=p.questions[0].id;const n=m.normProject(p,'primary');return new Set(n.questions.map(q=>q.id)).size===n.questions.length;});
+check('matching shuffle is stable',()=>{const q=m.kindTemplate('match',false);return JSON.stringify(m.matchOrder(q))===JSON.stringify(m.matchOrder(q));});
+check('match columns remain in RTL order',()=>{const p=m.makeProject('primary'),q=m.kindTemplate('match',false),h=m.blockHTML(q,1,m.makeCtx(p,'primary'),p,0,q.items.length,true);return h.includes('dir="rtl"')&&h.includes('mtab');});
+fs.writeFileSync(path.join(root,'tests','unit-results.json'),JSON.stringify({passed:count},null,2));
+console.log('TOTAL',count);

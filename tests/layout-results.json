@@ -1,0 +1,729 @@
+{
+  "templates": [
+    {
+      "st": "primary",
+      "grade": "الرابع الابتدائي",
+      "subject": "اللغة العربية",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "primary",
+      "grade": "الرابع الابتدائي",
+      "subject": "الرياضيات",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "primary",
+      "grade": "الخامس الابتدائي",
+      "subject": "التربية الإسلامية",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "primary",
+      "grade": "الخامس الابتدائي",
+      "subject": "اللغة العربية",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "primary",
+      "grade": "الخامس الابتدائي",
+      "subject": "اللغة الإنكليزية",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "primary",
+      "grade": "الخامس الابتدائي",
+      "subject": "الرياضيات",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "primary",
+      "grade": "الخامس الابتدائي",
+      "subject": "العلوم",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "primary",
+      "grade": "الخامس الابتدائي",
+      "subject": "الاجتماعيات",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "primary",
+      "grade": "السادس الابتدائي",
+      "subject": "التربية الإسلامية",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "primary",
+      "grade": "السادس الابتدائي",
+      "subject": "اللغة العربية",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "primary",
+      "grade": "السادس الابتدائي",
+      "subject": "اللغة الإنكليزية",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "primary",
+      "grade": "السادس الابتدائي",
+      "subject": "الرياضيات",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "primary",
+      "grade": "السادس الابتدائي",
+      "subject": "العلوم",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "primary",
+      "grade": "السادس الابتدائي",
+      "subject": "الاجتماعيات",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "intermediate",
+      "grade": "الأول المتوسط",
+      "subject": "التربية الإسلامية",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "intermediate",
+      "grade": "الأول المتوسط",
+      "subject": "اللغة العربية",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "intermediate",
+      "grade": "الأول المتوسط",
+      "subject": "اللغة الإنكليزية",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "intermediate",
+      "grade": "الأول المتوسط",
+      "subject": "الرياضيات",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "intermediate",
+      "grade": "الأول المتوسط",
+      "subject": "الأحياء",
+      "pages": 2,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "intermediate",
+      "grade": "الأول المتوسط",
+      "subject": "الكيمياء",
+      "pages": 2,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "intermediate",
+      "grade": "الأول المتوسط",
+      "subject": "الفيزياء",
+      "pages": 2,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "intermediate",
+      "grade": "الأول المتوسط",
+      "subject": "الاجتماعيات",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "intermediate",
+      "grade": "الأول المتوسط",
+      "subject": "الحاسوب",
+      "pages": 2,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "intermediate",
+      "grade": "الثاني المتوسط",
+      "subject": "التربية الإسلامية",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "intermediate",
+      "grade": "الثاني المتوسط",
+      "subject": "اللغة العربية",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "intermediate",
+      "grade": "الثاني المتوسط",
+      "subject": "اللغة الإنكليزية",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "intermediate",
+      "grade": "الثاني المتوسط",
+      "subject": "الرياضيات",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "intermediate",
+      "grade": "الثاني المتوسط",
+      "subject": "الأحياء",
+      "pages": 2,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "intermediate",
+      "grade": "الثاني المتوسط",
+      "subject": "الكيمياء",
+      "pages": 2,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "intermediate",
+      "grade": "الثاني المتوسط",
+      "subject": "الفيزياء",
+      "pages": 2,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "intermediate",
+      "grade": "الثاني المتوسط",
+      "subject": "الاجتماعيات",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "intermediate",
+      "grade": "الثاني المتوسط",
+      "subject": "الحاسوب",
+      "pages": 2,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "intermediate",
+      "grade": "الثالث المتوسط",
+      "subject": "التربية الإسلامية",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "intermediate",
+      "grade": "الثالث المتوسط",
+      "subject": "اللغة العربية",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "intermediate",
+      "grade": "الثالث المتوسط",
+      "subject": "اللغة الإنكليزية",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "intermediate",
+      "grade": "الثالث المتوسط",
+      "subject": "الرياضيات",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "intermediate",
+      "grade": "الثالث المتوسط",
+      "subject": "الأحياء",
+      "pages": 2,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "intermediate",
+      "grade": "الثالث المتوسط",
+      "subject": "الكيمياء",
+      "pages": 2,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "intermediate",
+      "grade": "الثالث المتوسط",
+      "subject": "الفيزياء",
+      "pages": 2,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "intermediate",
+      "grade": "الثالث المتوسط",
+      "subject": "الاجتماعيات",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "intermediate",
+      "grade": "الثالث المتوسط",
+      "subject": "الحاسوب",
+      "pages": 2,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "preparatory",
+      "grade": "الرابع العلمي",
+      "subject": "التربية الإسلامية",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "preparatory",
+      "grade": "الرابع العلمي",
+      "subject": "اللغة العربية",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "preparatory",
+      "grade": "الرابع العلمي",
+      "subject": "اللغة الإنكليزية",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "preparatory",
+      "grade": "الرابع العلمي",
+      "subject": "الرياضيات",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "preparatory",
+      "grade": "الرابع العلمي",
+      "subject": "الفيزياء",
+      "pages": 2,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "preparatory",
+      "grade": "الرابع العلمي",
+      "subject": "الكيمياء",
+      "pages": 2,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "preparatory",
+      "grade": "الرابع العلمي",
+      "subject": "الأحياء",
+      "pages": 2,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "preparatory",
+      "grade": "الرابع العلمي",
+      "subject": "الحاسوب",
+      "pages": 2,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "preparatory",
+      "grade": "الرابع الأدبي",
+      "subject": "التربية الإسلامية",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "preparatory",
+      "grade": "الرابع الأدبي",
+      "subject": "اللغة العربية",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "preparatory",
+      "grade": "الرابع الأدبي",
+      "subject": "اللغة الإنكليزية",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "preparatory",
+      "grade": "الرابع الأدبي",
+      "subject": "الرياضيات",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "preparatory",
+      "grade": "الرابع الأدبي",
+      "subject": "التاريخ",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "preparatory",
+      "grade": "الرابع الأدبي",
+      "subject": "الجغرافية",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "preparatory",
+      "grade": "الرابع الأدبي",
+      "subject": "علم الاجتماع",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "preparatory",
+      "grade": "الرابع الأدبي",
+      "subject": "الحاسوب",
+      "pages": 2,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "preparatory",
+      "grade": "الخامس العلمي",
+      "subject": "التربية الإسلامية",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "preparatory",
+      "grade": "الخامس العلمي",
+      "subject": "اللغة العربية",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "preparatory",
+      "grade": "الخامس العلمي",
+      "subject": "اللغة الإنكليزية",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "preparatory",
+      "grade": "الخامس العلمي",
+      "subject": "الرياضيات",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "preparatory",
+      "grade": "الخامس العلمي",
+      "subject": "الفيزياء",
+      "pages": 2,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "preparatory",
+      "grade": "الخامس العلمي",
+      "subject": "الكيمياء",
+      "pages": 2,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "preparatory",
+      "grade": "الخامس العلمي",
+      "subject": "الأحياء",
+      "pages": 2,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "preparatory",
+      "grade": "الخامس العلمي",
+      "subject": "علم الأرض",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "preparatory",
+      "grade": "الخامس العلمي",
+      "subject": "الحاسوب",
+      "pages": 2,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "preparatory",
+      "grade": "الخامس الأدبي",
+      "subject": "التربية الإسلامية",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "preparatory",
+      "grade": "الخامس الأدبي",
+      "subject": "اللغة العربية",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "preparatory",
+      "grade": "الخامس الأدبي",
+      "subject": "اللغة الإنكليزية",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "preparatory",
+      "grade": "الخامس الأدبي",
+      "subject": "الرياضيات",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "preparatory",
+      "grade": "الخامس الأدبي",
+      "subject": "التاريخ",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "preparatory",
+      "grade": "الخامس الأدبي",
+      "subject": "الجغرافية",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "preparatory",
+      "grade": "الخامس الأدبي",
+      "subject": "الاقتصاد",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "preparatory",
+      "grade": "الخامس الأدبي",
+      "subject": "الفلسفة وعلم النفس",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "preparatory",
+      "grade": "الخامس الأدبي",
+      "subject": "الحاسوب",
+      "pages": 2,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "preparatory",
+      "grade": "السادس العلمي",
+      "subject": "التربية الإسلامية",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "preparatory",
+      "grade": "السادس العلمي",
+      "subject": "اللغة العربية",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "preparatory",
+      "grade": "السادس العلمي",
+      "subject": "اللغة الإنكليزية",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "preparatory",
+      "grade": "السادس العلمي",
+      "subject": "الرياضيات",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "preparatory",
+      "grade": "السادس العلمي",
+      "subject": "الفيزياء",
+      "pages": 2,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "preparatory",
+      "grade": "السادس العلمي",
+      "subject": "الكيمياء",
+      "pages": 2,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "preparatory",
+      "grade": "السادس العلمي",
+      "subject": "الأحياء",
+      "pages": 2,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "preparatory",
+      "grade": "السادس الأدبي",
+      "subject": "التربية الإسلامية",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "preparatory",
+      "grade": "السادس الأدبي",
+      "subject": "اللغة العربية",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "preparatory",
+      "grade": "السادس الأدبي",
+      "subject": "اللغة الإنكليزية",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "preparatory",
+      "grade": "السادس الأدبي",
+      "subject": "الرياضيات",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "preparatory",
+      "grade": "السادس الأدبي",
+      "subject": "التاريخ",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "preparatory",
+      "grade": "السادس الأدبي",
+      "subject": "الجغرافية",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    },
+    {
+      "st": "preparatory",
+      "grade": "السادس الأدبي",
+      "subject": "الاقتصاد",
+      "pages": 1,
+      "tall": 0,
+      "wide": 0
+    }
+  ],
+  "errors": [],
+  "math": {
+    "tall": 0,
+    "wide": 0,
+    "chips": 8,
+    "roots": 2
+  },
+  "header": {
+    "center": 0.015625,
+    "gradeLeft": true,
+    "yearCopies": 1,
+    "gradeCopies": 1
+  }
+}

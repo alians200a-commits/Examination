@@ -1,0 +1,18 @@
+{
+  "checks": [
+    "learn button opens immediately within same tab",
+    "tutorial has sample exam",
+    "tutorial edits never overwrite actual local save",
+    "returning restores actual project and history",
+    "same-session tutorial retains learner changes",
+    "open project reveals native file selection and file-type instructions",
+    "native file chooser opens actual project end to end",
+    "invalid file has persistent visible message and preserves existing project",
+    "welcome no overflow at 360",
+    "welcome no overflow at 390",
+    "welcome no overflow at 768",
+    "welcome no overflow at 1280",
+    "no runtime errors in entry workflow"
+  ],
+  "errors": []
+}

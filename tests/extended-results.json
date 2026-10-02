@@ -1,0 +1,30 @@
+{
+  "checks": [
+    "touch symbol inserts into denominator after changing tab",
+    "touch equation remains inline",
+    "answer space contains four lines",
+    "branch alignment is saved",
+    "row inserted before selected cell without losing data",
+    "column inserted before selected cell without losing data",
+    "selected row can be deleted",
+    "selected row deletion is undoable",
+    "malformed imported equation blocks PDF",
+    "valid exam reaches print",
+    "custom font race leaves one current face",
+    "leaving custom font removes obsolete face",
+    "font upload stays with originating stage when switching during read",
+    "image and logo load without breaking layout",
+    "preview and print have same blocks and proportional positions",
+    "saved exam restores after reload",
+    "tab-separated clipboard populates rows and columns",
+    "table clipboard paste is one undoable change",
+    "multiline prose paste retains line breaks",
+    "blank sheet preserves custom header and design preferences",
+    "blank-sheet operation is undoable",
+    "long branch, prompt and table cell survive reload without truncation",
+    "damaged local save falls back to valid backup",
+    "backup recovery tells user to export",
+    "no uncaught errors during touch interactions"
+  ],
+  "errors": []
+}
