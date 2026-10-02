@@ -21,7 +21,7 @@ export function sanitizeProject(value: unknown): Partial<Project> | null {
       const v = (raw.meta as Record<string, unknown>)[key];
       if (typeof v === 'string') {
         if(key==='customFontSrc' && v && (!/^data:(font\/[^;,]+|application\/(font-woff|x-font-ttf|x-font-opentype|octet-stream));base64,[A-Za-z0-9+/=]+$/i.test(v)||v.length>1_600_000))return null;
-        meta[key] = v;
+        Object.assign(meta, { [key]: v });
       }
     }
   }
