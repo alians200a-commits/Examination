@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 CHROME="$(command -v google-chrome || command -v chromium || true)"
-if [ -z "$CHROME" ]; then echo 'Chromium unavailable: print smoke test skipped'; exit 0; fi
-if ! command -v pdfinfo >/dev/null; then echo 'pdfinfo unavailable: print smoke test skipped'; exit 0; fi
+if [ -z "$CHROME" ]; then echo 'Chromium unavailable: print smoke test failed'; exit 1; fi
+if ! command -v pdfinfo >/dev/null; then echo 'pdfinfo unavailable: print smoke test failed'; exit 1; fi
 npm run dev -- --host 127.0.0.1 > /tmp/examination-vite.log 2>&1 &
 server=$!
 trap 'kill "$server" 2>/dev/null || true' EXIT
