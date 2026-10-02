@@ -5,7 +5,7 @@ const ts=fs.readFileSync(new URL('../src/formExam.ts',import.meta.url),'utf8');
 const output=typescript.transpileModule(ts,{compilerOptions:{module:typescript.ModuleKind.ESNext,target:typescript.ScriptTarget.ES2020}}).outputText;
 const {newExam,newQuestion,newPart,sanitizeStructured}=await import('data:text/javascript;base64,'+Buffer.from(output).toString('base64'));
 const exam=newExam();
-exam.questions.push(newQuestion());
+exam.questions.push(newQuestion(), newQuestion());
 exam.questions[2].parts.push(newPart());
 exam.questions[2].parts[0].score=10;
 exam.questions[2].parts[0].formula={language:'arabic',value:'(س+١)/(ص+٢)'};
