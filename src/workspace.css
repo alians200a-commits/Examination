@@ -1,4 +1,4 @@
-/* v14 — unified, progressive, mobile-first workspace. Paper CSS remains unchanged. */
+/* v14 — mobile-first workspace. Interface palette exclusively navy/blue/neutral; paper palette independent. */
 :root {
   --bg:#F2F5F9;
   --panel:#FFFFFF;
@@ -8,14 +8,14 @@
   --muted:#73849A;
   --line:#DDE5EE;
   --line2:#EAF0F6;
-  --acc:#24568D;
-  --acc-h:#173E70;
-  --acc-soft:#EBF2FA;
+  --acc:#294B7C;
+  --acc-h:#1D3760;
+  --acc-soft:#EEF3FA;
   --acc-line:#BED2EA;
   --danger:#B43C3C;
   --danger-soft:#FFF2F1;
-  --ok:#258365;
-  --warn:#BC8F43;
+  --ok:#456B9D; /* saved = blue, never green */
+  --warn:#B47B3A;
   --r:16px;
   --r-sm:11px;
   --sh-1:0 2px 9px rgba(19,44,77,.04);
@@ -205,3 +205,14 @@ body{background:var(--bg);font-size:14px;color:var(--ink)}
  #pages .page{width:210mm!important;height:297mm!important;margin:0!important;box-shadow:none!important;break-inside:avoid!important;page-break-inside:avoid!important}
  #pages .page:last-child{break-after:auto!important;page-break-after:auto!important}
 }
+
+/* Reference-inspired interface color policy: no green, olive, teal or mint surfaces. */
+.status[data-s=saved]{background:#456B9D!important}
+.status[data-s=saving]{background:#B47B3A!important}
+.status[data-s=error]{background:#B43C3C!important}
+.demo-mode .mark{background:#294B7C!important}
+/* Non-editable paper preview on the home page mirrors the approved print palette. */
+.welcome-preview header{border-color:#293D68!important;color:#293D68!important;background:#FAFBFE!important}
+.preview-question b{background:#F1F4FA!important;color:#293D68!important}
+.file-panel input::file-selector-button{background:#294B7C!important;color:#fff!important}
+@media print{.status{display:none!important}}
