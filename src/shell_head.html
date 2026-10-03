@@ -542,3 +542,21 @@ input:not([type=checkbox]):not([type=range]):focus,textarea:focus{outline:none;b
 #eqdlg .eq-code small{display:block;margin:7px 0;font-size:11px;color:#576e89}
 #eqdlg .eq footer{background:#f9fbff;border-top:1px solid #d6e0ec;z-index:2}
 @media(max-width:639px){#eqdlg .eq{height:min(96dvh,940px);max-height:96dvh;padding:10px 10px calc(9px + env(safe-area-inset-bottom))}#eqdlg .eq-template-grid{grid-template-columns:repeat(2,minmax(0,1fr));max-height:240px}#eqdlg .eq-palette-title{display:grid;gap:3px}#eqdlg .eq-preview-label{margin-top:2px}#eqdlg .eqprev{min-height:106px;font-size:21px;padding:14px 10px}#eqdlg .eq-line{display:grid;grid-template-columns:30px minmax(0,1fr);align-items:start}#eqdlg .eq-line label:nth-of-type(2){grid-column:2}#eqdlg .eq-cat-tabs button{padding:7px 11px}}
+
+/* v19: distinct mathematical palettes, one-click trig, Greek and science symbols */
+#eqdlg .eq-palette-body{max-height:335px;overflow-y:auto;overscroll-behavior:contain}
+#eqdlg .eq-palette .eq-template-grid{max-height:none;overflow:visible;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));padding:12px}
+#eqdlg .eq-direct-symbols{display:grid;grid-template-columns:repeat(auto-fill,minmax(82px,1fr));gap:8px;padding:12px}
+#eqdlg .eq-symbol-tile{min-height:80px;border:1px solid #ccd9eb;border-radius:10px;background:white;color:#1b3559;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:7px 3px;touch-action:manipulation}
+#eqdlg .eq-symbol-tile:hover,#eqdlg .eq-symbol-tile:focus-visible{border-color:#24568d;box-shadow:0 0 0 3px rgba(36,86,141,.12);background:#f3f7ff}
+#eqdlg .eq-symbol-tile strong{font-family:'STIX Two Math','Tinos',serif;font-size:25px;font-weight:800;line-height:1.3}
+#eqdlg .eq-symbol-tile span{font-size:11px;font-weight:750;color:#415a7c;text-align:center;line-height:1.35}
+#eqdlg .eq-symbols-heading{padding:9px 13px 0;font-size:12px;color:#264b7b;font-weight:800}
+#eqdlg .eq-more-symbols{background:#f6f9fd;border:1px solid #dae5f5;border-radius:11px;padding:9px 11px}
+#eqdlg .eq-more-symbols summary{font-weight:800;font-size:12px;color:#234975;cursor:pointer}
+#eqdlg .eq-more-symbols[open] .symtabs{display:flex;overflow-x:auto;padding:12px 0;gap:5px}
+#eqdlg .eq-more-symbols[open] .syms{max-height:170px;overflow-y:auto}
+@media(max-width:639px){#eqdlg .eq-palette-body{max-height:260px}#eqdlg .eq-direct-symbols{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}#eqdlg .eq-palette .eq-template-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}#eqdlg .eq-symbol-tile{min-height:68px}}
+
+#eqdlg .eq-section-picker{display:none}
+@media(max-width:639px){#eqdlg .eq-section-picker{display:grid;gap:5px;padding:10px 12px 0;color:#244771;font-weight:800;font-size:12px}#eqdlg .eq-category-picker{display:block;width:100%;min-height:46px;background:#f5f8fd;color:#173a63;border:1px solid #bfcfe5;border-radius:10px;padding:9px 13px;font-size:14px;font-family:inherit;font-weight:800}#eqdlg .eq-cat-tabs{display:none}}

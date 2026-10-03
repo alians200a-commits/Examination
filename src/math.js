@@ -3,7 +3,7 @@ const SYM={times:'×',div:'÷',pm:'±',mp:'∓',cdot:'·',le:'≤',leq:'≤',ge:
  alpha:'α',beta:'β',gamma:'γ',delta:'δ',epsilon:'ε',theta:'θ',lambda:'λ',mu:'μ',pi:'π',rho:'ρ',sigma:'σ',tau:'τ',phi:'φ',omega:'ω',Delta:'Δ',Gamma:'Γ',Theta:'Θ',Lambda:'Λ',Pi:'Π',Sigma:'Σ',Phi:'Φ',Omega:'Ω'};
 Object.assign(SYM,{varepsilon:'ε',vartheta:'ϑ',varphi:'φ',eta:'η',kappa:'κ',nu:'ν',xi:'ξ',chi:'χ',psi:'ψ',zeta:'ζ',Psi:'Ψ',ell:'ℓ',AA:'Å',deg:'°',permil:'‰',bullet:'•',star:'⋆',leftrightharpoons:'⇋',rightharpoonup:'⇀',mapsto:'↦',implies:'⇒',iff:'⇔',ni:'∋',setminus:'∖',sqcup:'⊔',top:'⊤',bot:'⊥',cong:'≅',simeq:'≃',ll:'≪',gg:'≫',dagger:'†',measuredangle:'∡',square:'□',Box:'□',lozenge:'◊'});
 Object.assign(SYM,{uparrow:'↑',downarrow:'↓',longrightarrow:'⟶',longleftarrow:'⟵',Leftarrow:'⇐',nearrow:'↗',searrow:'↘',propto:'∝',hbar:'ℏ',ohm:'Ω'});
-const AR_FN={sin:'جا',cos:'جتا',tan:'ظا',cot:'ظتا',sec:'قا',csc:'قتا',arcsin:'جا⁻¹',arccos:'جتا⁻¹',arctan:'ظا⁻¹',log:'لو'};
+const AR_FN={sin:'جا',cos:'جتا',tan:'ظا',cot:'ظتا',sec:'قا',csc:'قتا',arcsin:'جا⁻¹',arccos:'جتا⁻¹',arctan:'ظا⁻¹',sinh:'sinh',cosh:'cosh',tanh:'tanh',log:'لو'};
 const FUNCS=new Set(['sin','cos','tan','cot','sec','csc','log','ln','exp','min','max','det','mod','arcsin','arccos','arctan','sinh','cosh','tanh']);
 const OPS='+-−×÷=<>≤≥≠±∓≈≡→←⇌⇒⇔↔⟶∨∧∩∪∈∉⊂⊆⊃∝·';
 const REL='=<>≤≥≠≈≡→←⇌⇒⇔↔⟶∈∉⊂⊆⊃∝';
@@ -236,7 +236,7 @@ function piecesToTex(ps){
  return ps.map(p=>({text:()=>p.v,frac:()=>`\\frac{${p.a}}{${p.b}}`,mixed:()=>`{${p.w}}\\frac{${p.a}}{${p.b}}`,sqrt:()=>`\\sqrt{${p.x}}`,nroot:()=>`\\sqrt[${p.n}]{${p.x}}`,root:()=>p.n&&!/^\s*[2٢]?\s*$/.test(p.n)?`\\sqrt[${p.n}]{${p.x}}`:`\\sqrt{${p.x}}`,
   unit:()=>`\\qty{${p.v}}{${p.u}}`,iso:()=>`\\isotope{${p.a}}{${p.z}}{${p.x}}`,sys:()=>`\\system{${p.a}}{${p.b}}`,log:()=>`\\log_{${p.b}}{${p.x}}`,lim:()=>`\\lim_{${p.v} \\to ${p.a}}{${p.x}}`,
   int:()=>`\\int_{${p.a}}^{${p.b}}{${p.f}}`,
-  trig:()=>`\\${['sin','cos','tan','cot','sec','csc','arcsin','arccos','arctan'].includes(p.fn)?p.fn:'sin'}${p.e?`^{${p.e}}`:''}{${p.x}}`,
+  trig:()=>`\\${['sin','cos','tan','cot','sec','csc','arcsin','arccos','arctan','sinh','cosh','tanh'].includes(p.fn)?p.fn:'sin'}${p.e?`^{${p.e}}`:''}{${p.x}}`,
   identity:()=>`\\sin^{2}{${p.x}}+\\cos^{2}{${p.x}}=1`,
   deriv:()=>`\\frac{${p.d}}{${p.d}${p.v}}\\left(${p.f}\\right)`,
   deriv2:()=>`\\frac{${p.d}^{2}}{${p.d}${p.v}^{2}}\\left(${p.f}\\right)`,
@@ -301,7 +301,7 @@ function parseAdvancedPiece(raw){
  if(pnth)p={t:'partialn',n:pnth[1],v:pnth[2],f:pnth[3]};
  const limsup=/^\\(limsup|liminf)_\{([^{}]+) \\to ([^{}]+)\}\{([\s\S]*)\}$/.exec(s);
  if(limsup)p={t:limsup[1],v:limsup[2],a:limsup[3],x:limsup[4]};
- const tr=/^\\(sin|cos|tan|cot|sec|csc|arcsin|arccos|arctan)(?:\^\{([^{}]+)\})?\{([\s\S]*)\}$/.exec(s);
+ const tr=/^\\(sin|cos|tan|cot|sec|csc|arcsin|arccos|arctan|sinh|cosh|tanh)(?:\^\{([^{}]+)\})?\{([\s\S]*)\}$/.exec(s);
  if(tr)p={t:'trig',fn:tr[1],e:tr[2]||'',x:tr[3]};
  const id=/^\\sin\^\{2\}\{([\s\S]+)\}\+\\cos\^\{2\}\{\1\}=1$/.exec(s);
  if(id)p={t:'identity',x:id[1]};

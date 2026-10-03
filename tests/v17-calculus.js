@@ -3,7 +3,7 @@ const fs=require('node:fs');
 const path=require('node:path');
 const root=path.resolve(__dirname,'..');
 const src=f=>fs.readFileSync(path.join(root,'src',f),'utf8');
-const m=new Function(src('core.js').replace("(()=>{'use strict';",'').replace('/*MATH*/',()=>src('math.js'))+'\n'+src('render.js')+'\nreturn {texToHTML,parsePieces,piecesToTex};')();
+const m=new Function(src('core.js').replace("(()=>{'use strict';",'').replace('/*MATH*/',()=>src('math.js'))+'\n'+src('render.js')+'\nreturn {texToHTML,parsePieces,piecesToTex,texProblem,richHTML};')();
 const examples=[
   [{t:'trig',fn:'sin',e:'٢',x:'س'},'trig','جا','٢'],
   [{t:'trig',fn:'cos',e:'',x:'x'},'trig','cos','x'],
@@ -21,12 +21,11 @@ let passed=0;
 for(const [p,type,...tokens] of examples){
  const tex=m.piecesToTex([p]);
  const html=m.texToHTML(tex,/[\p{Script=Arabic}]/u.test(tex)?'ar':'en');
- assert(!html.includes('math-error'),'Unrenderable '+type+' '+tex);
+ assert(!html.includes('math-error'),`Unrenderable ${type} ${tex}`);
  const back=m.parsePieces(tex);
- assert.equal(back.length,1,'Split template '+type);
- assert.equal(back[0].t,type,'Not roundtrip: '+type+' '+JSON.stringify(back));
- assert.equal(m.piecesToTex(back),tex,'Roundtrip formula changed: '+type);
- for(const t of tokens)assert(html.includes(t),'Missing '+t+' in '+tex);
+ assert.equal(back.length,1,`Split template ${type}`);assert.equal(back[0].t,type,`Not roundtrip: ${type} ${JSON.stringify(back)}`);
+ assert.equal(m.piecesToTex(back),tex,`Roundtrip formula changed: ${type}`);
+ for(const t of tokens)assert(html.includes(t),`Missing ${t} in ${tex}`);
  passed++;
 }
 assert(m.texToHTML('\\frac{d}{dx}\\left(x^{2}\\right)','en').includes('class="mf"'));
@@ -36,5 +35,5 @@ const css=src('paper.css');
 assert(/\.mx\{[^}]*font-weight:700/.test(css),'Math body not explicitly bold');
 assert(/\.mint\{[^}]*font-weight:800/.test(css),'Integral symbol not bold');
 assert(/@media print\{\.mx/.test(css),'Print math not pinned to dark');
-assert(src('ui.js').includes("['التفاضل'") && src('ui.js').includes("['التكامل'") && src('ui.js').includes('math-fast-scroll'),'Calculus editor shortcuts missing');
-console.log('V17 calculus checks: '+passed+' examples round-tripped, parser, equation weight and print CSS PASS');
+assert(src('ui.js').includes("['التفاضل'") && src('ui.js').includes("['التكامل'") && src('ui.js').includes('eq-category-picker'),'Calculus editor shortcuts missing');
+console.log(`V17 calculus checks: ${passed} examples round-tripped, parser, equation weight and print CSS PASS`);

@@ -517,15 +517,92 @@ function finishWizard(){
 }
 
 /* ---------- محرر المعادلات: تختار الصيغة ثم تملأ خاناتها، والناتج يدخل داخل السطر ---------- */
+/* MathType-inspired ribbons. Fractions and powers are deliberately independent. */
 const EQG=[
- ['كسور وأسس',['frac','mixed','binom','root','pow','sub','powsub','ppow','paren','abs']],
- ['الدوال والنهايات',['trig','identity','log','lim','limsup','liminf']],
+ ['الكسور',['frac','mixed','binom']],
+ ['الأسس والأدلة',['pow','sub','powsub','ppow']],
+ ['الجذور',['root']],
+ ['الأقواس والتنسيق',['paren','abs','overbrace','underbrace']],
+ ['الدوال المثلثية',['fn-sin','fn-cos','fn-tan','fn-cot','fn-sec','fn-csc','fn-arcsin','fn-arccos','fn-arctan','fn-sinh','fn-cosh','fn-tanh','identity']],
+ ['الحروف اليونانية',[]],
+ ['النهايات واللوغاريتم',['log','lim','limsup','liminf']],
  ['التفاضل',['deriv','deriv2','derivn','partialderiv','partialn']],
- ['التكامل',['intindef','intdef','iint','iiint','oint','sum','prod']],
- ['المصفوفات والأنظمة',['matrix','det','cases','aligned','sys']],
- ['هندسة وعلوم',['vec','bar','overbrace','underbrace','arrow','chem','iso','unit','longdiv']],
- ['نص ورموز',['text']]
+ ['التكامل',['intindef','intdef','iint','iiint','oint']],
+ ['المجاميع',['sum','prod']],
+ ['المصفوفات والمحددات',['matrix','det']],
+ ['أنظمة المعادلات',['sys','cases','aligned']],
+ ['الكيمياء',['chem','iso','arrow','chem-water','chem-reaction','chem-equilibrium','chem-state','chem-ion','chem-molarity','chem-ph','chem-moles','chem-density','chem-ideal-gas','chem-enthalpy','chem-equilibrium-constant']],
+ ['الفيزياء',['unit','vec','physics-speed','physics-force','physics-kinetic','physics-ohm','physics-wave','physics-charge','physics-gravity','physics-acceleration','physics-power','physics-pressure','physics-frequency','physics-lens','physics-coulomb','physics-capacitance','physics-density']],
+ ['الهندسة والمتجهات',['vec','bar','arrow','overbrace','underbrace']],
+ ['الرموز والعلاقات',[]],
+ ['القسمة الطويلة',['longdiv']],
+ ['نص رياضي حر',['text']]
 ];
+const TRIG_PALETTE=[
+ ['sin','جا'],['cos','جتا'],['tan','ظا'],['cot','ظتا'],['sec','قا'],['csc','قتا'],
+ ['arcsin','جا العكسية'],['arccos','جتا العكسية'],['arctan','ظا العكسية'],
+ ['sinh','sinh'],['cosh','cosh'],['tanh','tanh']
+];
+/* Presets reuse the existing reversible typed pieces: no new opaque formula format. */
+const EQ_PRESETS={
+ 'chem-water': ['H₂O · الماء','chem',{x:'H2O'}],
+ 'chem-reaction': ['معادلة تفاعل','chem',{x:'2H2 + O2 -> 2H2O'}],
+ 'chem-equilibrium': ['تفاعل اتزان','chem',{x:'N2 + 3H2 <=> 2NH3'}],
+ 'chem-state': ['حالات المادة','chem',{x:'CaCO3(s) ->[Δ] CaO(s) + CO2(g)'}],
+ 'chem-ion': ['أيونات وشحنات','chem',{x:'Ca^2+ + 2Cl^- -> CaCl2'}],
+ 'chem-molarity': ['التركيز المولاري','frac',{a:'n',b:'V'}],
+ 'chem-ph': ['درجة الحموضة pH','text',{v:'pH=-\\log{[H^{+}]}' }],
+ 'chem-moles': ['عدد المولات','frac',{a:'m',b:'M'}],
+ 'chem-density': ['الكثافة','frac',{a:'m',b:'V'}],
+ 'chem-ideal-gas': ['قانون الغاز المثالي','text',{v:'P V=n R T'}],
+ 'chem-enthalpy': ['الإنثالبي','text',{v:'\\Delta H=H_{\\text{products}}-H_{\\text{reactants}}'}],
+ 'chem-equilibrium-constant': ['ثابت الاتزان','frac',{a:'[C]^{c}[D]^{d}',b:'[A]^{a}[B]^{b}'}],
+ 'physics-speed': ['السرعة المتوسطة','frac',{a:'\\Delta x',b:'\\Delta t'}],
+ 'physics-force': ['قانون نيوتن الثاني','text',{v:'F=m a'}],
+ 'physics-kinetic': ['الطاقة الحركية','frac',{a:'m v^{2}',b:'2'}],
+ 'physics-ohm': ['قانون أوم','text',{v:'V=I R'}],
+ 'physics-wave': ['سرعة الموجة','text',{v:'v=\\lambda f'}],
+ 'physics-charge': ['شدة التيار','frac',{a:'Q',b:'t'}],
+ 'physics-gravity': ['قانون التجاذب','text',{v:'F=G\\frac{m_1 m_2}{r^{2}}'}],
+ 'physics-acceleration': ['التسارع','frac',{a:'\\Delta v',b:'\\Delta t'}],
+ 'physics-power': ['القدرة','frac',{a:'W',b:'t'}],
+ 'physics-pressure': ['الضغط','frac',{a:'F',b:'A'}],
+ 'physics-frequency': ['التردد','frac',{a:'1',b:'T'}],
+ 'physics-lens': ['قانون العدسات','text',{v:'\\frac{1}{f}=\\frac{1}{u}+\\frac{1}{v}'}],
+ 'physics-coulomb': ['قانون كولوم','text',{v:'F=k\\frac{q_1 q_2}{r^{2}}'}],
+ 'physics-capacitance': ['السعة الكهربائية','frac',{a:'Q',b:'V'}],
+ 'physics-density': ['الكثافة','frac',{a:'m',b:'V'}]
+};
+const EQ_QUICK_SYMBOLS={
+ 'الحروف اليونانية':[
+  ['α','\\alpha','ألفا'],['β','\\beta','بيتا'],['γ','\\gamma','گاما'],['δ','\\delta','دلتا'],
+  ['θ','\\theta','ثيتا'],['ϑ','\\vartheta','ثيتا البديلة'],['λ','\\lambda','لامدا'],['μ','\\mu','ميو'],
+  ['π','\\pi','باي'],['ρ','\\rho','رو'],['σ','\\sigma','سيگما'],['τ','\\tau','تاو'],
+  ['φ','\\phi','فاي'],['ω','\\omega','أوميگا'],['ε','\\epsilon','إبسيلون'],['η','\\eta','إيتا'],
+  ['ν','\\nu','نيو'],['ξ','\\xi','كساي'],['χ','\\chi','كاي'],['ψ','\\psi','بساي'],
+  ['Δ','\\Delta','دلتا كبيرة'],['Σ','\\Sigma','سيگما كبيرة'],['Ω','\\Omega','أوميگا كبيرة'],['Φ','\\Phi','فاي كبيرة']
+ ],
+ 'الدوال المثلثية':[['°','\\degree','درجة'],['π','\\pi','باي'],['θ','\\theta','ثيتا']],
+ 'الكيمياء':[
+  ['+',' + ','تفاعل مع'],['→',' -> ','ينتج'],['⇌',' <=> ','اتزان'],['Δ','\\Delta','حرارة'],
+  ['(s)','(s)','صلب'],['(l)','(l)','سائل'],['(g)','(g)','غاز'],['(aq)','(aq)','محلول مائي'],
+  ['⁺','^{+}','شحنة موجبة'],['⁻','^{-}','شحنة سالبة'],['²⁺','^{2+}','شحنة ثنائية'],['↓','\\downarrow','راسب'],['↑','\\uparrow','غاز متصاعد']
+ ],
+ 'الفيزياء':[
+  ['Δ','\\Delta','التغيّر'],['θ','\\theta','زاوية'],['ω','\\omega','سرعة زاوية'],['λ','\\lambda','طول موجي'],
+  ['μ','\\mu','معامل'],['ρ','\\rho','كثافة'],['ε','\\epsilon','سماحية'],['Ω','\\Omega','أوم'],
+  ['ℏ','\\hbar','ثابت بلانك المختزل'],['∇','\\nabla','نابلا'],['∂','\\partial','مشتقة جزئية'],
+  ['N','\\text{N}','نيوتن'],['J','\\text{J}','جول'],['Pa','\\text{Pa}','باسكال'],
+  ['Hz','\\text{Hz}','هرتز'],['m/s','\\text{m/s}','متر/ثانية'],['m/s²','\\text{m/s}^{2}','تسارع']
+ ],
+ 'الرموز والعلاقات':[
+  ['=','=','يساوي'],['≠','\\ne','لا يساوي'],['>','>','أكبر من'],['<','<','أصغر من'],
+  ['≥','\\ge','أكبر أو يساوي'],['≤','\\le','أصغر أو يساوي'],['≈','\\approx','تقريبًا'],
+  ['≡','\\equiv','مكافئ'],['∞','\\infty','مالانهاية'],['±','\\pm','زائد أو ناقص'],
+  ['∈','\\in','ينتمي'],['∉','\\notin','لا ينتمي'],['⊥','\\perp','عمودي'],['∥','\\parallel','موازٍ'],
+  ['∠','\\angle','زاوية'],['°','\\degree','درجة']
+ ]
+};
 const EQT={
  frac:['كسر',[['a','البسط (فوق)'],['b','المقام (تحت)']],{a:'١',b:'٢'}],
  mixed:['عدد كسري',[['w','العدد الصحيح'],['a','البسط'],['b','المقام']],{w:'٢',a:'١',b:'٣'}],
@@ -603,10 +680,24 @@ function openEq(t){
  const chip=t.chip||null,lang=chip?chip.dataset.l:(ctx().ar?'ar':'en');
  const pieces=chip?parsePieces(chip.dataset.tex):[];
  const path=t.el.dataset.r||t.el.dataset.k;
- EQ={t,path,marked:markedText(t.el,chip,t.range),lang,pieces,sel:pieces.length?0:-1,focusKey:null,edit:!!chip,tab:EQ&&EQ.tab||'أساسية',cat:EQ&&EQ.cat||'كسور وأسس'};
+ EQ={t,path,marked:markedText(t.el,chip,t.range),lang,pieces,sel:pieces.length?0:-1,focusKey:null,edit:!!chip,tab:EQ&&EQ.tab||'أساسية',cat:EQ&&EQG.some(([g])=>g===EQ.cat)?EQ.cat:'الكسور'};
  renderEq();const d=$('#eqdlg');if(!d.open)d.showModal();
 }
 function pieceTex(p){return piecesToTex([p]);}
+function eqPaletteTile(key,lang){
+ const fn=key.startsWith('fn-')?key.slice(3):null;
+ const preset=EQ_PRESETS[key];
+ const type=fn?'trig':preset?preset[1]:key;
+ const config=EQT[type];if(!config)return'';
+ const sample=fn?{t:'trig',fn,x:lang==='ar'?'س':'x',e:''}:preset?{t:type,...preset[2]}:{t:type,...(lang==='en'&&config[3]?config[3]:config[2])};
+ const label=fn?(TRIG_PALETTE.find(([id])=>id===fn)?.[1]||fn)+' / '+fn:preset?preset[0]:config[0];
+ const symbol=texToHTML(pieceTex(sample),lang);
+ return`<button type="button" class="eq-template-tile" data-act="eqAdd" data-t="${type}" ${fn?`data-fn="${fn}"`:''} ${preset?`data-preset="${key}"`:''} title="${esc(label)}"><span class="eq-tile-symbol" dir="${lang==='ar'?'rtl':'ltr'}">${symbol}</span><span class="eq-tile-caption">${esc(label)}</span></button>`;
+}
+function eqQuickSymbols(category){
+ return(EQ_QUICK_SYMBOLS[category]||[]).map(([mark,tex,description])=>`<button type="button" class="eq-symbol-tile" data-act="eqPaletteSymbol" data-sym="${esc(tex)}" title="${esc(description)}" aria-label="إدراج ${esc(description)}"><strong dir="ltr">${esc(mark)}</strong><span>${esc(description)}</span></button>`).join('');
+}
+
 function renderEq(){
  const e=EQ,ar=e.lang==='ar',sel=e.pieces[e.sel];
  const old=e.focusKey&&$('#eqdlg [data-eq="'+e.focusKey+'"]');
@@ -615,7 +706,7 @@ function renderEq(){
  const strip=e.pieces.map((p,i)=>`<button type="button" class="pc${i===e.sel?' sel':''}" data-act="eqSel" data-i="${i}">${texToHTML(pieceTex(p),e.lang)}</button>`).join('');
  const D=v=>ar?toAr(v):toLa(v);
  const field=(f,l)=>{
-  if(sel.t==='trig'&&f==='fn')return`<label class="fld"><span>${l}</span><select data-eq="fn" aria-label="اختر الدالة المثلثية">${[['sin','جا / sin'],['cos','جتا / cos'],['tan','ظا / tan'],['cot','ظتا / cot'],['sec','قا / sec'],['csc','قتا / csc'],['arcsin','جا العكسية / arcsin'],['arccos','جتا العكسية / arccos'],['arctan','ظا العكسية / arctan']].map(([v,n])=>`<option value="${v}"${sel.fn===v?' selected':''}>${n}</option>`).join('')}</select></label>`;
+  if(sel.t==='trig'&&f==='fn')return`<label class="fld"><span>${l}</span><select data-eq="fn" aria-label="اختر الدالة المثلثية">${[['sin','جا / sin'],['cos','جتا / cos'],['tan','ظا / tan'],['cot','ظتا / cot'],['sec','قا / sec'],['csc','قتا / csc'],['arcsin','جا العكسية / arcsin'],['arccos','جتا العكسية / arccos'],['arctan','ظا العكسية / arctan'],['sinh','sinh'],['cosh','cosh'],['tanh','tanh']].map(([v,n])=>`<option value="${v}"${sel.fn===v?' selected':''}>${n}</option>`).join('')}</select></label>`;
   if(['matrix','det'].includes(sel.t)&&['r','c'].includes(f))return`<label class="fld"><span>${l}</span><select data-eq-dim="${f}" aria-label="${l}">${[1,2,3,4].filter(n=>sel.t!=='det'||n>=2).map(n=>`<option value="${n}"${String(sel[f])===String(n)?' selected':''}>${D(String(n))}</option>`).join('')}</select></label>`;
   if(sel.t==='matrix'&&f==='style')return`<label class="fld"><span>${l}</span><select data-eq="style">${[['p','( ) أقواس'],['b','[ ] مربعة'],['v','| | محدد'],['n','بدون إطار']].map(([v,name])=>`<option value="${v}"${sel.style===v?' selected':''}>${name}</option>`).join('')}</select></label>`;
   if(['cases','aligned'].includes(sel.t)&&f==='n')return`<label class="fld"><span>${l}</span><select data-eq-dim="n">${[2,3,4,5,6].map(n=>`<option value="${n}"${String(sel.n)===String(n)?' selected':''}>${D(String(n))}</option>`).join('')}</select></label>`;
@@ -633,27 +724,30 @@ function renderEq(){
   <div class="eq-preview-label">معاينة فورية · كما ستظهر بالورقة</div><div class="eqprev" role="status" aria-live="polite" dir="${ar?'rtl':'ltr'}">${prev}</div>
   ${e.pieces.length>1?`<div class="strip" dir="${ar?'rtl':'ltr'}">${strip}</div>`:''}
   ${form}
-  <div class="math-fast" aria-label="أدوات الرياضيات المتقدمة"><b>رياضيات: أضف الصيغة</b><div class="math-fast-scroll">${[['trig','جا / sin'],['identity','جا² + جتا²'],['deriv','المشتقة'],['deriv2','المشتقة الثانية'],['partialderiv','∂ مشتقة جزئية'],['intindef','∫ غير محدد'],['intdef','∫ بحدود']].map(([k,n])=>`<button type="button" data-act="eqAdd" data-t="${k}">${n}</button>`).join('')}</div></div>
-  <section class="eq-palette" aria-label="قوالب محرّر المعادلات">
-    <div class="eq-palette-title"><b>مكتبة الصيغ</b><span>اختر فئة ثم اضغط على شكل المعادلة</span></div>
-    <div class="eq-cat-tabs" role="tablist" aria-label="فئات المعادلات">${EQG.map(([g])=>`<button type="button" role="tab" aria-selected="${(e.cat||'كسور وأسس')===g}" data-act="eqCategory" data-cat="${g}">${g}</button>`).join('')}</div>
-    <div class="eq-template-grid" role="tabpanel">${(EQG.find(([g])=>g===(e.cat||'كسور وأسس'))||EQG[0])[1].map(k=>{const [label,,arSample,enSample]=EQT[k],sample=e.lang==='en'&&enSample?enSample:arSample;const sampleLang=e.lang==='en'?'en':'ar';return`<button type="button" class="eq-template-tile" data-act="eqAdd" data-t="${k}" title="${label}"><span class="eq-tile-symbol" dir="${ar?'rtl':'ltr'}">${texToHTML(pieceTex({t:k,...sample}),sampleLang)}</span><span class="eq-tile-caption">${label}</span></button>`}).join('')}</div>
+
+  <section class="eq-palette" aria-label="لوحة معادلات بأسلوب MathType">
+    <div class="eq-palette-title"><b>أدوات المعادلة</b><span>كل نوع بقسم مستقل · اضغط على الرمز لإدراجه عند المؤشر</span></div>
+    <label class="eq-section-picker"><span>اختر القسم</span><select class="eq-category-picker" data-eq-cat-select aria-label="انتقل مباشرة إلى قسم المعادلات">${EQG.map(([g])=>`<option value="${g}"${e.cat===g?' selected':''}>${g}</option>`).join('')}</select></label>
+    <div class="eq-cat-tabs" role="tablist" aria-label="أقسام المعادلات">${EQG.map(([g])=>`<button type="button" role="tab" aria-selected="${e.cat===g}" data-act="eqCategory" data-cat="${g}">${g}</button>`).join('')}</div>
+    <div class="eq-palette-body" role="tabpanel" aria-label="${esc(e.cat)}">
+      ${EQG.find(([g])=>g===e.cat)?.[1].length?`<div class="eq-template-grid">${EQG.find(([g])=>g===e.cat)[1].map(k=>eqPaletteTile(k,e.lang)).join('')}</div>`:''}
+      ${EQ_QUICK_SYMBOLS[e.cat]?`<div class="eq-symbols-heading">${e.cat==='الحروف اليونانية'?'اختر الحرف اليوناني مباشرة':'رموز جاهزة للإدراج عند المؤشر'}</div><div class="eq-direct-symbols">${eqQuickSymbols(e.cat)}</div>`:''}
+    </div>
   </section>
   <details class="eq-code"><summary>صيغة مخصّصة متقدمة (LaTeX)</summary><label>اكتب صيغة تدعمها مكتبة المفيد<textarea data-eq-tex dir="ltr" spellcheck="false" rows="3">${esc(piecesToTex(e.pieces))}</textarea></label><button type="button" class="btn sm" data-act="eqApplyTex">تطبيق الصيغة</button><small>مثال: \\frac{س+١}{٢} — الصيغ غير المدعومة تُرفض بدل طباعتها بصورة خاطئة.</small></details>
-  <div class="sub-h">الرموز، تُكتب في الخانة المحددة</div>
-  <div class="symtabs">${Object.keys(SYMS).map(k=>`<button type="button" data-act="eqTab" data-k="${k}" aria-pressed="${tab===k}">${k}</button>`).join('')}</div>
-  <div class="syms">${SYMS[tab].map(symBtn).join('')}</div>
+  <details class="eq-more-symbols"><summary>رموز إضافية (اختياري)</summary><div class="symtabs">${Object.keys(SYMS).map(k=>`<button type="button" data-act="eqTab" data-k="${k}" aria-pressed="${tab===k}">${k}</button>`).join('')}</div><div class="syms">${SYMS[tab].map(symBtn).join('')}</div></details>
   <p class="eq-error" id="eqError" role="status" hidden></p>
   <footer>${e.edit?`<button type="button" class="btn danger-t" data-act="eqRemove">${ic('trash-2',16)}حذف</button><span class="sp"></span>`:''}<button type="button" class="btn" data-act="eqClose">إلغاء</button><button type="button" class="btn primary" data-act="eqOk"${e.pieces.length?'':' disabled'}>${ic('check',17)}${e.edit?'حفظ التعديل':'إدراج في السطر'}</button></footer>
  </div>`;
  icons();
  if(caret&&e.focusKey===caret.key){const el=$('#eqdlg [data-eq="'+caret.key+'"]');if(el&&el.type!=='checkbox')el.setSelectionRange(caret.a??el.value.length,caret.b??el.value.length);e.caret=caret;}
- const first=$('#eqdlg [data-eq]');if(first&&EQ.autofocus){first.focus();EQ.autofocus=false;}
+ const first=$('#eqdlg .eqform input[data-eq]:not([type=checkbox]),#eqdlg .eqform textarea[data-eq],#eqdlg .eqform input[data-eq-cell],#eqdlg .eqform input[data-eq-line]');if(first&&EQ.autofocus){first.focus();EQ.autofocus=false;}
 }
 function eqLive(){$('#eqdlg .eqprev').innerHTML=EQ.pieces.length?texToHTML(piecesToTex(EQ.pieces),EQ.lang):'';const b=$$('#eqdlg .pc')[EQ.sel];if(b)b.innerHTML=texToHTML(pieceTex(EQ.pieces[EQ.sel]),EQ.lang);const err=$('#eqError');if(err)err.hidden=true;}
 function eqSym(s){
  let el=EQ.focusKey?(EQ.focusKey.startsWith('cell:')?$('#eqdlg [data-eq-cell="'+EQ.focusKey.slice(5)+'"]'):EQ.focusKey.startsWith('line:')?$('#eqdlg [data-eq-line="'+EQ.focusKey.slice(5)+'"]'):$('#eqdlg [data-eq="'+EQ.focusKey+'"]')):null;
- if(!el){const sel=EQ.pieces[EQ.sel];if(!sel||sel.t!=='text'){EQ.pieces.splice(EQ.sel+1,0,{t:'text',v:''});EQ.sel++;renderEq();}el=$('#eqdlg [data-eq]');}
+ if(!el||!('selectionStart' in el)||el.type==='checkbox'){const sel=EQ.pieces[EQ.sel];if(!sel||sel.t!=='text'){EQ.pieces.splice(EQ.sel+1,0,{t:'text',v:''});EQ.sel++;EQ.focusKey=null;renderEq();}el=$('#eqdlg .eqform input[data-eq="x"],#eqdlg .eqform input[data-eq="v"],#eqdlg .eqform input[data-eq="f"],#eqdlg .eqform input[data-eq]');}
+ const selected=EQ.pieces[EQ.sel];if(selected?.t==='trig'&&selected._untouched&&el.dataset.eq==='x'){el.value='';el.setSelectionRange(0,0);selected._untouched=false;}
  const a=el.selectionStart??el.value.length,b=el.selectionEnd??a;el.value=el.value.slice(0,a)+s+el.value.slice(b);el.focus();el.setSelectionRange(a+s.length,a+s.length);el.dispatchEvent(new Event('input',{bubbles:true}));
 }
 function eqOk(remove){
@@ -869,11 +963,14 @@ document.addEventListener('click',e=>{
    else if(a==='tbRow'){const w=x.table.rows[0].length;if(+b.dataset.d>0){if(x.table.rows.length>=30){toast('الحد ٣٠ صفاً، وزّع المحتوى على أكثر من جدول');break;}x.table.rows.push(Array(w).fill(''));}else if(x.table.rows.length>1)x.table.rows.pop();}
    else{if(+b.dataset.d>0)x.table.rows.forEach(r=>r.push(''));else if(x.table.rows[0].length>1)x.table.rows.forEach(r=>r.pop());}
    p.pristine=false;commit();if(a==='tbDel')toast('حُذف الجدول',{label:'تراجع',run:()=>undo(-1)});break;}
-  case'eqAdd':{const [,,smp,enSmp]=EQT[b.dataset.t];const np={t:b.dataset.t,steps:false};EQT[b.dataset.t][1].forEach(([f])=>np[f]='');const advanced=['matrix','det','cases','aligned','binom','derivn','partialn','iint','iiint','oint','limsup','liminf','prod','overbrace','underbrace'];if(advanced.includes(b.dataset.t))Object.assign(np,JSON.parse(JSON.stringify(EQ.lang==='en'&&enSmp?enSmp:smp)));if(b.dataset.t==='text')np.v='';if(b.dataset.t==='trig')np.fn='sin';if(['deriv','deriv2','intindef','intdef'].includes(b.dataset.t)){np.v=EQ.lang==='ar'?'س':'x';np.d=EQ.lang==='ar'?'د':'d';}if(b.dataset.t==='partialderiv')np.v=EQ.lang==='ar'?'س':'x';if(['chem','iso','unit'].includes(b.dataset.t))EQ.lang='en';EQ.pieces.splice(EQ.sel+1,0,np);EQ.sel++;EQ.focusKey=null;EQ.autofocus=true;renderEq();break;}
+  case'eqAdd':{const [,,smp,enSmp]=EQT[b.dataset.t];const np={t:b.dataset.t,steps:false};EQT[b.dataset.t][1].forEach(([f])=>np[f]='');const advanced=['matrix','det','cases','aligned','binom','derivn','partialn','iint','iiint','oint','limsup','liminf','prod','overbrace','underbrace'];if(advanced.includes(b.dataset.t))Object.assign(np,JSON.parse(JSON.stringify(EQ.lang==='en'&&enSmp?enSmp:smp)));if(b.dataset.t==='text')np.v='';if(b.dataset.t==='trig')np.fn='sin';if(['deriv','deriv2','intindef','intdef'].includes(b.dataset.t)){np.v=EQ.lang==='ar'?'س':'x';np.d=EQ.lang==='ar'?'د':'d';}if(b.dataset.t==='partialderiv')np.v=EQ.lang==='ar'?'س':'x';if(b.dataset.fn){np.fn=b.dataset.fn;np.x=EQ.lang==='ar'?'س':'x';np._untouched=true;}
+   if(b.dataset.preset){const preset=EQ_PRESETS[b.dataset.preset];if(!preset||preset[1]!==np.t)break;Object.assign(np,JSON.parse(JSON.stringify(preset[2])));}
+   EQ.pieces.splice(EQ.sel+1,0,np);EQ.sel++;EQ.focusKey=null;EQ.autofocus=true;renderEq();break;}
   case'eqSel':EQ.sel=+b.dataset.i;EQ.focusKey=null;EQ.autofocus=true;renderEq();break;
   case'eqMove':{const d=+b.dataset.d;move(EQ.pieces,EQ.sel,d);EQ.sel=Math.max(0,Math.min(EQ.pieces.length-1,EQ.sel+d));EQ.focusKey=null;renderEq();break;}
   case'eqDel':EQ.pieces.splice(EQ.sel,1);EQ.sel=Math.min(EQ.sel,EQ.pieces.length-1);EQ.focusKey=null;renderEq();break;
-  case'eqCategory':EQ.cat=b.dataset.cat;EQ.focusKey=null;renderEq();break;
+  case'eqCategory':if(EQG.some(([g])=>g===b.dataset.cat)){EQ.cat=b.dataset.cat;renderEq();}break;
+  case'eqPaletteSymbol':eqSym(b.dataset.sym);break;
   case'eqApplyTex':{const raw=$('#eqdlg [data-eq-tex]')?.value||'';const issue=texProblem(raw);const rendered=issue?'':texToHTML(raw,EQ.lang);if(issue||rendered.includes('math-error')){const box=$('#eqError');box.textContent=issue||'هذه الصيغة غير مدعومة حاليًا';box.hidden=false;break;}EQ.pieces=parsePieces(raw);EQ.sel=0;EQ.focusKey=null;renderEq();break;}
   case'eqTab':EQ.tab=b.dataset.k;renderEq();break;
   case'eqOk':eqOk();break;case'eqClose':$('#eqdlg').close();break;
@@ -905,6 +1002,7 @@ document.addEventListener('focusin',e=>{if(EQ&&e.target.dataset&&e.target.type!=
 });
 document.addEventListener('input',e=>{
  const el=e.target;
+  if(el.dataset&&el.dataset.eqCatSelect!==undefined){if(EQG.some(([g])=>g===el.value)){EQ.cat=el.value;renderEq();}return;}
  if(el.dataset&&el.dataset.eqDim!==undefined){const p=EQ?.pieces[EQ.sel];if(!p)return;const key=el.dataset.eqDim,value=Math.max(1,Math.min(key==='n'?6:4,Number(el.value)||2));if(['matrix','det'].includes(p.t)){
    const prevR=Number(p.r)||2,prevC=Number(p.c)||2,old=p.cells||[],nextR=key==='r'?value:prevR,nextC=p.t==='det'?nextR:key==='c'?value:prevC;
    p.cells=Array.from({length:nextR*nextC},(_,i)=>old[Math.floor(i/nextC)*prevC+i%nextC]??'');p.r=String(nextR);p.c=String(nextC);
@@ -913,7 +1011,7 @@ document.addEventListener('input',e=>{
  }
  if(el.dataset&&el.dataset.eqCell!==undefined){const p=EQ?.pieces[EQ.sel];if(!p)return;el.value=EQ.lang==='ar'?toAr(el.value):toLa(el.value);p.cells[Number(el.dataset.eqCell)]=el.value;eqLive();return;}
  if(el.dataset&&el.dataset.eqLine!==undefined){const p=EQ?.pieces[EQ.sel];if(!p)return;const [row,col]=el.dataset.eqLine.split('.').map(Number);el.value=EQ.lang==='ar'?toAr(el.value):toLa(el.value);p.lines[row][col]=el.value;eqLive();return;}
- if(el.dataset&&el.dataset.eq!==undefined){const p=EQ.pieces[EQ.sel];if(!p)return;if(el.type!=='checkbox'&&el.tagName!=='SELECT'&&el.dataset.eq!=='style'&&el.dataset.eq!=='fn')el.value=EQ.lang==='ar'?toAr(el.value):toLa(el.value);p[el.dataset.eq]=el.type==='checkbox'?el.checked:el.value;eqLive();return;}
+ if(el.dataset&&el.dataset.eq!==undefined){const p=EQ.pieces[EQ.sel];if(!p)return;if(el.type!=='checkbox'&&el.tagName!=='SELECT'&&el.dataset.eq!=='style'&&el.dataset.eq!=='fn')el.value=p.t==='chem'&&el.dataset.eq==='x'?toLa(el.value):EQ.lang==='ar'?toAr(el.value):toLa(el.value);p[el.dataset.eq]=el.type==='checkbox'?el.checked:el.value;if(p.t==='trig'&&el.dataset.eq==='x')p._untouched=false;eqLive();return;}
  if(el.dataset&&el.dataset.wz){W[el.dataset.wz]=el.type==='checkbox'?el.checked:el.value;if(el.dataset.wz==='subject'&&el.value.trim()){W.subject=el.value.trim();$$('#wizard [data-f=subject]').forEach(c=>c.setAttribute('aria-pressed','false'));$('#wizard [data-act=wzNext]').disabled=false;}return;}
  if(el.dataset&&el.dataset.b){
   const path=el.dataset.b;setPath(path,el.type==='checkbox'?el.checked:el.value);
