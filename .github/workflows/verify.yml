@@ -19,6 +19,8 @@ jobs:
           node-version: '22'
       - name: Run 38 core and mathematical checks
         run: node tests/unit.js
+      - name: Enforce paper reference palette and blue-only UI
+        run: node tests/palette.js
       - name: Build self-contained standalone HTML
         run: |
           node build.js
