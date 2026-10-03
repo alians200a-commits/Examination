@@ -294,12 +294,18 @@ const FONTS={
  custom:{label:'خطي',css:"'ExamUserFont','Noto Sans Arabic',sans-serif"}
 };
 const LABELS={'n-dot':'1.','n-dash':'1-','n-paren':'1)','l-dash':'أ-','l-paren':'أ)','none':'بلا'};
+// Stable exam numbering: teachers should never have to type 'س:١)' themselves.
+// Legacy style keys are retained only so older JSON project files can still be opened.
 const QSTYLES={slash:'س1/',paren:'س1)',colon:'س1:',pre:'س:1)'};
+const EXAM_NUMBER_PREFIX=/^\s*(?:س|سؤال|Q(?:uestion)?)\s*[:：\/]\s*[0-9٠-٩۰-۹]+\s*(?:[-–ـ]\s*(?:[A-Z]|[أ-ي])\s*\)|[.)])\s*[-:]?\s*/iu;
+function stripExamNumberPrefix(value){return String(value??'').replace(EXAM_NUMBER_PREFIX,'').trimStart();}
+function stripExamItemPrefix(value,kind){const text=stripExamNumberPrefix(value);if(kind==='definitions')return text.replace(/^\s*[0-9٠-٩۰-۹]+\s*[.)-]\s*/u,'').trimStart();if(['branches','enumerate'].includes(kind))return text.replace(/^\s*(?:[A-Z]|[أبجدهـوزحطيكلمنسعفصقر])\s*[)-]\s*/iu,'').trimStart();return text;}
+
 const KIND_INFO={
- definitions:['تعريفات','مصطلحات قصيرة في مربعات'],
+ definitions:['إضافة تعاريف','كل تعريف في حقل مستقل وجدول منسق تلقائيًا'],
  blanks:['فراغات','عبارات فيها نقاط للإكمال'],
  mcq:['اختيار من متعدد','خيارات بين قوسين'],
- branches:['أفرع','أ- ب- ج- مع فقرات داخلية'],
+ branches:['سؤال بأفرع','ترقيم تلقائي: س:١- أ) أو س:1- A)'],
  enumerate:['عدّد','أفرع قصيرة في سطر واحد'],
  truefalse:['صح أو خطأ','عبارات للحكم عليها'],
  match:['وصل وزاوج','عمود (أ) وعمود (ب) للربط بينهما'],
@@ -419,7 +425,7 @@ function baseMeta(stage){
 function autoTitles(p){const m=p.meta;if(m.titleAuto)m.title=kindTitle(m.examKind)+(m.subject?' في مادة '+m.subject:'');if(m.subtitleAuto)m.subtitle=m.grade?'للصف '+String(m.grade).replace(/^الصف\s+/,''):'';}
 function makeProject(stage,blank){
  if(blank===undefined)blank=true;
- const p={meta:baseMeta(stage),style:'source',theme:'source',font:'sans',customFont:null,size:13,density:'normal',digits:'auto',dir:'auto',qStyle:'slash',rules:true,fit:true,pristine:true,questions:[]};
+ const p={meta:baseMeta(stage),style:'source',theme:'source',font:'sans',customFont:null,size:13,density:'normal',digits:'auto',dir:'auto',qStyle:'pre',rules:true,fit:true,pristine:true,questions:[]};
  autoTitles(p);if(!blank)p.questions=starter(stage,p.meta.grade,p.meta.subject);return p;
 }
 function blankQuestion(kind,en){
@@ -458,7 +464,7 @@ function normProject(p,stage){
  const cf=p.customFont&&typeof p.customFont.src==='string'&&/^data:(font\/[\w.+-]+|application\/[\w.+-]+|);base64,[A-Za-z0-9+/]+={0,2}$/.test(p.customFont.src)?{name:str(p.customFont.name,120),src:p.customFont.src}:null;
  const out={meta,style:'source',theme:pick(p.theme==='teal'?'steel':p.theme,Object.keys(THEMES),'source'),font:pick(p.font,Object.keys(FONTS),'sans'),customFont:cf,
   size:pick(+p.size,[13,14,15],13),density:pick(p.density,['tight','normal','airy'],'normal'),digits:pick(p.digits,['auto','arabic','latin'],'auto'),dir:pick(p.dir,['auto','rtl','ltr'],'auto'),
-  qStyle:pick(p.qStyle,Object.keys(QSTYLES),'slash'),rules:p.rules!==false,fit:p.fit!==false,pristine:!!p.pristine,questions:(Array.isArray(p.questions)?p.questions:[]).slice(0,80).map(normQ).filter(Boolean)};
+  qStyle:'pre',/* Old question formats normalize on display. */rules:p.rules!==false,fit:p.fit!==false,pristine:!!p.pristine,questions:(Array.isArray(p.questions)?p.questions:[]).slice(0,80).map(normQ).filter(Boolean)};
  const ids=new Set();const unique=x=>{while(ids.has(x.id))x.id=uid();ids.add(x.id);};
  out.questions.forEach(q=>{unique(q);q.items.forEach(unique);});
  if(out.font==='custom'&&!cf)out.font='sans';autoTitles(out);return out;
@@ -524,10 +530,21 @@ function footerHTML(p,c){
 }
 const flipHTML=(p,c)=>vis(p.meta,'flip')?`<div class="pflip"><span class="ln"></span>${ed(c,'meta.flip',p.meta.flip)}<span class="ln"></span></div>`:'';
 function imgHTML(img){return`<figure class="qi al-${img.align}${img.side?' side':''}" style="width:${img.w}%"><img src="${img.src}" alt="" style="aspect-ratio:${img.r}"></figure>`;}
-function qnum(n,c,p){const N=c.D(String(n)),s=c.en?'Q':'س';return{slash:`${s}${N}/`,paren:`${s}${N})`,colon:`${s}${N}:`,pre:`${s}:${N})`}[p.qStyle];}
+// One canonical exam prefix; imported legacy slash/paren formats render consistently.
+function qnum(n,c){return `س:${c.D(String(n))})`;}
+function branchNumber(q,n,i,c){
+ if(q.label==='none')return '';
+ if(['branches','enumerate'].includes(q.kind)){const label=q.label.startsWith('l')?c.L(i):c.lab(q.label,i).replace(/[.)-]$/,'');return `س:${c.D(String(n))}- ${label})`;}
+ return c.lab(q.label,i);
+}
+function numberedTitle(q,n,c){
+ const custom=String(q.title||'').trim();
+ if(custom&&!/^(?:س|Q)?\s*[:：\/]?\s*[0-9٠-٩۰-۹]+[.)\/]?$/.test(custom))return c.D(custom);
+ return qnum(n,c);
+}
 const scoreH=(raw,c,p,cls='qs')=>{const t=scoreText(raw,c.en,c.D,p.style==='source');return t?`<span class="${cls}">${esc(t)}</span>`:'';};
-function itemHTML(q,x,i,c,p,cols,part){
- const lb=c.lab(q.label,i),img=x.image?imgHTML(x.image):'',side=x.image&&x.image.side;
+function itemHTML(q,x,i,c,p,cols,part,n){
+ const lb=branchNumber(q,n,i,c),img=x.image?imgHTML(x.image):'',side=x.image&&x.image.side;
  const chIdx=x.choices.map((s,j)=>s.trim()?j:-1).filter(j=>j>=0),ch=chIdx.map(j=>x.choices[j].trim());
  const cE=j=>ed(c,`it.${q.id}.${x.id}.choice.${chIdx[j]}`,ch[j]);
  const letter=j=>q.chStyle==='letters'?`${c.ar?(PART_AR[j]||c.D(j+1)):(PART_EN[j]||String(j+1))}- `:'';
@@ -541,7 +558,7 @@ function itemHTML(q,x,i,c,p,cols,part){
  const subH=subs.length?`<div class="subs">${subs.map((v,k)=>`<span class="sb"><span class="il">${esc(c.lab(x.subLabel,k))}</span> ${ed(c,`it.${q.id}.${x.id}.sub.${v.j}`,v.s)}</span>`).join('')}</div>`:'';
  const strong=q.label.startsWith('l')&&cols===1;
  const answer=x.answerLines&&(!part||part.last)?`<div class="answer-lines" aria-label="${c.en?'Answer space':'مساحة الإجابة'}">${'<div></div>'.repeat(x.answerLines)}</div>`:'';
- return`<div class="ir${strong?' br':''}">${lb?`<span class="il">${esc(lb)}</span>`:''}<div class="ix"${x.align&&x.align!=='auto'?` style="text-align:${x.align}"`:''}>${side?img:''}${ed(c,`it.${q.id}.${x.id}.text`,x.text,'',c.en?'Type here':'اكتب هنا')}${chH}${x.score.trim()?' '+scoreH(x.score,c,p,'qs in'):''}${chB}${side?'':img}${subH}${tb}${answer}</div></div>`;
+ return`<div class="ir${strong?' br':''}">${lb?`<span class="il">${esc(lb)}</span>`:''}<div class="ix"${x.align&&x.align!=='auto'?` style="text-align:${x.align}"`:''}>${side?img:''}${ed(c,`it.${q.id}.${x.id}.text`,stripExamItemPrefix(x.text,q.kind),'',c.en?'Type here':'اكتب هنا')}${chH}${x.score.trim()?' '+scoreH(x.score,c,p,'qs in'):''}${chB}${side?'':img}${subH}${tb}${answer}</div></div>`;
 }
 function tableHTML(t,c,path,part){
  const from=part?.from??0,to=part?.to??t.rows.length;
@@ -572,16 +589,16 @@ function matchHTML(q,c,from,to){
 }
 function blockHTML(q,n,c,p,from,to,head,part){
  if(q.kind==='text'&&!q.prompt.trim()&&!q.showScore){
-  return`<section class="qb free-block" data-q="${q.id}" dir="${c.en?'ltr':'rtl'}"><div class="qbody" style="--cols:1">${q.items.slice(from,to).map((x,k)=>itemHTML(q,x,from+k,c,p,1,part)).join('')}</div></section>`;
+  return`<section class="qb free-block" data-q="${q.id}" dir="${c.en?'ltr':'rtl'}"><div class="qbody" style="--cols:1">${q.items.slice(from,to).map((x,k)=>itemHTML(q,x,from+k,c,p,1,part,n)).join('')}</div></section>`;
  }
  if(q.kind==='section')return`<section class="qb sec" data-q="${q.id}"><span class="sec-t">${ed(c,`q.${q.id}.prompt`,q.prompt,'','عنوان القسم')}${q.showScore&&q.score?` (${esc(scoreText(q.score,c.en,c.D,false))})`:''}</span></section>`;
  const cols=part?1:autoCols(q);let h='';
- if(head)h+=`<div class="qh"><span class="qmk"></span><h2><span class="qn">${esc(q.title.trim()?c.D(q.title.trim()):qnum(n,c,p))}</span> ${ed(c,`q.${q.id}.prompt`,q.prompt,'',c.en?'Question':'نص السؤال')}</h2>${q.showScore?scoreH(q.score,c,p):''}</div>`;
- else h+=`<div class="qcontinue">${esc(q.title.trim()?c.D(q.title.trim()):qnum(n,c,p))} ${c.en?'(continued)':'(تابع)'}</div>`;
+ if(head)h+=`<div class="qh"><span class="qmk"></span><h2><span class="qn">${esc(numberedTitle(q,n,c))}</span> ${ed(c,`q.${q.id}.prompt`,stripExamNumberPrefix(q.prompt),'',c.en?'Question':'نص السؤال')}</h2>${q.showScore?scoreH(q.score,c,p):''}</div>`;
+ else h+=`<div class="qcontinue">${esc(numberedTitle(q,n,c))} ${c.en?'(continued)':'(تابع)'}</div>`;
  if(head&&q.image)h+=imgHTML(q.image);
  const items=q.items.slice(from,to);
  if(q.kind==='match'){if(items.length||(head&&q.extra.length))h+=`<div class="qbody" style="--cols:1">${matchHTML(q,c,from,to)}</div>`;return`<section class="qb${head?'':' cont'}" data-q="${q.id}" dir="${c.en?'ltr':'rtl'}">${h}</section>`;}
- if(items.length)h+=`<div class="qbody${q.boxed?' boxed':''}" style="--cols:${cols}">${items.map((x,k)=>itemHTML(q,x,from+k,c,p,cols,part)).join('')}</div>`;
+ if(items.length)h+=`<div class="qbody${q.boxed?' boxed':''}" style="--cols:${cols}">${items.map((x,k)=>itemHTML(q,x,from+k,c,p,cols,part,n)).join('')}</div>`;
  return`<section class="qb${head?'':' cont'}" data-q="${q.id}" dir="${c.en?'ltr':'rtl'}">${h}</section>`;
 }
 function pageShell(p,c,first,inner,bottom){
@@ -616,8 +633,13 @@ function examStats(p){
  const scores=questions.map(q=>toNumber(q.score));
  const invalid=scores.filter(v=>!Number.isFinite(v)||v<0).length;
  const empty=questions.filter(q=>!q.prompt?.trim()&&!q.items.some(x=>x.text?.trim())).length;
- const issues=[];
+ const issues=[],missingDefinitions=[];
  questions.forEach((q,index)=>{
+  if(q.kind==='definitions'){
+   const filled=q.items.filter(x=>stripExamItemPrefix(x.text,q.kind).trim());
+   const blanks=q.items.length-filled.length;
+   if(filled.length>0&&blanks)missingDefinitions.push({id:q.id,number:index+1,count:blanks});
+  }
   const used=q.items.filter(x=>x.text?.trim()||x.choices?.some(t=>t.trim())||x.table||x.image||x.subs?.some(t=>t.trim()));
   const filled=used.filter(x=>String(x.score??'').trim());
   if(!filled.length)return; // Assigning branch marks is optional.
@@ -632,16 +654,20 @@ function examStats(p){
   }
   if(issue)issues.push({id:q.id,number:index+1,message:issue});
  });
- return {count:questions.length,marks:scores.reduce((n,v)=>n+(Number.isFinite(v)&&v>=0?v:0),0),invalid,empty,issues};
+ return {count:questions.length,marks:scores.reduce((n,v)=>n+(Number.isFinite(v)&&v>=0?v:0),0),invalid,empty,issues,missingDefinitions};
 }
 function examStatsMarkup(stats){
- return `<span class="stat-main"><b>${stats.count.toLocaleString('ar-IQ')}</b> ${stats.count===1?'سؤال':stats.count<11?'أسئلة':'سؤالاً'}</span><span class="stat-divider"></span><span><b>${stats.marks.toLocaleString('ar-IQ')}</b> مجموع الدرجات</span>${stats.invalid?`<span class="stat-alert">${stats.invalid} درجة غير صالحة</span>`:''}${stats.empty?`<span class="stat-alert">${stats.empty} سؤال غير مكتمل</span>`:''}${stats.issues.length?`<span class="stat-alert">${stats.issues.length} تنبيه توزيع درجات</span>`:''}`;
+ return `<span class="stat-main"><b>${stats.count.toLocaleString('ar-IQ')}</b> ${stats.count===1?'سؤال':stats.count<11?'أسئلة':'سؤالاً'}</span><span class="stat-divider"></span><span><b>${stats.marks.toLocaleString('ar-IQ')}</b> مجموع الدرجات</span>${stats.invalid?`<span class="stat-alert">${stats.invalid} درجة غير صالحة</span>`:''}${stats.empty?`<span class="stat-alert">${stats.empty} سؤال غير مكتمل</span>`:''}${stats.issues.length?`<span class="stat-alert">${stats.issues.length} تنبيه توزيع درجات</span>`:''}${stats.missingDefinitions.length?`<span class="stat-alert">${stats.missingDefinitions.length} سؤال تعاريف فيه خانات فارغة</span>`:''}`;
 }
 function gradeAuditMarkup(stats){
  if(!stats.issues.length)return '';
  return `<details class="grade-audit"><summary><span class="grade-audit-icon" aria-hidden="true">!</span> تدقيق درجات الأفرع <b>${stats.issues.length.toLocaleString('ar-IQ')}</b><span class="grade-audit-hint">اضغط لمراجعة الأسئلة</span></summary><div class="grade-audit-body">${stats.issues.map(item=>`<button type="button" data-act="jumpQuestion" data-target="${esc(item.id)}"><b>س${toAr(item.number)}</b><span>${esc(item.message)}</span></button>`).join('')}</div></details>`;
 }
-function refreshStats(){const stats=examStats(P());const node=document.querySelector('.exam-statline');if(node)node.innerHTML=examStatsMarkup(stats);const audit=document.getElementById('gradeAudit');if(audit){const expanded=!!audit.querySelector('details[open]');audit.innerHTML=gradeAuditMarkup(stats);if(expanded&&audit.querySelector('details'))audit.querySelector('details').open=true;}}
+function definitionAuditMarkup(stats){
+ if(!stats.missingDefinitions.length)return '';
+ return `<details class="content-audit"><summary>تعريفات تحتاج إكمالاً <b>${stats.missingDefinitions.length.toLocaleString('ar-IQ')}</b><small>راجع الحقول الفارغة قبل طباعة الامتحان</small></summary><div>${stats.missingDefinitions.map(item=>`<button type="button" data-act="jumpQuestion" data-target="${esc(item.id)}">سؤال ${toAr(item.number)}: ${toAr(item.count)} تعريف فارغ</button>`).join('')}</div></details>`;
+}
+function refreshStats(){const stats=examStats(P());const node=document.querySelector('.exam-statline');if(node)node.innerHTML=examStatsMarkup(stats);const audit=document.getElementById('gradeAudit');if(audit){const expanded=!!audit.querySelector('details[open]');audit.innerHTML=gradeAuditMarkup(stats);if(expanded&&audit.querySelector('details'))audit.querySelector('details').open=true;}const content=document.getElementById('contentAudit');if(content)content.innerHTML=definitionAuditMarkup(stats);}
 
 const P=()=>S.stages[S.active];
 const ctx=()=>makeCtx(P(),S.active);
@@ -678,14 +704,14 @@ function setPath(path,val){
   if(f==='extra'){q.extra[+r[2]]=String(val);p.pristine=false;return;}
   if(f==='cols')val=Math.min(4,Math.max(-1,parseInt(val)));
   if(['boxed','showScore','breakBefore','shuffle'].includes(f))val=bool(val);
-  q[f]=val;p.pristine=false;}
+  q[f]=f==='prompt'?stripExamNumberPrefix(val):val;p.pristine=false;}
  else if(a==='it'){const q=findQ(r[0]),x=q&&q.items.find(i=>i.id===r[1]);if(!x)return;const f=r[2];
   if(f==='image'){if(x.image&&r[3])x.image[r[3]]=r[3]==='w'?+val:r[3]==='side'?bool(val):val;return;}
   if(f==='choice'){x.choices[+r[3]]=String(val);p.pristine=false;return;}
   if(f==='sub'){x.subs[+r[3]]=String(val);p.pristine=false;return;}
   if(f==='cell'){if(x.table&&x.table.rows[+r[3]])x.table.rows[+r[3]][+r[4]]=String(val);p.pristine=false;return;}
   if(f==='table'){if(x.table)x.table[r[3]]=r[3]==='align'?val:bool(val);p.pristine=false;return;}
-  x[f]=f==='answerLines'?Math.min(12,Math.max(0,parseInt(val)||0)):(f==='choices'||f==='subs')?String(val).split('\n'):val;p.pristine=false;}
+  x[f]=f==='text'&&q.kind!=='text'?stripExamItemPrefix(val,q.kind):f==='answerLines'?Math.min(12,Math.max(0,parseInt(val)||0)):(f==='choices'||f==='subs')?String(val).split('\n'):val;p.pristine=false;}
 }
 function syncField(path,v){const el=document.querySelector(`[data-b="${path}"]`);if(el&&el!==document.activeElement)el.value=v;
  const r=document.querySelector(`[data-r="${path}"]`);if(r&&r!==document.activeElement&&!r.contains(document.activeElement)){r.innerHTML=rteHTML(v);r.classList.toggle('ph-on',!String(v).trim());}}
@@ -795,24 +821,25 @@ const sec=(title,body,open=true,icon='')=>`<details class="sec"${open?' open':''
 /* ---------- لوحة الأسئلة ---------- */
 function questionsView(p,c){
  let n=0;
- const rows=p.questions.map((q,i)=>{if(q.kind!=='section'&&q.kind!=='text')n++;const open=UI.open===q.id,num=q.kind==='section'?'§':q.kind==='text'?'نص':(q.title.trim()||qnum(n,c,p));
+ const rows=p.questions.map((q,i)=>{if(q.kind!=='section'&&q.kind!=='text')n++;const open=UI.open===q.id,num=q.kind==='section'?'§':q.kind==='text'?'نص':numberedTitle(q,n,c);
   return`<li class="qc${open?' open':''}" data-qid="${q.id}"><button type="button" class="qc-h" data-act="toggle" data-q="${q.id}" aria-expanded="${open}">
    <span class="qbadge">${esc(num)}</span><span class="qc-t">${esc(q.prompt||(q.items[0]&&q.items[0].text)||'سؤال بلا نص').replace(/\$+[^$]*\$+/g,'∑')}</span>${q.showScore&&q.score?`<span class="qc-s">${esc(scoreText(q.score,c.en,c.D,false))}</span>`:''}${ic(open?'chevron-up':'chevron-down',18)}</button>
    ${open?qEditor(q,c,i,p):''}</li>`;}).join('');
  const stats=examStats(p);
  return`<div class="pad pad-questions">
-  <header class="work-heading"><span class="step-kicker">الخطوة ٢ من ٣</span><div class="bar"><h2>كتابة الأسئلة</h2><button type="button" class="btn soft" data-act="adding" aria-expanded="${UI.adding}">${ic(UI.adding?'x':'plus',18)}${UI.adding?'إغلاق الأنواع':'سؤال جديد'}</button></div><p>كل سؤال في مكانه: اكتب النص، أضف الفروع ثم المعادلة أو الصورة عند الحاجة.</p></header>
+  <header class="work-heading"><span class="step-kicker">الخطوة ٢ من ٣</span><div class="bar"><h2>اكتب أسئلة الامتحان</h2><button type="button" class="btn soft" data-act="adding" aria-expanded="${UI.adding}">${ic(UI.adding?'x':'plus',18)}${UI.adding?'إغلاق الأنواع':'إضافة سؤال'}</button></div><p>اختر نوع السؤال، ثم اكتب كل تعريف أو فرع في حقل مستقل؛ الرقم والدرجة يظهران تلقائيًا في الورقة.</p></header>
   <div class="exam-statline" role="status" aria-live="polite">${examStatsMarkup(stats)}</div>
   <div id="gradeAudit">${gradeAuditMarkup(stats)}</div>
+  <div id="contentAudit">${definitionAuditMarkup(stats)}</div>
   ${UI.adding?addSheet():''}
-  ${p.questions.length?`<ol class="qlist">${rows}</ol>`:UI.adding?`<p class="pick-hint">اختر نوع السؤال أعلاه. ويمكنك تغيير تنسيقه وتحرير نصه بعد إضافته.</p>`:`<div class="empty write-welcome"><b>ورقتك جاهزة لإضافة أول سؤال</b><span>ابدأ بسؤال من الأنواع الجاهزة، أو اكتب نصاً حرّاً داخل الورقة.</span><button type="button" class="btn primary" data-act="adding">${ic('plus',17)}إضافة السؤال الأول</button><button type="button" class="text-link" data-act="startWriting">أفضّل الكتابة المباشرة</button></div>`}
-  <div class="step-footer"><button type="button" class="btn" data-act="startWriting">${ic('pencil',17)}تحرير مباشر</button><button type="button" class="btn primary" data-act="view" data-v="preview">معاينة الورقة ${ic('arrow-left',17)}</button></div>
+  ${p.questions.length?`<ol class="qlist">${rows}</ol>`:UI.adding?`<p class="pick-hint">اختر النوع، ثم اضغط على «إضافة تعريف» أو «إضافة فرع» بقدر ما تحتاج.</p>`:`<div class="empty write-welcome"><b>ابدأ بسؤالك الأول</b><span>مثلًا، اختر «تعاريف» وأضف كل مصطلح في حقل مستقل. الترقيم والتنسيق تلقائيان.</span><button type="button" class="btn primary" data-act="adding">${ic('plus',17)}اختيار نوع السؤال</button></div>`}
+  <div class="step-footer"><button type="button" class="btn primary" data-act="view" data-v="preview">معاينة الامتحان وطباعته ${ic('arrow-left',17)}</button></div>
  </div>`;
 }
 const addSheet=()=>{
- const primary=['branches','definitions','blanks','mcq','math','text'];
+ const primary=['definitions','branches','blanks','mcq','math','text'];
  const cards=keys=>keys.filter(k=>KIND_INFO[k]).map(k=>{const[t,d]=KIND_INFO[k];return`<button type="button" class="kind" data-act="addQ" data-kind="${k}"><b>${esc(t)}</b><small>${esc(d)}</small></button>`;}).join('');
- return`<section class="question-picker" aria-label="اختيار نوع السؤال"><div class="picker-title"><strong>اختر نوع السؤال</strong><small>الأكثر استخدامًا</small></div><div class="addsheet">${cards(primary)}</div><details class="picker-more"><summary>${ic('layout-grid',16)}أنواع إضافية${ic('chevron-down',17)}</summary><div class="addsheet">${cards(Object.keys(KIND_INFO).filter(k=>!primary.includes(k)))}</div></details></section>`;
+ return`<section class="question-picker" aria-label="اختيار نوع السؤال"><div class="picker-title"><strong>شنو تريد تضيف للورقة؟</strong><small>اضغط على النوع لتظهر حقوله مباشرةً</small></div><div class="addsheet">${cards(primary)}</div><details class="picker-more"><summary>${ic('layout-grid',16)}أنواع إضافية${ic('chevron-down',17)}</summary><div class="addsheet">${cards(Object.keys(KIND_INFO).filter(k=>!primary.includes(k)))}</div></details></section>`;
 };
 function imgCtl(img,path){
  return`<div class="imgctl"><img src="${img.src}" alt=""><div class="imgctl-b">
@@ -860,11 +887,18 @@ function qEditor(q,c,qi,p){
  const foot=`<div class="qfoot"><button type="button" class="ib" data-act="qUp" data-q="${q.id}" title="نقل للأعلى"${qi===0?' disabled':''}>${ic('arrow-up')}</button><button type="button" class="ib" data-act="qDown" data-q="${q.id}" title="نقل للأسفل"${qi===p.questions.length-1?' disabled':''}>${ic('arrow-down')}</button><button type="button" class="ib" data-act="qDup" data-q="${q.id}" title="تكرار">${ic('copy')}</button><span class="sp"></span><button type="button" class="btn danger-t" data-act="qDel" data-q="${q.id}">${ic('trash-2',16)}حذف السؤال</button></div>`;
  if(q.kind==='section')return`<div class="qed"><div class="row">${fld('عنوان القسم',`q.${q.id}.prompt`,q.prompt)}${fld('الدرجة',`q.${q.id}.score`,q.score,{w:'xs',type:'text'})}</div>${foot}</div>`;
  const isM=q.kind==='match',ph=c.en?'Type here':'اكتب هنا';
+ const questionNo=p.questions.slice(0,qi+1).filter(v=>!['text','section'].includes(v.kind)).length;
  const items=q.items.map((x,i)=>{const path=`it.${q.id}.${x.id}`,more=UI.more[x.id],isMcq=q.kind==='mcq'||x.choices.length;
   const order=`<div class="tools"><button type="button" class="tb" data-act="itUp" data-q="${q.id}" data-i="${x.id}"${i===0?' disabled':''} title="للأعلى">${ic('chevron-up',16)}</button><button type="button" class="tb" data-act="itDown" data-q="${q.id}" data-i="${x.id}"${i===q.items.length-1?' disabled':''} title="للأسفل">${ic('chevron-down',16)}</button><button type="button" class="tb danger" data-act="itDel" data-q="${q.id}" data-i="${x.id}" title="حذف">${ic('trash-2',16)}</button></div>`;
-  if(isM)return`<li class="item mi" data-iid="${x.id}"><div class="mrow"><span class="ibadge">${esc(c.lab(q.label==='none'?'n-dot':q.label,i))}</span>${rte(path+'.text',x.text,c.en?'Column A':'العمود (أ)')}<span class="mlink" aria-hidden="true">${ic('arrow-left',16)}</span>${rte(path+'.pair',x.pair,c.en?'Its match':'ما يناسبه في (ب)')}</div><div class="mrow-a"><button type="button" class="tag" data-act="img" data-path="${path}">${ic('image-plus',16)}صورة</button>${order}</div>${x.image?imgCtl(x.image,path):''}</li>`;
+  if(q.kind==='definitions')return`<li class="def-entry" data-iid="${x.id}">
+   <div class="def-entry-head"><span class="def-counter">التعريف ${c.D(String(i+1))}</span><span class="def-entry-hint">حقل مستقل؛ سيُرتَّب في جدول تلقائيًا</span>${order}</div>
+   ${rte(path+'.text',stripExamItemPrefix(x.text,q.kind),'اكتب اسم المصطلح هنا','definition-input')}
+   <div class="def-entry-actions"><button type="button" class="btn sm" data-act="eq" data-for="${path}.text">${ic('sigma',15)}معادلة</button><button type="button" class="btn sm" data-act="img" data-path="${path}">${ic('image-plus',15)}صورة</button><label class="def-score"><span>درجته (اختياري)</span>${inp(path+'.score',x.score,{ph:'مثلاً ٢'})}</label></div>
+   ${x.image?imgCtl(x.image,path):''}
+  </li>`;
+  if(isM)return`<li class="item mi data-iid="${x.id}"><div class="mrow"><span class="ibadge">${esc(c.lab(q.label==='none'?'n-dot':q.label,i))}</span>${rte(path+'.text',x.text,c.en?'Column A':'العمود (أ)')}<span class="mlink" aria-hidden="true">${ic('arrow-left',16)}</span>${rte(path+'.pair',x.pair,c.en?'Its match':'ما يناسبه في (ب)')}</div><div class="mrow-a"><button type="button" class="tag" data-act="img" data-path="${path}">${ic('image-plus',16)}صورة</button>${order}</div>${x.image?imgCtl(x.image,path):''}</li>`;
   return`<li class="item" data-iid="${x.id}">
-   <div class="item-r"><span class="ibadge">${esc(c.lab(q.label,i)||'•')}</span>${rte(path+'.text',x.text,c.en?'Branch text':'نص الفرع، والمعادلة تُدرج في أي موضع منه')}</div>
+   <div class="item-r"><span class="ibadge">${esc(branchNumber(q,questionNo,i,c)||'•')}</span>${rte(path+'.text',stripExamItemPrefix(x.text,q.kind),c.en?'Branch text':'اكتب نص الفرع؛ رقمه يُضاف تلقائيًا')}</div>
    ${isMcq?choicesEd(path,x,c):''}
    ${itemTools(path,x,q,i)}
    ${more?`<div class="drawer">
@@ -884,19 +918,20 @@ function qEditor(q,c,qi,p){
    ${chk('خلط ترتيب العمود (ب) تلقائياً',`q.${q.id}.shuffle`,q.shuffle)}
    <div class="row">${fld('عنوان العمود الأول',`q.${q.id}.colA`,q.colA,{ph:c.en?'Column A':'العمود (أ)'})}${fld('عنوان العمود الثاني',`q.${q.id}.colB`,q.colB,{ph:c.en?'Column B':'العمود (ب)'})}</div>`:'';
  return`<div class="qed">
-  <div class="fld"><span>نص السؤال</span>${rte(`q.${q.id}.prompt`,q.prompt,'مثل: عرّف خمساً مما يأتي:')}</div>
+  <div class="fld"><span>نص السؤال <small class="field-help">لا تكتب «س:١)»؛ التطبيق يضيفها تلقائيًا</small></span>${rte(`q.${q.id}.prompt`,stripExamNumberPrefix(q.prompt),'مثل: عرّف خمسة مما يأتي:')}</div>
   <div class="row al-end">${fld('الدرجة',`q.${q.id}.score`,q.score,{w:'xs',ph:'10'})}<label class="chk"><input type="checkbox" data-b="q.${q.id}.showScore"${q.showScore?' checked':''}><span>إظهار الدرجة</span></label><span class="sp"></span><button type="button" class="ib keep" data-act="eq" data-for="q.${q.id}.prompt" title="معادلة في نص السؤال">${ic('sigma',18)}</button><button type="button" class="ib" data-act="img" data-path="q.${q.id}" title="صورة للسؤال">${ic('image-plus',18)}</button></div>
   ${q.image?imgCtl(q.image,`q.${q.id}`):''}
-  <div class="sub-h">${isM?'أزواج الوصل: كل سطر عبارة وما يقابلها':'الأفرع والفقرات'}</div>
-  <ol class="items">${items}</ol>
+  <div class="sub-h">${isM?'أزواج الوصل: كل سطر عبارة وما يقابلها':q.kind==='definitions'?'حقول التعاريف — كل مصطلح في خانة منفصلة':'الأفرع والفقرات'}</div>
+  <ol class="items${q.kind==='definitions'?' definitions-list':''}">${items}</ol>
   ${isM?`<div class="fld"><span>إجابات زائدة في العمود (ب) للتمويه</span>${q.extra.map((v,k)=>`<div class="chr">${rte(`q.${q.id}.extra.${k}`,v,'إجابة زائدة')}<button type="button" class="ib sm" data-act="exDel" data-q="${q.id}" data-j="${k}" title="حذف">${ic('x',16)}</button></div>`).join('')}<button type="button" class="ghost sm" data-act="exAdd" data-q="${q.id}">${ic('plus',16)}إجابة زائدة</button></div>`:''}
-  <div class="row2"><button type="button" class="ghost" data-act="addItem" data-q="${q.id}">${ic('plus',17)}${isM?'إضافة زوج':'إضافة فرع'}</button>${isM?'':`<button type="button" class="ghost" data-act="addEqItem" data-q="${q.id}">${ic('sigma',17)}فرع معادلة</button>`}</div>
+  ${q.kind==='text'?`<div class="free-convert"><b>كتبت سؤالًا يدويًا؟</b><span>حوّله إلى سؤال مرقّم بدون نسخ النص أو إعادة كتابته.</span><button type="button" class="btn soft sm" data-act="convertFree" data-q="${q.id}">تحويل إلى سؤال: س:١)</button></div>`:''}
+  <div class="row2"><button type="button" class="ghost" data-act="addItem" data-q="${q.id}">${ic('plus',17)}${isM?'إضافة زوج':q.kind==='definitions'?'إضافة تعريف':'إضافة فرع'}</button>${isM||q.kind==='definitions'?'':`<button type="button" class="ghost" data-act="addEqItem" data-q="${q.id}">${ic('sigma',17)}فرع معادلة</button>`}</div>
   <details class="sec in"${UI.lay[q.id]?' open':''} data-lay="${q.id}"><summary>${ic('layout-grid',17)}<span>ترتيب السؤال</span>${ic('chevron-down',17)}</summary><div class="sec-b">
-   ${isM?mOpts:`<div class="opt"><span>توزيع الأفرع</span>${seg(`q.${q.id}.cols`,q.cols,[[-1,'تلقائي'],[1,'سطر لكل فرع'],[2,'عمودان'],[3,'٣'],[4,'٤']],'sm')}</div>`}
-   <div class="opt"><span>الترقيم</span>${seg(`q.${q.id}.label`,q.label,Object.keys(LABELS).map(k=>[k,k==='none'?'بلا':c.lab(k,0)]),'sm')}</div>
+   ${isM?mOpts:`<div class="opt"><span>${q.kind==='definitions'?'عدد أعمدة التعاريف في الورقة':'توزيع الأفرع'}</span>${seg(`q.${q.id}.cols`,q.cols,[[-1,'تلقائي'],[1,'سطر لكل فرع'],[2,'عمودان'],[3,'٣'],[4,'٤']],'sm')}</div>`}
+   <div class="opt"><span>${q.kind==='definitions'?'ترقيم التعاريف':'ترقيم الأفرع'}</span>${seg(`q.${q.id}.label`,q.label,Object.keys(LABELS).map(k=>[k,k==='none'?'بلا':c.lab(k,0)]),'sm')}</div>
    ${chOpts}
-   <div class="row wrap">${isM?'':chk('الأفرع داخل مربعات',`q.${q.id}.boxed`,q.boxed)}${chk('يبدأ في صفحة جديدة',`q.${q.id}.breakBefore`,q.breakBefore)}</div>
-   ${fld('رقم مخصص (اختياري)',`q.${q.id}.title`,q.title,{w:'sm',ph:qnum(qi+1,c,p)})}
+   <div class="row wrap">${isM?'':chk(q.kind==='definitions'?'التعاريف داخل مربعات':'الأفرع داخل مربعات',`q.${q.id}.boxed`,q.boxed)}${chk('يبدأ في صفحة جديدة',`q.${q.id}.breakBefore`,q.breakBefore)}</div>
+   <p class="hint">رقم السؤال يحدّثه البرنامج تلقائيًا عند إضافة أو ترتيب الأسئلة. لا حاجة لإدخاله يدويًا.</p>
   </div></details>
   ${foot}
  </div>`;
@@ -950,7 +985,7 @@ function styleView(p,c){
   ${sec('متقدم',`<div class="opt"><span>الأرقام والحروف</span>${seg('p.digits',p.digits,[['auto','تلقائي'],['arabic','١ ، أ'],['latin','1 ، A']],'sm')}</div>
    <p class="hint">التلقائي: الابتدائية عربي عدا الإنكليزية، والمتوسطة والإعدادية إنكليزي عدا الإسلامية والعربية والاجتماعيات والتاريخ والجغرافية والاقتصاد.</p>
    <div class="opt"><span>اتجاه الأسئلة</span>${seg('p.dir',p.dir,[['auto','تلقائي'],['rtl','عربي'],['ltr','English']],'sm')}</div>
-   <div class="opt"><span>رقم السؤال</span>${seg('p.qStyle',p.qStyle,Object.keys(QSTYLES).map(k=>[k,qnum(1,c,{qStyle:k})]),'sm')}</div>`,false,'settings-2')}
+   <p class="hint">ترقيم السؤال تلقائي وثابت: س:١) أو س:1)، والفرع س:١- أ) أو س:1- A).</p>`,false,'settings-2')}
   <div class="step-footer"><button type="button" class="btn" data-act="view" data-v="paper">${ic('arrow-right',17)}إعداد الورقة</button><button type="button" class="btn primary" data-act="view" data-v="questions">الانتقال للأسئلة ${ic('arrow-left',17)}</button></div>
  </div>`;
 }
@@ -973,7 +1008,7 @@ function renderWriter(){
  const p=P(),c=ctx();let n=0;
  const text=p.questions.map(q=>{
   if(!['text','section'].includes(q.kind))n++;
-  const heading=q.kind==='text'?'':q.kind==='section'?'عنوان قسم':qnum(n,c,p);
+  const heading=q.kind==='text'?'':q.kind==='section'?'عنوان قسم':numberedTitle(q,n,c);
   return`<div class="write-question">${heading?`<h3>${esc(heading)}</h3>`:''}${q.kind!=='text'?rte(`q.${q.id}.prompt`,q.prompt,'عنوان السؤال'):''}
    ${q.items.map(x=>rte(`it.${q.id}.${x.id}.text`,x.text,'اكتب هنا…')+x.choices.map((v,j)=>`<div class="chr"><span class="chn">${esc(c.L(j))}</span>${rte(`it.${q.id}.${x.id}.choice.${j}`,v,'خيار')}</div>`).join('')+(q.kind==='match'?rte(`it.${q.id}.${x.id}.pair`,x.pair,'ما يقابله'): '')+(x.table?tableEd(`it.${q.id}.${x.id}`,x.table):'')).join('')}</div>`;
  }).join('');
@@ -1024,7 +1059,7 @@ function showWelcome(){
  document.activeElement?.blur();const host=$('#welcome');host.hidden=false;
  const features=[
  ['ترويسة عراقية، بترتيبك','الدولة والمديرية والمدرسة والصف والسنة والشعار. عدّل التفاصيل أو أخفِ ما لا تحتاجه.'],
- ['أسئلة بأكثر من شكل','تعريفات وفراغات واختيارات وأفرع ووصل. رتّب الأفرع القصيرة في أعمدة أو خصص سطراً لكل فرع.'],
+ ['تعاريف بحقول واضحة','اضغط «إضافة تعاريف»، واكتب كل مصطلح وحده؛ يظهر الجدول وتُرقّم التعاريف تلقائيًا.'],
  ['المعادلة بمكانها','كسور وجذور وأسُس وقسمة طويلة، ورموز للفيزياء والكيمياء، داخل الجملة أو في فرع مستقل.'],
  ['جداول ومساحات إجابة','اكتب في الخلايا، أضف الصفوف والأعمدة، ووزّع الجدول الطويل على الصفحات مع عناوينه.'],
  ['راجع قبل الطباعة','معاينة A4 وتنبيه عند تجاوز الحدود، ثم إخراج PDF من طباعة المتصفح.'],
@@ -1339,7 +1374,7 @@ document.addEventListener('click',e=>{
   case'eye':{const k=b.dataset.k;p.meta.show[k]=!(p.meta.show[k]!==false);commit();break;}
   case'toggle':UI.open=UI.open===q.id?null:q.id;renderSide();renderPaper();break;
   case'adding':UI.adding=!UI.adding;renderSide();break;
-  case'addQ':{if(p.questions.length>=80){toast('الحد ٨٠ سؤالاً لكل مرحلة، احفظ امتحاناً جديداً');break;}const n=DEMO?kindTemplate(b.dataset.kind,ctx().en):blankQuestion(b.dataset.kind,ctx().en);p.questions.push(n);p.pristine=false;UI.open=n.id;UI.adding=false;UI.view='questions';commit();requestAnimationFrame(()=>{const r=$(`.qc[data-qid="${n.id}"]`);r&&r.scrollIntoView({block:'start',behavior:'smooth'});});break;}
+  case'addQ':{if(p.questions.length>=80){toast('الحد ٨٠ سؤالاً لكل مرحلة، احفظ امتحاناً جديداً');break;}const n=DEMO?kindTemplate(b.dataset.kind,ctx().en):blankQuestion(b.dataset.kind,ctx().en);if(!DEMO&&['branches','enumerate'].includes(n.kind))n.label='l-paren';p.questions.push(n);p.pristine=false;UI.open=n.id;UI.adding=false;UI.view='questions';commit();requestAnimationFrame(()=>{const r=$(`.qc[data-qid="${n.id}"]`);r&&r.scrollIntoView({block:'start',behavior:'smooth'});});break;}
   case'startWriting':startWriting();break;
   case'rQuestion':UI.view='questions';UI.adding=true;renderSide();break;
   case'demo':startLesson();break;
@@ -1347,6 +1382,17 @@ document.addEventListener('click',e=>{
   case'qDown':move(p.questions,qi,1);p.pristine=false;commit();break;
   case'qDup':{const d=JSON.parse(JSON.stringify(q));d.id=uid();d.items.forEach(x=>x.id=uid());p.questions.splice(qi+1,0,d);UI.open=d.id;p.pristine=false;commit();break;}
   case'qDel':p.questions.splice(qi,1);p.pristine=false;commit();toast('حُذف السؤال',{label:'تراجع',run:()=>undo(-1)});break;
+  case'convertFree':{
+   if(!q||q.kind!=='text')break;
+   const first=q.items[0]||it('');const lines=String(first.text||'').split(/\r?\n/);
+   const manualHeading=stripExamNumberPrefix(q.prompt||lines.shift()||'');
+   if(!manualHeading.trim()){toast('اكتب نص السؤال أولاً ثم حوّله إلى سؤال مرقّم');break;}
+   q.kind='branches';q.label='l-paren';q.prompt=manualHeading;
+   const remainder=q.prompt===stripExamNumberPrefix(String(first.text||''))?'':lines.join('\n');
+   q.items=q.items.length?q.items:[it('')];q.items[0].text=remainder;
+   q.showScore=!!String(q.score).trim();q.boxed=false;p.pristine=false;UI.open=q.id;
+   commit();toast('صار السؤال مرقّمًا تلقائيًا؛ أضف الأفرع عند الحاجة');break;
+  }
   case'addItem':{if(q.items.length>=80){toast('الحد ٨٠ فرعاً لكل سؤال');break;}const n=it('',{choices:q.kind==='mcq'?['','']:[]});q.items.push(n);p.pristine=false;commit();requestAnimationFrame(()=>{const t=$(`[data-r="it.${q.id}.${n.id}.text"]`);t&&t.focus();});break;}
   case'addEqItem':{const n=it('');q.items.push(n);p.pristine=false;commit();requestAnimationFrame(()=>{const el=$(`[data-r="it.${q.id}.${n.id}.text"]`);el&&openEq({el});});break;}
   case'more':UI.more[b.dataset.i]=!UI.more[b.dataset.i];renderSide();break;
