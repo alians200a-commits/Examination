@@ -20,7 +20,7 @@
  --ink:oklch(0.27 0.03 262);--ink2:oklch(0.45 0.025 262);--muted:oklch(0.58 0.02 262);
  --line:oklch(0.91 0.008 262);--line2:oklch(0.945 0.006 262);
  --acc:oklch(0.45 0.11 262);--acc-h:oklch(0.40 0.11 262);--acc-soft:oklch(0.955 0.018 262);--acc-line:oklch(0.83 0.05 262);
- --danger:oklch(0.55 0.17 27);--danger-soft:oklch(0.965 0.02 27);--ok:#456B9D;--warn:oklch(0.72 0.13 75);
+ --danger:oklch(0.55 0.17 27);--danger-soft:oklch(0.965 0.02 27);--ok:#456B9D;--warn:#946180;
  --r:14px;--r-sm:10px;--e-out:cubic-bezier(0.22,1,0.36,1);
  --sh-1:0 1px 2px oklch(0.35 0.03 262 / .06);--sh-2:0 12px 32px -14px oklch(0.35 0.03 262 / .28);
  --nav-h:64px;--top-h:58px;
@@ -112,8 +112,16 @@ h2{margin:0;font-size:18px;font-weight:800;letter-spacing:-.01em}
 .mrow-a{display:flex;justify-content:flex-end}
 .item.mi{gap:4px;padding:8px}
 .tbed{display:flex;flex-direction:column;gap:8px}
-.tbed-g{display:grid;grid-template-columns:repeat(var(--tc),minmax(72px,1fr));gap:4px;overflow-x:auto}
-.tbed-g .rte{min-height:38px;padding:5px 8px;font-size:14px;text-align:center;border-radius:6px}
+/* The same selected row and column remain visible on narrow mobile screens. */
+.tbed-scroll{max-width:100%;overflow:auto;overscroll-behavior-x:contain;border:1px solid var(--line);border-radius:12px;background:#FFF}
+.tbed-g{display:grid;grid-template-columns:38px repeat(var(--tc),minmax(110px,1fr));gap:3px;min-width:max-content;padding:7px;align-items:stretch;direction:rtl}
+.tbed-g .rte{display:block;width:100%;height:100%;min-height:42px;padding:8px 9px;font-size:14px;text-align:center;border:1px solid transparent;border-radius:7px;background:transparent}
+.tbed-corner,.tbed-col-head,.tbed-row-head{display:grid;place-items:center;background:#EAF0F8;color:#344F72;font-weight:800;font-size:12px;border-radius:7px}
+.tbed-corner{font-size:9px;text-align:center;padding:2px;line-height:1.4}
+.tbed-cell{min-width:0;border:1px solid #E3EAF3;border-radius:8px;background:#FFF;transition:background .15s,border-color .15s}
+.tbed-cell.table-heading-cell{background:#F1F5FB;border-color:#D7E1EF}
+.tbed-cell.current,.tbed-cell:focus-within{border-color:#527DB2;background:#EAF2FD;box-shadow:0 0 0 2px rgba(77,119,177,.13)}
+.tbed-cell .rte:focus{box-shadow:none;border:0;background:transparent}
 .tbed-a{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
 .tbed-a .tb{display:inline-flex;align-items:center;gap:4px;padding:0 10px;font-size:13px;width:auto}
 .table-edit-more{border-top:1px solid var(--line);padding-top:8px}
@@ -415,7 +423,7 @@ input:not([type=checkbox]):not([type=range]):focus,textarea:focus{outline:none;b
 .welcome-actions{display:flex;flex-wrap:wrap;gap:12px}
 .welcome .primary{background:oklch(.39 .095 260);border-color:oklch(.39 .095 260);color:oklch(.99 .005 85)}
 .welcome .trust{font-size:12px;color:oklch(.53 .02 260);line-height:1.8;margin-top:16px}
-.welcome-preview{background:oklch(.998 .002 85);padding:28px;border:1px solid oklch(.86 .015 85);box-shadow:12px 16px 0 #D6E1EE;transform:rotate(-2deg);font-family:'Noto Sans Arabic',sans-serif}
+.welcome-preview{background:#FCFDFF;padding:28px;border:1px solid #CFD9E7;box-shadow:12px 16px 0 #D6E1EE;transform:rotate(-2deg);font-family:'Noto Sans Arabic',sans-serif}
 .welcome-preview header{text-align:center;border:1px solid oklch(.55 .07 260);padding:16px;margin-bottom:20px;border-radius:6px;color:oklch(.35 .075 260);font-weight:700}
 .welcome-preview header small{display:block;margin-top:8px;font-size:11px}
 .preview-question{margin:18px 0}.preview-question b{display:block;font-size:12px;background:oklch(.94 .013 260);padding:7px 10px}
@@ -494,10 +502,10 @@ input:not([type=checkbox]):not([type=range]):focus,textarea:focus{outline:none;b
 /* A4 print palettes: reference-matched navy / muted blue / pale burgundy score chips. */
 /* The legacy `teal` theme ID remains loadable, but now renders steel blue; no green palette. */
 .pages{font-family:var(--pf);color:var(--ink)}
-.th-source{--p:#293D68;--soft:#F1F4FA;--line:#E2E7EF;--cell:#D5DBE6;--ink:#202739;--score:#823B4C;--score-bd:#E9C7CE;--score-bg:#FBECEF;--choice:#2C648A}
-.th-sky{--p:#365E9A;--soft:#F0F5FC;--line:#DEE7F3;--cell:#CBD9EB;--ink:#212D43;--score:#874456;--score-bd:#E9CDD5;--score-bg:#FCEFF2;--choice:#2E6B9D}
-.th-teal{--p:#496889;--soft:#F1F4F8;--line:#DEE5EC;--cell:#CCD7E2;--ink:#223247;--score:#874456;--score-bd:#E9CDD5;--score-bg:#FCEFF2;--choice:#376588}
-.th-gray{--p:#4E5B73;--soft:#F2F4F7;--line:#E1E4E9;--cell:#D0D6DF;--ink:#232A35;--score:#823B4C;--score-bd:#E9C7CE;--score-bg:#FBECEF;--choice:#455F80}
+.th-source{--p:#293D68;--soft:#F1F4FA;--line:#E2E7EF;--cell:#D5DBE6;--ink:#202739;--score:#823B4C;--score-bd:#E9C7CE;--score-bg:#FBECEF;--choice:#385D91}
+.th-sky{--p:#365E9A;--soft:#F0F5FC;--line:#DEE7F3;--cell:#CBD9EB;--ink:#212D43;--score:#874456;--score-bd:#E9CDD5;--score-bg:#FCEFF2;--choice:#365C9A}
+.th-steel{--p:#496889;--soft:#F1F4F8;--line:#DEE5EC;--cell:#CCD7E2;--ink:#223247;--score:#874456;--score-bd:#E9CDD5;--score-bg:#FCEFF2;--choice:#385E91}
+.th-gray{--p:#4E5B73;--soft:#F2F4F7;--line:#E1E4E9;--cell:#D0D6DF;--ink:#232A35;--score:#823B4C;--score-bd:#E9C7CE;--score-bg:#FBECEF;--choice:#465D80}
 .th-ink{--p:#111111;--soft:#f0f0f0;--line:#bdbdbd;--cell:#a8a8a8;--ink:#111111;--score:#111111;--score-bd:#8a8a8a;--score-bg:#ffffff;--choice:#111111}
 .page{width:210mm;height:297mm;background:#fff;position:relative;overflow:hidden;margin:0 auto 18px;box-shadow:0 1px 2px rgba(40,40,60,.08),0 10px 30px -12px rgba(40,40,60,.25);-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .pin{position:absolute;top:10mm;bottom:8mm;left:11mm;right:11mm;display:flex;flex-direction:column;font-size:var(--fs);line-height:1.58}
@@ -510,17 +518,17 @@ input:not([type=checkbox]):not([type=range]):focus,textarea:focus{outline:none;b
 .dots.short{display:inline-block;width:30mm;flex:none;vertical-align:-1mm}
 /* الترويسة: الوسط في منتصف الصفحة تماماً */
 .ph{flex:none;margin-bottom:var(--gap)}
-.ph.box{border:1.4pt solid var(--p);border-radius:3mm;padding:2.6mm 4mm 2mm}
-.hg{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.55fr) minmax(0,1fr);align-items:center;column-gap:3mm}
-.hr{display:flex;flex-direction:column;align-items:flex-start;color:var(--p);font-weight:700;font-size:.9em;line-height:1.7;text-align:right}
+.ph.box{border:1.3pt solid var(--p);border-radius:2.5mm;padding:3mm 3.8mm 2.2mm;box-shadow:inset 0 0 0 .25pt var(--line)}
+.hg{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.52fr) minmax(0,1fr);align-items:start;column-gap:3mm;min-height:23mm}
+.hr{display:flex;flex-direction:column;align-items:flex-start;color:var(--p);font-weight:700;font-size:.9em;line-height:1.55;text-align:right;min-width:0;overflow-wrap:anywhere}
 .hm{display:flex;flex-direction:column;align-items:center;text-align:center;min-width:0}
-.hm .ttl{text-wrap:balance;font-size:1.18em;font-weight:800;line-height:1.5;color:var(--ink)}
+.hm .ttl{text-wrap:balance;font-size:1.18em;font-weight:800;line-height:1.48;color:var(--ink);max-width:100%;overflow-wrap:anywhere}
 .hm .sub,.hm .rnd{color:var(--p);font-weight:700;font-size:.98em}
 .hm .yr{margin-top:1mm;text-align:center;font-size:.92em;line-height:1.6}
 .hm .yr .lbl{color:var(--p);font-weight:600}
 .hm .yr .val{display:inline-block;direction:ltr;unicode-bidi:isolate;font-weight:800}
 .hlft .grade{font-weight:800;color:var(--p);line-height:1.6;margin-bottom:.7mm;max-width:100%;overflow-wrap:anywhere}
-.hlft{display:flex;flex-direction:column;align-items:flex-end;font-size:.9em;line-height:1.75;text-align:left}
+.hlft{display:flex;flex-direction:column;align-items:flex-end;font-size:.9em;line-height:1.55;text-align:left;min-width:0;overflow-wrap:anywhere}
 .hlft .lbl,.hr .lbl{color:var(--p);font-weight:600}
 .hlft .val{color:var(--ink);font-weight:800}
 .hr .hl .val{color:var(--ink)}
@@ -666,11 +674,14 @@ input:not([type=checkbox]):not([type=range]):focus,textarea:focus{outline:none;b
 .cho{min-width:0}.cho .il{font-weight:800}
 
 /* ===== الجداول ===== */
-.qtab{border-collapse:collapse;margin:1.2mm 0 .4mm;font-size:.95em;max-width:100%}
-.qtab.full{width:100%}
+.qtab{border-collapse:collapse;margin:1.5mm 0 .8mm;font-size:.95em;max-width:100%;border:1pt solid var(--cell);overflow-wrap:anywhere}
+.qtab.full{width:100%;table-layout:fixed}
 .qtab.ctr{margin-left:auto;margin-right:auto}
-.qtab td,.qtab th{border:.7pt solid var(--cell);padding:.6mm 2.4mm;text-align:var(--ta,center);vertical-align:middle;min-width:12mm;height:7mm}
-.qtab th{background:var(--soft);font-weight:800;color:var(--ink)}
+.qtab td,.qtab th{border:.65pt solid var(--cell);padding:1.1mm 2.2mm;text-align:var(--ta,center);vertical-align:middle;min-width:10mm;height:7.4mm;overflow-wrap:anywhere;white-space:normal}
+.qtab th{background:var(--soft);font-weight:800;color:var(--p);border-bottom:1.1pt solid var(--p)}
+.qtab thead{display:table-header-group}
+.qtab tbody tr:nth-child(even){background:#FAFBFE}
+.qtab tr{break-inside:avoid;page-break-inside:avoid}
 .answer-lines{clear:both;margin-top:1.6mm}
 .answer-lines>div{height:7mm;border-bottom:.65pt dotted var(--cell)}
 
@@ -689,14 +700,15 @@ input:not([type=checkbox]):not([type=range]):focus,textarea:focus{outline:none;b
 .hr>div:not(.hl){white-space:normal}
 .hlft .hl{white-space:normal;max-width:100%;overflow-wrap:anywhere}
 .qtab td>[data-k],.qtab th>[data-k],.mtab td>[data-k],.mtab th>[data-k]{display:inline-block;min-width:8mm;min-height:1.2em}
-/* v14 — mobile-first workspace. Interface palette exclusively navy/blue/neutral; paper palette independent. */
+/* Premium workspace design system. Native HTML/CSS; inspired by MIT shadcn/ui and Tabler.
+   Palette policy: navy, true blue, white/slate, blush for grade warnings. Never green, olive, teal or petrol. */
 :root {
   --bg:#F2F5F9;
   --panel:#FFFFFF;
   --sunk:#F7F9FC;
   --ink:#1B2D43;
   --ink2:#52657B;
-  --muted:#73849A;
+  --muted:#596C86;
   --line:#DDE5EE;
   --line2:#EAF0F6;
   --acc:#294B7C;
@@ -706,11 +718,11 @@ input:not([type=checkbox]):not([type=range]):focus,textarea:focus{outline:none;b
   --danger:#B43C3C;
   --danger-soft:#FFF2F1;
   --ok:#456B9D; /* saved = blue, never green */
-  --warn:#B47B3A;
+  --warn:#946180;
   --r:16px;
   --r-sm:11px;
-  --sh-1:0 2px 9px rgba(19,44,77,.04);
-  --sh-2:0 18px 54px -20px rgba(19,44,77,.25);
+  --sh-1:0 2px 12px rgba(19,44,77,.045);
+  --sh-2:0 18px 52px -19px rgba(19,44,77,.19);
   --top-h:64px;
   --nav-h:66px;
 }
@@ -763,11 +775,11 @@ body{background:var(--bg);font-size:14px;color:var(--ink)}
 .question-picker{background:var(--panel);border:1px solid #D9E3EF;border-radius:17px;padding:14px;box-shadow:var(--sh-1);animation:rise .2s ease-out}
 .picker-title{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:11px;gap:8px}
 .picker-title strong{font-weight:800;font-size:15px}
-.picker-title small{color:#8291A2;font-size:11px}
+.picker-title small{color:#60738A;font-size:11px}
 .question-picker .addsheet{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
 .question-picker .kind{min-width:0;min-height:78px;padding:12px 12px 10px;align-items:flex-start;gap:3px;border:1px solid #DEE7F1;border-radius:12px;background:#FFFFFF;box-shadow:none;transition:border-color .15s,transform .15s,background .15s}
 .question-picker .kind b{font-size:14px;color:#223A56;font-weight:800}
-.question-picker .kind small{font-size:11.5px;line-height:1.65;color:#7A8AA0}
+.question-picker .kind small{font-size:11.5px;line-height:1.65;color:#5D718A}
 .question-picker .kind:hover{border-color:#91B2D7;background:#F5F9FE;transform:translateY(-1px)}
 .picker-more{margin-top:9px;border-top:1px solid #E8EEF5}
 .picker-more summary{list-style:none;display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:700;color:#355C83;min-height:42px}
@@ -778,18 +790,18 @@ body{background:var(--bg);font-size:14px;color:var(--ink)}
 .pick-hint{text-align:center;color:#7A8A9E;font-size:12px;margin:0}
 /* Question cards become the center of the workspace. */
 .qlist{margin:0;padding:0;display:flex;flex-direction:column;gap:12px;list-style:none}
-.qc{border:1px solid #DCE5EE;background:var(--panel);border-radius:15px;overflow:hidden;box-shadow:0 2px 11px rgba(24,53,85,.035)}
-.qc.open{border-color:#BCD0E7;box-shadow:0 5px 23px rgba(26,61,102,.07)}
+.qc{border:1px solid #D8E2EF;background:var(--panel);border-radius:15px;overflow:hidden;box-shadow:0 3px 15px rgba(24,53,85,.04)}
+.qc.open{border-color:#AEC4E1;box-shadow:0 8px 27px -18px rgba(26,61,102,.2)}
 .qc-h{border-radius:0;gap:10px;min-height:62px;padding:11px 13px;background:#fff}
 .qc.open .qc-h{background:#F7FAFE;border-bottom:1px solid #E4EDF7}
 .qc-h>.qbadge{border-radius:9px;background:#E9F1FA;color:#28588B;min-width:40px;min-height:32px;display:inline-flex;justify-content:center;align-items:center;font-size:13px}
 .qc-h .qc-t{color:#2F455F;font-size:13px;font-weight:700}
-.qc-s{background:#F6F1E9;color:#8C6A34;border-color:#E4D6B9;white-space:nowrap}
+.qc-s{background:#F9EDEF;color:#833A4B;border-color:#EBCBD1;white-space:nowrap}
 .qed{padding:14px;gap:13px;border-top:0}
 .qed>.fld:first-child{margin-top:0}
 .qed .rte{min-height:50px}
 .qed .sub-h{color:#375472}
-.qed .item{border:1px solid #E8EDF5;border-radius:11px;background:#FCFDFE;padding:10px;gap:9px}
+.qed .item{border:1px solid #DEE7F2;border-radius:11px;background:#FCFDFF;padding:11px;gap:9px}
 .qed .items{gap:9px}
 .qfoot{margin-top:4px;padding-top:11px}
 /* Setup keeps short decisions first; details remain collapsible. */
@@ -799,8 +811,8 @@ body{background:var(--bg);font-size:14px;color:var(--ink)}
 .setup-appearance small{color:#68809A;font-size:11.5px}
 .pad-setup .summary{margin:0}
 .pad-setup .summary span{background:#fff;color:#4F6580;border-color:#E1E8F0}
-.sec{border-color:#DFE7F1;border-radius:14px;background:#fff;box-shadow:var(--sh-1)}
-.sec>summary{min-height:55px;padding:13px 15px;font-size:14px}
+.sec{border-color:#DCE5F0;border-radius:14px;background:#fff;box-shadow:var(--sh-1)}
+.sec>summary{min-height:55px;padding:13px 15px;font-size:14px;color:#24405F}
 .sec[open]{border-color:#C9D9EA}
 /* Print preview should visually dominate, with controls subordinate. */
 .canvas{background:#E9EFF6;padding-bottom:calc(var(--nav-h) + 16px)}
@@ -899,7 +911,7 @@ body{background:var(--bg);font-size:14px;color:var(--ink)}
 
 /* Reference-inspired interface color policy: no green, olive, teal or mint surfaces. */
 .status[data-s=saved]{background:#456B9D!important}
-.status[data-s=saving]{background:#B47B3A!important}
+.status[data-s=saving]{background:#946180!important}
 .status[data-s=error]{background:#B43C3C!important}
 .demo-mode .mark{background:#294B7C!important}
 /* Non-editable paper preview on the home page mirrors the approved print palette. */
@@ -907,6 +919,67 @@ body{background:var(--bg);font-size:14px;color:var(--ink)}
 .preview-question b{background:#F1F4FA!important;color:#293D68!important}
 .file-panel input::file-selector-button{background:#294B7C!important;color:#fff!important}
 @media print{.status{display:none!important}}
+
+/* ===== Focused question-quality review. Visible only when branch grades need attention. ===== */
+.grade-audit{border:1px solid #E7CAD4;background:#FFF9FB;border-radius:13px;overflow:hidden;color:#753B53}
+.grade-audit>summary{display:flex;align-items:center;gap:10px;padding:11px 13px;min-height:44px;cursor:pointer;list-style:none;font-size:12.5px;font-weight:800}
+.grade-audit>summary::-webkit-details-marker{display:none}
+.grade-audit-icon{display:grid;place-items:center;width:23px;height:23px;border-radius:7px;background:#F7E2E8;color:#7D3C55;font-family:system-ui,sans-serif}
+.grade-audit summary b{background:#F3DFE6;border-radius:99px;padding:2px 8px;color:#703D53}
+.grade-audit-hint{margin-inline-start:auto;color:#956E7C;font-weight:600;font-size:11px}
+.grade-audit-body{padding:8px;border-top:1px solid #EBD4DC;display:grid;gap:6px}
+.grade-audit-body button{display:flex;gap:10px;align-items:center;width:100%;text-align:start;min-height:40px;border:1px solid transparent;border-radius:9px;background:#FFF;color:#59354B;padding:8px 10px}
+.grade-audit-body button:hover,.grade-audit-body button:focus-visible{border-color:#CB97A9;background:#FBEFF3}
+.grade-audit-body button b{border-radius:8px;background:#F8E5EA;min-width:32px;text-align:center;padding:2px 5px}
+/* Table editing uses explicit row/column guides like a spreadsheet, not unlabeled input boxes. */
+.tbed{border:1px solid #DCE5F0;border-radius:13px;background:#F9FBFF;padding:11px;gap:9px}
+.tbed-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.tbed-head b{font-size:13px;color:#294A74}
+.tbed-head span{font-size:11px;color:#57708F;background:#EAF1FA;border-radius:99px;padding:4px 10px}
+.tbed-help{font-size:11px;line-height:1.65;color:#6F8197;margin:0}
+.tbed-scroll:focus-visible{outline:2px solid #527DB2;outline-offset:2px}
+.tbed-a{border-top:1px solid #E0E8F3;padding-top:10px;gap:6px}
+.tbed-a .tb{min-height:38px;border-radius:9px;background:#FFF;border-color:#DCE6F2;color:#2E517C}
+.tbed-a .tb.danger{color:#A74752;background:#FFF8F9;border-color:#F0DCE1}
+.tbed .chk{font-size:12px}
+.tbed .table-edit-more{border:1px solid #DFE7F2;border-radius:9px;padding:5px 10px;background:#FFF}
+.tbed .table-edit-more>summary{min-height:38px;font-size:12px;color:#385B86}
+/* Improve the header editor without consuming extra room on mobile. */
+.pad-setup .frow{padding:8px 0;border-bottom:1px solid #F0F3F8}
+.pad-setup .frow:last-child{border-bottom:0}
+.pad-setup .frow .frow-l{font-size:12px;color:#455D7C}
+.pad-setup .frow .pair{align-items:stretch;gap:8px;flex-wrap:wrap}
+.pad-setup .frow .pair .lb{flex:0 1 105px}
+.pad-setup .frow .pair input:not(.lb){flex:1 1 160px}
+.pad-setup .logo-row{border:1px dashed #C5D5E9;padding:8px;border-radius:10px}
+/* Clear premium shell: fixed white tools, restrained blue elevation and ample tap targets. */
+.top{background:#FFF;border-color:#DCE5F0}
+.top .btn.primary{box-shadow:0 5px 16px rgba(28,68,113,.15)}
+.top .menu>summary:hover{background:#EDF3FA}
+.question-picker{box-shadow:0 9px 27px -20px rgba(26,61,102,.22)}
+.question-picker .kind:focus-visible,.stagecard:focus-visible,.theme:focus-visible{outline:2px solid #456FA8;outline-offset:2px}
+.theme[aria-pressed=true]{border-color:#2C588C;background:#F7FAFE;box-shadow:0 0 0 2px #D9E6F7}
+@media(max-width:479px){
+ .tbed{padding:8px}
+ .tbed-head{align-items:flex-start}
+ .grade-audit-hint{display:none}
+ .pad-setup .frow .pair .lb{flex:0 1 85px}
+}
+@media print{
+ .grade-audit,.tbed-head,.tbed-help,.tbed-scroll,.tbed-a{display:none!important}
+}
+
+/* Mobile navigation occupies a real grid track: never cover the last question-picker row.
+   This solves short-height Chromium/WebView click interception without test-specific scrolling. */
+@media screen and (max-width:1023px){
+ .app{grid-template-rows:var(--top-h) auto minmax(0,1fr) calc(var(--nav-h) + env(safe-area-inset-bottom))}
+ .app.has-lesson{grid-template-rows:var(--top-h) auto auto minmax(0,1fr) calc(var(--nav-h) + env(safe-area-inset-bottom))}
+ .app[data-view=paper],.app[data-view=style],.app[data-view=preview]{grid-template-rows:var(--top-h) minmax(0,1fr) calc(var(--nav-h) + env(safe-area-inset-bottom))}
+ .app.has-lesson[data-view=paper],.app.has-lesson[data-view=style],.app.has-lesson[data-view=preview]{grid-template-rows:var(--top-h) auto minmax(0,1fr) calc(var(--nav-h) + env(safe-area-inset-bottom))}
+ .nav{position:relative;inset:auto;grid-row:auto;height:calc(var(--nav-h) + env(safe-area-inset-bottom));z-index:15}
+ .sbody{padding-bottom:28px;scroll-padding-block-end:32px}
+ .canvas{padding-bottom:8px}
+}
 </style>
 </head>
 <body dir="rtl">
@@ -1256,7 +1329,7 @@ function scoreText(raw,en,D,paren){
 const THEMES={
  source:{label:'كحلي'},
  sky:{label:'أزرق سماوي'},
- teal:{label:'أزرق فولاذي'},
+ steel:{label:'أزرق فولاذي'},
  gray:{label:'رمادي'},
  ink:{label:'أسود'}
 };
@@ -1431,7 +1504,7 @@ function normProject(p,stage){
  meta.logoH=Math.min(40,Math.max(8,meta.logoH));
  const pick=(v,list,d)=>list.includes(v)?v:d;
  const cf=p.customFont&&typeof p.customFont.src==='string'&&/^data:(font\/[\w.+-]+|application\/[\w.+-]+|);base64,[A-Za-z0-9+/]+={0,2}$/.test(p.customFont.src)?{name:str(p.customFont.name,120),src:p.customFont.src}:null;
- const out={meta,style:'source',theme:pick(p.theme,Object.keys(THEMES),'source'),font:pick(p.font,Object.keys(FONTS),'sans'),customFont:cf,
+ const out={meta,style:'source',theme:pick(p.theme==='teal'?'steel':p.theme,Object.keys(THEMES),'source'),font:pick(p.font,Object.keys(FONTS),'sans'),customFont:cf,
   size:pick(+p.size,[13,14,15],13),density:pick(p.density,['tight','normal','airy'],'normal'),digits:pick(p.digits,['auto','arabic','latin'],'auto'),dir:pick(p.dir,['auto','rtl','ltr'],'auto'),
   qStyle:pick(p.qStyle,Object.keys(QSTYLES),'slash'),rules:p.rules!==false,fit:p.fit!==false,pristine:!!p.pristine,questions:(Array.isArray(p.questions)?p.questions:[]).slice(0,80).map(normQ).filter(Boolean)};
  const ids=new Set();const unique=x=>{while(ids.has(x.id))x.id=uid();ids.add(x.id);};
@@ -1522,7 +1595,9 @@ function tableHTML(t,c,path,part){
  const from=part?.from??0,to=part?.to??t.rows.length;
  const indices=Array.from({length:Math.max(0,to-from)},(_,i)=>from+i);
  if(part?.cont&&t.head&&from>0)indices.unshift(0);
- return`<table class="qtab${t.full?' full':' ctr'}" data-table="${path}" style="--ta:${t.align||'center'}">${indices.map(i=>{const r=t.rows[i];return`<tr data-table-row="${i}">${r.map((v,j)=>{const tg=t.head&&i===0?'th':'td';return`<${tg}>${ed(c,`${path}.cell.${i}.${j}`,v)}</${tg}>`;}).join('')}</tr>`;}).join('')}</table>`;
+ const hasHeader=t.head&&indices.includes(0);
+ const row=i=>`<tr data-table-row="${i}">${t.rows[i].map((v,j)=>{const tag=hasHeader&&i===0?'th':'td';return`<${tag}${tag==='th'?' scope="col"':''}>${ed(c,`${path}.cell.${i}.${j}`,v)}</${tag}>`;}).join('')}</tr>`;
+ return`<table class="qtab${t.full?' full':' ctr'}" data-table="${path}" style="--ta:${t.align||'center'}" aria-label="${c.en?'Exam question table':'جدول السؤال'}">${hasHeader?`<thead>${row(0)}</thead>`:''}<tbody>${indices.filter(i=>!(hasHeader&&i===0)).map(row).join('')}</tbody></table>`;
 }
 /* ترتيب العمود (ب) مخلوط بشكل ثابت حسب رقم السؤال حتى لا يتغير مع كل عرض */
 function matchOrder(q){
@@ -1589,12 +1664,32 @@ function examStats(p){
  const scores=questions.map(q=>toNumber(q.score));
  const invalid=scores.filter(v=>!Number.isFinite(v)||v<0).length;
  const empty=questions.filter(q=>!q.prompt?.trim()&&!q.items.some(x=>x.text?.trim())).length;
- return {count:questions.length,marks:scores.reduce((n,v)=>n+(Number.isFinite(v)&&v>=0?v:0),0),invalid,empty};
+ const issues=[];
+ questions.forEach((q,index)=>{
+  const used=q.items.filter(x=>x.text?.trim()||x.choices?.some(t=>t.trim())||x.table||x.image||x.subs?.some(t=>t.trim()));
+  const filled=used.filter(x=>String(x.score??'').trim());
+  if(!filled.length)return; // Assigning branch marks is optional.
+  const values=filled.map(x=>toNumber(x.score));
+  let issue='';
+  if(values.some(n=>!Number.isFinite(n)||n<0))issue='إحدى درجات الأفرع غير صالحة';
+  else if(filled.length!==used.length)issue='بعض الأفرع بلا درجة؛ أكمل توزيع الدرجات';
+  else if(!Number.isFinite(toNumber(q.score))||toNumber(q.score)<0)issue='حدّد درجة السؤال لمقارنتها بدرجات الأفرع';
+  else {
+   const sum=values.reduce((a,b)=>a+b,0),total=toNumber(q.score);
+   if(Math.abs(sum-total)>0.001)issue=`مجموع الأفرع ${sum.toLocaleString('ar-IQ')}، ودرجة السؤال ${total.toLocaleString('ar-IQ')}`;
+  }
+  if(issue)issues.push({id:q.id,number:index+1,message:issue});
+ });
+ return {count:questions.length,marks:scores.reduce((n,v)=>n+(Number.isFinite(v)&&v>=0?v:0),0),invalid,empty,issues};
 }
 function examStatsMarkup(stats){
- return `<span class="stat-main"><b>${stats.count.toLocaleString('ar-IQ')}</b> ${stats.count===1?'سؤال':stats.count<11?'أسئلة':'سؤالاً'}</span><span class="stat-divider"></span><span><b>${stats.marks.toLocaleString('ar-IQ')}</b> مجموع الدرجات</span>${stats.invalid?`<span class="stat-alert">${stats.invalid} درجة غير صالحة</span>`:''}${stats.empty?`<span class="stat-alert">${stats.empty} سؤال غير مكتمل</span>`:''}`;
+ return `<span class="stat-main"><b>${stats.count.toLocaleString('ar-IQ')}</b> ${stats.count===1?'سؤال':stats.count<11?'أسئلة':'سؤالاً'}</span><span class="stat-divider"></span><span><b>${stats.marks.toLocaleString('ar-IQ')}</b> مجموع الدرجات</span>${stats.invalid?`<span class="stat-alert">${stats.invalid} درجة غير صالحة</span>`:''}${stats.empty?`<span class="stat-alert">${stats.empty} سؤال غير مكتمل</span>`:''}${stats.issues.length?`<span class="stat-alert">${stats.issues.length} تنبيه توزيع درجات</span>`:''}`;
 }
-function refreshStats(){const node=document.querySelector('.exam-statline');if(node)node.innerHTML=examStatsMarkup(examStats(P()));}
+function gradeAuditMarkup(stats){
+ if(!stats.issues.length)return '';
+ return `<details class="grade-audit"><summary><span class="grade-audit-icon" aria-hidden="true">!</span> تدقيق درجات الأفرع <b>${stats.issues.length.toLocaleString('ar-IQ')}</b><span class="grade-audit-hint">اضغط لمراجعة الأسئلة</span></summary><div class="grade-audit-body">${stats.issues.map(item=>`<button type="button" data-act="jumpQuestion" data-target="${esc(item.id)}"><b>س${toAr(item.number)}</b><span>${esc(item.message)}</span></button>`).join('')}</div></details>`;
+}
+function refreshStats(){const stats=examStats(P());const node=document.querySelector('.exam-statline');if(node)node.innerHTML=examStatsMarkup(stats);const audit=document.getElementById('gradeAudit');if(audit){const expanded=!!audit.querySelector('details[open]');audit.innerHTML=gradeAuditMarkup(stats);if(expanded&&audit.querySelector('details'))audit.querySelector('details').open=true;}}
 
 const P=()=>S.stages[S.active];
 const ctx=()=>makeCtx(P(),S.active);
@@ -1756,6 +1851,7 @@ function questionsView(p,c){
  return`<div class="pad pad-questions">
   <header class="work-heading"><span class="step-kicker">الخطوة ٢ من ٣</span><div class="bar"><h2>كتابة الأسئلة</h2><button type="button" class="btn soft" data-act="adding" aria-expanded="${UI.adding}">${ic(UI.adding?'x':'plus',18)}${UI.adding?'إغلاق الأنواع':'سؤال جديد'}</button></div><p>كل سؤال في مكانه: اكتب النص، أضف الفروع ثم المعادلة أو الصورة عند الحاجة.</p></header>
   <div class="exam-statline" role="status" aria-live="polite">${examStatsMarkup(stats)}</div>
+  <div id="gradeAudit">${gradeAuditMarkup(stats)}</div>
   ${UI.adding?addSheet():''}
   ${p.questions.length?`<ol class="qlist">${rows}</ol>`:UI.adding?`<p class="pick-hint">اختر نوع السؤال أعلاه. ويمكنك تغيير تنسيقه وتحرير نصه بعد إضافته.</p>`:`<div class="empty write-welcome"><b>ورقتك جاهزة لإضافة أول سؤال</b><span>ابدأ بسؤال من الأنواع الجاهزة، أو اكتب نصاً حرّاً داخل الورقة.</span><button type="button" class="btn primary" data-act="adding">${ic('plus',17)}إضافة السؤال الأول</button><button type="button" class="text-link" data-act="startWriting">أفضّل الكتابة المباشرة</button></div>`}
   <div class="step-footer"><button type="button" class="btn" data-act="startWriting">${ic('pencil',17)}تحرير مباشر</button><button type="button" class="btn primary" data-act="view" data-v="preview">معاينة الورقة ${ic('arrow-left',17)}</button></div>
@@ -1789,14 +1885,20 @@ function choicesEd(path,x,c){
 }
 function tableEd(path,t){
  const pos=UI.tableCells[path]||[0,0],r=Math.min(pos[0],t.rows.length-1),c=Math.min(pos[1],t.rows[0].length-1);
- return`<div class="tbed"><div class="tbed-g" style="--tc:${t.rows[0].length}">${t.rows.map((r,i)=>r.map((v,j)=>rte(`${path}.cell.${i}.${j}`,v,t.head&&i===0?'عنوان':'',t.head&&i===0?'th':'')).join('')).join('')}</div>
-  <div class="tbed-a"><button type="button" class="tb" data-act="tbRow" data-path="${path}" data-d="1" title="إضافة صف">${ic('plus',15)}صف</button><button type="button" class="tb" data-act="tbRow" data-path="${path}" data-d="-1" title="حذف آخر صف"${t.rows.length<2?' disabled':''}>${ic('minus',15)}صف</button>
-  <button type="button" class="tb" data-act="tbCol" data-path="${path}" data-d="1" title="إضافة عمود"${t.rows[0].length>=8?' disabled':''}>${ic('plus',15)}عمود</button><button type="button" class="tb" data-act="tbCol" data-path="${path}" data-d="-1" title="حذف آخر عمود"${t.rows[0].length<2?' disabled':''}>${ic('minus',15)}عمود</button>
+ const cols=t.rows[0].length,ctxNow=ctx();
+ const headers=Array.from({length:cols},(_,i)=>`<span class="tbed-col-head" role="columnheader">${ctxNow.D(String(i+1))}</span>`).join('');
+ const cells=t.rows.map((row,i)=>`<span class="tbed-row-head" role="rowheader">${ctxNow.D(String(i+1))}</span>`+row.map((v,j)=>`<div class="tbed-cell${r===i&&c===j?' current':''}${t.head&&i===0?' table-heading-cell':''}" role="gridcell" aria-label="صف ${i+1}، عمود ${j+1}">${rte(`${path}.cell.${i}.${j}`,v,t.head&&i===0?'عنوان العمود':'محتوى الخلية',t.head&&i===0?'th':'')}</div>`).join('')).join('');
+ return`<section class="tbed" aria-label="محرّر جدول السؤال">
+  <div class="tbed-head"><b>جدول السؤال</b><span>${ctxNow.D(String(t.rows.length))} صفوف × ${ctxNow.D(String(cols))} أعمدة</span></div>
+  <p class="tbed-help">حدد خلية ثم أضف صفًا أو عمودًا قبلها أو بعدها. مرر الجدول أفقيًا عند الحاجة.</p>
+  <div class="tbed-scroll" role="region" tabindex="0" aria-label="خلايا الجدول، يمكن التمرير أفقيًا"><div class="tbed-g" role="grid" style="--tc:${cols}"><span class="tbed-corner" aria-hidden="true">صف / عمود</span>${headers}${cells}</div></div>
+  <div class="tbed-a"><button type="button" class="tb" data-act="tbRow" data-path="${path}" data-d="1" title="إضافة صف"${t.rows.length>=30?' disabled':''}>${ic('plus',15)}صف</button><button type="button" class="tb" data-act="tbRow" data-path="${path}" data-d="-1" title="حذف آخر صف"${t.rows.length<2?' disabled':''}>${ic('minus',15)}صف</button>
+  <button type="button" class="tb" data-act="tbCol" data-path="${path}" data-d="1" title="إضافة عمود"${cols>=10?' disabled':''}>${ic('plus',15)}عمود</button><button type="button" class="tb" data-act="tbCol" data-path="${path}" data-d="-1" title="حذف آخر عمود"${cols<2?' disabled':''}>${ic('minus',15)}عمود</button>
   <span class="sp"></span><button type="button" class="tb danger" data-act="tbDel" data-path="${path}" title="حذف الجدول">${ic('trash-2',15)}</button></div>
   <div class="row wrap">${chk('الصف الأول عناوين',`${path}.table.head`,t.head)}${chk('بعرض السطر كاملاً',`${path}.table.full`,t.full)}</div>
   <div class="opt"><span>محاذاة خلايا الجدول</span>${seg(path+'.table.align',t.align||'center',[['right','يمين'],['center','وسط'],['left','يسار']],'sm')}</div>
-  <details class="table-edit-more"><summary>التحكم بالصف والعمود المحدد</summary><p class="hint" data-cell-info="${path}">الصف ${r+1}، العمود ${c+1}. اضغط على خلية لتحديدها.</p>
-  <div class="table-actions">${[['rowBefore','صف قبله'],['rowAfter','صف بعده'],['colBefore','عمود قبله'],['colAfter','عمود بعده'],['delRow','حذف الصف'],['delCol','حذف العمود']].map(([op,label])=>`<button type="button" class="btn sm${op.startsWith('del')?' danger-t':''}" data-act="tbEdit" data-path="${path}" data-op="${op}">${label}</button>`).join('')}</div></details></div>`;
+  <details class="table-edit-more"><summary>تخصيص الصف والعمود المحدد</summary><p class="hint" data-cell-info="${path}">الصف ${r+1}، العمود ${c+1}. اضغط على خلية لتحديدها.</p>
+  <div class="table-actions">${[['rowBefore','صف قبله'],['rowAfter','صف بعده'],['colBefore','عمود قبله'],['colAfter','عمود بعده'],['delRow','حذف الصف'],['delCol','حذف العمود']].map(([op,label])=>`<button type="button" class="btn sm${op.startsWith('del')?' danger-t':''}" data-act="tbEdit" data-path="${path}" data-op="${op}">${label}</button>`).join('')}</div></details></section>`;
 }
 function subsEd(path,x,c){
  return`<div class="fld"><span>فقرات داخل الفرع</span>${x.subs.map((v,j)=>`<div class="chr"><span class="chn">${esc(c.lab(x.subLabel,j))}</span>${rte(path+'.sub.'+j,v,'فقرة داخلية')}<button type="button" class="ib sm" data-act="subDel" data-path="${path}" data-j="${j}" title="حذف الفقرة">${ic('x',16)}</button></div>`).join('')}
@@ -2268,9 +2370,10 @@ document.addEventListener('click',e=>{
  if(a==='addEqItem'&&q.items.length>=80){toast('الحد ٨٠ فرعاً لكل سؤال');return;}
  if(a==='exAdd'&&q.extra.length>=10){toast('الحد ١٠ إجابات زائدة');return;}
  if(a==='chAdd'){const [,qid,iid]=b.dataset.path.split('.'),x=findQ(qid)?.items.find(i=>i.id===iid);if(x&&x.choices.length>=40){toast('الحد ٤٠ خياراً');return;}}
- if(!['symOpen','symTab','symClose','eqRoot','eqRemove','fmt','rEq','rSym','view','toggle','adding','more','zin','zout','zfit','eq','eqEdit','eqAdd','eqSel','eqMove','eqDel','eqClose','eqOk','eqTab','wz','wzNext','wzBack','wzClose','img','logo','font','open','save','print','wizard','undo','redo'].includes(a))pushHist();
+ if(!['jumpQuestion','symOpen','symTab','symClose','eqRoot','eqRemove','fmt','rEq','rSym','view','toggle','adding','more','zin','zout','zfit','eq','eqEdit','eqAdd','eqSel','eqMove','eqDel','eqClose','eqOk','eqTab','wz','wzNext','wzBack','wzClose','img','logo','font','open','save','print','wizard','undo','redo'].includes(a))pushHist();
  switch(a){
   case'view':setView(b.dataset.v);break;
+  case'jumpQuestion':{const target=b.dataset.target;UI.open=target;UI.view='questions';renderSide();requestAnimationFrame(()=>{$(`.qc[data-qid="${target}"]`)?.scrollIntoView({behavior:'smooth',block:'center'});});break;}
   case'home':showWelcome();break;
   case'continueProject':$('#welcome').hidden=true;UI.view='questions';renderAll();break;
   case'homeNew':openWizard(1);W.newProject=true;renderWizard();break;
@@ -2354,7 +2457,7 @@ document.addEventListener('click',e=>{
 });
 document.addEventListener('focusin',e=>{if(EQ&&e.target.dataset&&e.target.dataset.eq!==undefined&&e.target.type!=='checkbox'){EQ.focusKey=e.target.dataset.eq;EQ.caret=null;}
  const path=e.target.dataset?.r||e.target.dataset?.k,m=path&&/^(it\.[a-z0-9]+\.[a-z0-9]+)\.cell\.(\d+)\.(\d+)$/.exec(path);
- if(m){UI.tableCells[m[1]]=[+m[2],+m[3]];const info=$(`[data-cell-info="${m[1]}"]`);if(info)info.textContent=`الصف ${+m[2]+1}، العمود ${+m[3]+1}. اضغط على خلية لتحديدها.`;}
+ if(m){UI.tableCells[m[1]]=[+m[2],+m[3]];const info=$(`[data-cell-info="${m[1]}"]`);if(info)info.textContent=`الصف ${+m[2]+1}، العمود ${+m[3]+1}. اضغط على خلية لتحديدها.`;const grid=e.target.closest('.tbed-g');if(grid){$$('.tbed-cell.current',grid).forEach(el=>el.classList.remove('current'));e.target.closest('.tbed-cell')?.classList.add('current');}}
 });
 document.addEventListener('input',e=>{
  const el=e.target;

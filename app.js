@@ -281,7 +281,7 @@ function scoreText(raw,en,D,paren){
 const THEMES={
  source:{label:'كحلي'},
  sky:{label:'أزرق سماوي'},
- teal:{label:'أزرق فولاذي'},
+ steel:{label:'أزرق فولاذي'},
  gray:{label:'رمادي'},
  ink:{label:'أسود'}
 };
@@ -456,7 +456,7 @@ function normProject(p,stage){
  meta.logoH=Math.min(40,Math.max(8,meta.logoH));
  const pick=(v,list,d)=>list.includes(v)?v:d;
  const cf=p.customFont&&typeof p.customFont.src==='string'&&/^data:(font\/[\w.+-]+|application\/[\w.+-]+|);base64,[A-Za-z0-9+/]+={0,2}$/.test(p.customFont.src)?{name:str(p.customFont.name,120),src:p.customFont.src}:null;
- const out={meta,style:'source',theme:pick(p.theme,Object.keys(THEMES),'source'),font:pick(p.font,Object.keys(FONTS),'sans'),customFont:cf,
+ const out={meta,style:'source',theme:pick(p.theme==='teal'?'steel':p.theme,Object.keys(THEMES),'source'),font:pick(p.font,Object.keys(FONTS),'sans'),customFont:cf,
   size:pick(+p.size,[13,14,15],13),density:pick(p.density,['tight','normal','airy'],'normal'),digits:pick(p.digits,['auto','arabic','latin'],'auto'),dir:pick(p.dir,['auto','rtl','ltr'],'auto'),
   qStyle:pick(p.qStyle,Object.keys(QSTYLES),'slash'),rules:p.rules!==false,fit:p.fit!==false,pristine:!!p.pristine,questions:(Array.isArray(p.questions)?p.questions:[]).slice(0,80).map(normQ).filter(Boolean)};
  const ids=new Set();const unique=x=>{while(ids.has(x.id))x.id=uid();ids.add(x.id);};
@@ -547,7 +547,9 @@ function tableHTML(t,c,path,part){
  const from=part?.from??0,to=part?.to??t.rows.length;
  const indices=Array.from({length:Math.max(0,to-from)},(_,i)=>from+i);
  if(part?.cont&&t.head&&from>0)indices.unshift(0);
- return`<table class="qtab${t.full?' full':' ctr'}" data-table="${path}" style="--ta:${t.align||'center'}">${indices.map(i=>{const r=t.rows[i];return`<tr data-table-row="${i}">${r.map((v,j)=>{const tg=t.head&&i===0?'th':'td';return`<${tg}>${ed(c,`${path}.cell.${i}.${j}`,v)}</${tg}>`;}).join('')}</tr>`;}).join('')}</table>`;
+ const hasHeader=t.head&&indices.includes(0);
+ const row=i=>`<tr data-table-row="${i}">${t.rows[i].map((v,j)=>{const tag=hasHeader&&i===0?'th':'td';return`<${tag}${tag==='th'?' scope="col"':''}>${ed(c,`${path}.cell.${i}.${j}`,v)}</${tag}>`;}).join('')}</tr>`;
+ return`<table class="qtab${t.full?' full':' ctr'}" data-table="${path}" style="--ta:${t.align||'center'}" aria-label="${c.en?'Exam question table':'جدول السؤال'}">${hasHeader?`<thead>${row(0)}</thead>`:''}<tbody>${indices.filter(i=>!(hasHeader&&i===0)).map(row).join('')}</tbody></table>`;
 }
 /* ترتيب العمود (ب) مخلوط بشكل ثابت حسب رقم السؤال حتى لا يتغير مع كل عرض */
 function matchOrder(q){
@@ -614,12 +616,32 @@ function examStats(p){
  const scores=questions.map(q=>toNumber(q.score));
  const invalid=scores.filter(v=>!Number.isFinite(v)||v<0).length;
  const empty=questions.filter(q=>!q.prompt?.trim()&&!q.items.some(x=>x.text?.trim())).length;
- return {count:questions.length,marks:scores.reduce((n,v)=>n+(Number.isFinite(v)&&v>=0?v:0),0),invalid,empty};
+ const issues=[];
+ questions.forEach((q,index)=>{
+  const used=q.items.filter(x=>x.text?.trim()||x.choices?.some(t=>t.trim())||x.table||x.image||x.subs?.some(t=>t.trim()));
+  const filled=used.filter(x=>String(x.score??'').trim());
+  if(!filled.length)return; // Assigning branch marks is optional.
+  const values=filled.map(x=>toNumber(x.score));
+  let issue='';
+  if(values.some(n=>!Number.isFinite(n)||n<0))issue='إحدى درجات الأفرع غير صالحة';
+  else if(filled.length!==used.length)issue='بعض الأفرع بلا درجة؛ أكمل توزيع الدرجات';
+  else if(!Number.isFinite(toNumber(q.score))||toNumber(q.score)<0)issue='حدّد درجة السؤال لمقارنتها بدرجات الأفرع';
+  else {
+   const sum=values.reduce((a,b)=>a+b,0),total=toNumber(q.score);
+   if(Math.abs(sum-total)>0.001)issue=`مجموع الأفرع ${sum.toLocaleString('ar-IQ')}، ودرجة السؤال ${total.toLocaleString('ar-IQ')}`;
+  }
+  if(issue)issues.push({id:q.id,number:index+1,message:issue});
+ });
+ return {count:questions.length,marks:scores.reduce((n,v)=>n+(Number.isFinite(v)&&v>=0?v:0),0),invalid,empty,issues};
 }
 function examStatsMarkup(stats){
- return `<span class="stat-main"><b>${stats.count.toLocaleString('ar-IQ')}</b> ${stats.count===1?'سؤال':stats.count<11?'أسئلة':'سؤالاً'}</span><span class="stat-divider"></span><span><b>${stats.marks.toLocaleString('ar-IQ')}</b> مجموع الدرجات</span>${stats.invalid?`<span class="stat-alert">${stats.invalid} درجة غير صالحة</span>`:''}${stats.empty?`<span class="stat-alert">${stats.empty} سؤال غير مكتمل</span>`:''}`;
+ return `<span class="stat-main"><b>${stats.count.toLocaleString('ar-IQ')}</b> ${stats.count===1?'سؤال':stats.count<11?'أسئلة':'سؤالاً'}</span><span class="stat-divider"></span><span><b>${stats.marks.toLocaleString('ar-IQ')}</b> مجموع الدرجات</span>${stats.invalid?`<span class="stat-alert">${stats.invalid} درجة غير صالحة</span>`:''}${stats.empty?`<span class="stat-alert">${stats.empty} سؤال غير مكتمل</span>`:''}${stats.issues.length?`<span class="stat-alert">${stats.issues.length} تنبيه توزيع درجات</span>`:''}`;
 }
-function refreshStats(){const node=document.querySelector('.exam-statline');if(node)node.innerHTML=examStatsMarkup(examStats(P()));}
+function gradeAuditMarkup(stats){
+ if(!stats.issues.length)return '';
+ return `<details class="grade-audit"><summary><span class="grade-audit-icon" aria-hidden="true">!</span> تدقيق درجات الأفرع <b>${stats.issues.length.toLocaleString('ar-IQ')}</b><span class="grade-audit-hint">اضغط لمراجعة الأسئلة</span></summary><div class="grade-audit-body">${stats.issues.map(item=>`<button type="button" data-act="jumpQuestion" data-target="${esc(item.id)}"><b>س${toAr(item.number)}</b><span>${esc(item.message)}</span></button>`).join('')}</div></details>`;
+}
+function refreshStats(){const stats=examStats(P());const node=document.querySelector('.exam-statline');if(node)node.innerHTML=examStatsMarkup(stats);const audit=document.getElementById('gradeAudit');if(audit){const expanded=!!audit.querySelector('details[open]');audit.innerHTML=gradeAuditMarkup(stats);if(expanded&&audit.querySelector('details'))audit.querySelector('details').open=true;}}
 
 const P=()=>S.stages[S.active];
 const ctx=()=>makeCtx(P(),S.active);
@@ -781,6 +803,7 @@ function questionsView(p,c){
  return`<div class="pad pad-questions">
   <header class="work-heading"><span class="step-kicker">الخطوة ٢ من ٣</span><div class="bar"><h2>كتابة الأسئلة</h2><button type="button" class="btn soft" data-act="adding" aria-expanded="${UI.adding}">${ic(UI.adding?'x':'plus',18)}${UI.adding?'إغلاق الأنواع':'سؤال جديد'}</button></div><p>كل سؤال في مكانه: اكتب النص، أضف الفروع ثم المعادلة أو الصورة عند الحاجة.</p></header>
   <div class="exam-statline" role="status" aria-live="polite">${examStatsMarkup(stats)}</div>
+  <div id="gradeAudit">${gradeAuditMarkup(stats)}</div>
   ${UI.adding?addSheet():''}
   ${p.questions.length?`<ol class="qlist">${rows}</ol>`:UI.adding?`<p class="pick-hint">اختر نوع السؤال أعلاه. ويمكنك تغيير تنسيقه وتحرير نصه بعد إضافته.</p>`:`<div class="empty write-welcome"><b>ورقتك جاهزة لإضافة أول سؤال</b><span>ابدأ بسؤال من الأنواع الجاهزة، أو اكتب نصاً حرّاً داخل الورقة.</span><button type="button" class="btn primary" data-act="adding">${ic('plus',17)}إضافة السؤال الأول</button><button type="button" class="text-link" data-act="startWriting">أفضّل الكتابة المباشرة</button></div>`}
   <div class="step-footer"><button type="button" class="btn" data-act="startWriting">${ic('pencil',17)}تحرير مباشر</button><button type="button" class="btn primary" data-act="view" data-v="preview">معاينة الورقة ${ic('arrow-left',17)}</button></div>
@@ -814,14 +837,20 @@ function choicesEd(path,x,c){
 }
 function tableEd(path,t){
  const pos=UI.tableCells[path]||[0,0],r=Math.min(pos[0],t.rows.length-1),c=Math.min(pos[1],t.rows[0].length-1);
- return`<div class="tbed"><div class="tbed-g" style="--tc:${t.rows[0].length}">${t.rows.map((r,i)=>r.map((v,j)=>rte(`${path}.cell.${i}.${j}`,v,t.head&&i===0?'عنوان':'',t.head&&i===0?'th':'')).join('')).join('')}</div>
-  <div class="tbed-a"><button type="button" class="tb" data-act="tbRow" data-path="${path}" data-d="1" title="إضافة صف">${ic('plus',15)}صف</button><button type="button" class="tb" data-act="tbRow" data-path="${path}" data-d="-1" title="حذف آخر صف"${t.rows.length<2?' disabled':''}>${ic('minus',15)}صف</button>
-  <button type="button" class="tb" data-act="tbCol" data-path="${path}" data-d="1" title="إضافة عمود"${t.rows[0].length>=8?' disabled':''}>${ic('plus',15)}عمود</button><button type="button" class="tb" data-act="tbCol" data-path="${path}" data-d="-1" title="حذف آخر عمود"${t.rows[0].length<2?' disabled':''}>${ic('minus',15)}عمود</button>
+ const cols=t.rows[0].length,ctxNow=ctx();
+ const headers=Array.from({length:cols},(_,i)=>`<span class="tbed-col-head" role="columnheader">${ctxNow.D(String(i+1))}</span>`).join('');
+ const cells=t.rows.map((row,i)=>`<span class="tbed-row-head" role="rowheader">${ctxNow.D(String(i+1))}</span>`+row.map((v,j)=>`<div class="tbed-cell${r===i&&c===j?' current':''}${t.head&&i===0?' table-heading-cell':''}" role="gridcell" aria-label="صف ${i+1}، عمود ${j+1}">${rte(`${path}.cell.${i}.${j}`,v,t.head&&i===0?'عنوان العمود':'محتوى الخلية',t.head&&i===0?'th':'')}</div>`).join('')).join('');
+ return`<section class="tbed" aria-label="محرّر جدول السؤال">
+  <div class="tbed-head"><b>جدول السؤال</b><span>${ctxNow.D(String(t.rows.length))} صفوف × ${ctxNow.D(String(cols))} أعمدة</span></div>
+  <p class="tbed-help">حدد خلية ثم أضف صفًا أو عمودًا قبلها أو بعدها. مرر الجدول أفقيًا عند الحاجة.</p>
+  <div class="tbed-scroll" role="region" tabindex="0" aria-label="خلايا الجدول، يمكن التمرير أفقيًا"><div class="tbed-g" role="grid" style="--tc:${cols}"><span class="tbed-corner" aria-hidden="true">صف / عمود</span>${headers}${cells}</div></div>
+  <div class="tbed-a"><button type="button" class="tb" data-act="tbRow" data-path="${path}" data-d="1" title="إضافة صف"${t.rows.length>=30?' disabled':''}>${ic('plus',15)}صف</button><button type="button" class="tb" data-act="tbRow" data-path="${path}" data-d="-1" title="حذف آخر صف"${t.rows.length<2?' disabled':''}>${ic('minus',15)}صف</button>
+  <button type="button" class="tb" data-act="tbCol" data-path="${path}" data-d="1" title="إضافة عمود"${cols>=10?' disabled':''}>${ic('plus',15)}عمود</button><button type="button" class="tb" data-act="tbCol" data-path="${path}" data-d="-1" title="حذف آخر عمود"${cols<2?' disabled':''}>${ic('minus',15)}عمود</button>
   <span class="sp"></span><button type="button" class="tb danger" data-act="tbDel" data-path="${path}" title="حذف الجدول">${ic('trash-2',15)}</button></div>
   <div class="row wrap">${chk('الصف الأول عناوين',`${path}.table.head`,t.head)}${chk('بعرض السطر كاملاً',`${path}.table.full`,t.full)}</div>
   <div class="opt"><span>محاذاة خلايا الجدول</span>${seg(path+'.table.align',t.align||'center',[['right','يمين'],['center','وسط'],['left','يسار']],'sm')}</div>
-  <details class="table-edit-more"><summary>التحكم بالصف والعمود المحدد</summary><p class="hint" data-cell-info="${path}">الصف ${r+1}، العمود ${c+1}. اضغط على خلية لتحديدها.</p>
-  <div class="table-actions">${[['rowBefore','صف قبله'],['rowAfter','صف بعده'],['colBefore','عمود قبله'],['colAfter','عمود بعده'],['delRow','حذف الصف'],['delCol','حذف العمود']].map(([op,label])=>`<button type="button" class="btn sm${op.startsWith('del')?' danger-t':''}" data-act="tbEdit" data-path="${path}" data-op="${op}">${label}</button>`).join('')}</div></details></div>`;
+  <details class="table-edit-more"><summary>تخصيص الصف والعمود المحدد</summary><p class="hint" data-cell-info="${path}">الصف ${r+1}، العمود ${c+1}. اضغط على خلية لتحديدها.</p>
+  <div class="table-actions">${[['rowBefore','صف قبله'],['rowAfter','صف بعده'],['colBefore','عمود قبله'],['colAfter','عمود بعده'],['delRow','حذف الصف'],['delCol','حذف العمود']].map(([op,label])=>`<button type="button" class="btn sm${op.startsWith('del')?' danger-t':''}" data-act="tbEdit" data-path="${path}" data-op="${op}">${label}</button>`).join('')}</div></details></section>`;
 }
 function subsEd(path,x,c){
  return`<div class="fld"><span>فقرات داخل الفرع</span>${x.subs.map((v,j)=>`<div class="chr"><span class="chn">${esc(c.lab(x.subLabel,j))}</span>${rte(path+'.sub.'+j,v,'فقرة داخلية')}<button type="button" class="ib sm" data-act="subDel" data-path="${path}" data-j="${j}" title="حذف الفقرة">${ic('x',16)}</button></div>`).join('')}
@@ -1293,9 +1322,10 @@ document.addEventListener('click',e=>{
  if(a==='addEqItem'&&q.items.length>=80){toast('الحد ٨٠ فرعاً لكل سؤال');return;}
  if(a==='exAdd'&&q.extra.length>=10){toast('الحد ١٠ إجابات زائدة');return;}
  if(a==='chAdd'){const [,qid,iid]=b.dataset.path.split('.'),x=findQ(qid)?.items.find(i=>i.id===iid);if(x&&x.choices.length>=40){toast('الحد ٤٠ خياراً');return;}}
- if(!['symOpen','symTab','symClose','eqRoot','eqRemove','fmt','rEq','rSym','view','toggle','adding','more','zin','zout','zfit','eq','eqEdit','eqAdd','eqSel','eqMove','eqDel','eqClose','eqOk','eqTab','wz','wzNext','wzBack','wzClose','img','logo','font','open','save','print','wizard','undo','redo'].includes(a))pushHist();
+ if(!['jumpQuestion','symOpen','symTab','symClose','eqRoot','eqRemove','fmt','rEq','rSym','view','toggle','adding','more','zin','zout','zfit','eq','eqEdit','eqAdd','eqSel','eqMove','eqDel','eqClose','eqOk','eqTab','wz','wzNext','wzBack','wzClose','img','logo','font','open','save','print','wizard','undo','redo'].includes(a))pushHist();
  switch(a){
   case'view':setView(b.dataset.v);break;
+  case'jumpQuestion':{const target=b.dataset.target;UI.open=target;UI.view='questions';renderSide();requestAnimationFrame(()=>{$(`.qc[data-qid="${target}"]`)?.scrollIntoView({behavior:'smooth',block:'center'});});break;}
   case'home':showWelcome();break;
   case'continueProject':$('#welcome').hidden=true;UI.view='questions';renderAll();break;
   case'homeNew':openWizard(1);W.newProject=true;renderWizard();break;
@@ -1379,7 +1409,7 @@ document.addEventListener('click',e=>{
 });
 document.addEventListener('focusin',e=>{if(EQ&&e.target.dataset&&e.target.dataset.eq!==undefined&&e.target.type!=='checkbox'){EQ.focusKey=e.target.dataset.eq;EQ.caret=null;}
  const path=e.target.dataset?.r||e.target.dataset?.k,m=path&&/^(it\.[a-z0-9]+\.[a-z0-9]+)\.cell\.(\d+)\.(\d+)$/.exec(path);
- if(m){UI.tableCells[m[1]]=[+m[2],+m[3]];const info=$(`[data-cell-info="${m[1]}"]`);if(info)info.textContent=`الصف ${+m[2]+1}، العمود ${+m[3]+1}. اضغط على خلية لتحديدها.`;}
+ if(m){UI.tableCells[m[1]]=[+m[2],+m[3]];const info=$(`[data-cell-info="${m[1]}"]`);if(info)info.textContent=`الصف ${+m[2]+1}، العمود ${+m[3]+1}. اضغط على خلية لتحديدها.`;const grid=e.target.closest('.tbed-g');if(grid){$$('.tbed-cell.current',grid).forEach(el=>el.classList.remove('current'));e.target.closest('.tbed-cell')?.classList.add('current');}}
 });
 document.addEventListener('input',e=>{
  const el=e.target;
