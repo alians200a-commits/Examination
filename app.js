@@ -281,7 +281,7 @@ function scoreText(raw,en,D,paren){
 const THEMES={
  source:{label:'كحلي'},
  sky:{label:'أزرق سماوي'},
- teal:{label:'فيروزي'},
+ teal:{label:'أزرق فولاذي'},
  gray:{label:'رمادي'},
  ink:{label:'أسود'}
 };
