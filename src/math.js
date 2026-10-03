@@ -1,5 +1,5 @@
 /* ===== محرك الرياضيات: صيغة LaTeX مبسطة تُرسم HTML حقيقي ===== */
-const SYM={times:'×',div:'÷',pm:'±',mp:'∓',cdot:'·',le:'≤',leq:'≤',ge:'≥',geq:'≥',ne:'≠',neq:'≠',approx:'≈',equiv:'≡',sim:'~',to:'→',rightarrow:'→',leftarrow:'←',Rightarrow:'⇒',Leftrightarrow:'⇔',leftrightarrow:'↔',rightleftharpoons:'⇌',lor:'∨',land:'∧',neg:'~',lnot:'~',cap:'∩',cup:'∪',in:'∈',notin:'∉',subset:'⊂',subseteq:'⊆',supset:'⊃',emptyset:'∅',varnothing:'∅',infty:'∞',angle:'∠',triangle:'△',degree:'°',circ:'°',perp:'⊥',parallel:'∥',therefore:'∴',because:'∵',forall:'∀',exists:'∃',sum:'∑',int:'∫',prod:'∏',partial:'∂',nabla:'∇',prime:'′',ldots:'…',cdots:'⋯',
+const SYM={times:'×',div:'÷',pm:'±',mp:'∓',cdot:'·',le:'≤',leq:'≤',ge:'≥',geq:'≥',ne:'≠',neq:'≠',approx:'≈',equiv:'≡',sim:'~',to:'→',rightarrow:'→',leftarrow:'←',Rightarrow:'⇒',Leftrightarrow:'⇔',leftrightarrow:'↔',rightleftharpoons:'⇌',lor:'∨',land:'∧',neg:'~',lnot:'~',cap:'∩',cup:'∪',in:'∈',notin:'∉',subset:'⊂',subseteq:'⊆',supset:'⊃',emptyset:'∅',varnothing:'∅',infty:'∞',angle:'∠',triangle:'△',degree:'°',circ:'°',perp:'⊥',parallel:'∥',therefore:'∴',because:'∵',forall:'∀',exists:'∃',sum:'∑',int:'∫',prod:'∏',iint:'∬',iiint:'∭',oint:'∮',partial:'∂',nabla:'∇',prime:'′',ldots:'…',cdots:'⋯',
  alpha:'α',beta:'β',gamma:'γ',delta:'δ',epsilon:'ε',theta:'θ',lambda:'λ',mu:'μ',pi:'π',rho:'ρ',sigma:'σ',tau:'τ',phi:'φ',omega:'ω',Delta:'Δ',Gamma:'Γ',Theta:'Θ',Lambda:'Λ',Pi:'Π',Sigma:'Σ',Phi:'Φ',Omega:'Ω'};
 Object.assign(SYM,{varepsilon:'ε',vartheta:'ϑ',varphi:'φ',eta:'η',kappa:'κ',nu:'ν',xi:'ξ',chi:'χ',psi:'ψ',zeta:'ζ',Psi:'Ψ',ell:'ℓ',AA:'Å',deg:'°',permil:'‰',bullet:'•',star:'⋆',leftrightharpoons:'⇋',rightharpoonup:'⇀',mapsto:'↦',implies:'⇒',iff:'⇔',ni:'∋',setminus:'∖',sqcup:'⊔',top:'⊤',bot:'⊥',cong:'≅',simeq:'≃',ll:'≪',gg:'≫',dagger:'†',measuredangle:'∡',square:'□',Box:'□',lozenge:'◊'});
 Object.assign(SYM,{uparrow:'↑',downarrow:'↓',longrightarrow:'⟶',longleftarrow:'⟵',Leftarrow:'⇐',nearrow:'↗',searrow:'↘',propto:'∝',hbar:'ℏ',ohm:'Ω'});
@@ -36,12 +36,29 @@ function texToHTML(src,lang){
    switch(name){
     case'frac':case'dfrac':case'tfrac':{const a=braced(),b=braced();return`<span class="mf"><span>${cell(a)}</span><span>${cell(b)}</span></span>`;}
     case'sqrt':{sp();let n='';if(s[i]==='['){i++;n=group(()=>s[i]===']');i++;}const x=braced();const deg=n&&!/^\s*[2٢]\s*$/.test(n);return`<span class="mr${deg?' ix':''}">${deg?`<span class="mr-i">${n}</span>`:''}<span class="mr-s">${rootSVG()}</span><span class="mr-u">${cell(x)}</span></span>`;}
+    case'binom':{const a=braced(),b=braced();return`<span class="mbinom"><span class="mbinom-br">${fenceSVG('(')}</span><span class="mbinom-stack"><span>${cell(a)}</span><span>${cell(b)}</span></span><span class="mbinom-br">${fenceSVG(')')}</span></span>`;}
+    case'mat':case'detmatrix':{
+      const nr=Number(rawBraced()),nc=Number(rawBraced()),style=name==='detmatrix'?'v':rawBraced();
+      if(!Number.isInteger(nr)||!Number.isInteger(nc)||nr<1||nc<1||nr>4||nc>4||!['p','b','v','n'].includes(style))return'<span class="math-error">مصفوفة غير صالحة</span>';
+      const data=[];for(let k=0;k<nr*nc;k++){sp();if(s[i]!=='{')return'<span class="math-error">مصفوفة غير مكتملة</span>';data.push(rawBraced());}
+      const l=style==='p'?'(':style==='b'?'[':'',r=style==='p'?')':style==='b'?']':'';
+      return`<span class="mmat mmat-${style}" role="math" aria-label="${style==='v'?'محدد':'مصفوفة'} ${nr} × ${nc}">${l?`<span class="mmat-br">${fenceSVG(l)}</span>`:''}<span class="mmat-grid" style="grid-template-columns:repeat(${nc},minmax(0,max-content));direction:${lang==='ar'?'rtl':'ltr'}">${data.map(v=>`<span class="mmat-cell">${cell(texToHTML(v,lang))}</span>`).join('')}</span>${r?`<span class="mmat-br">${fenceSVG(r)}</span>`:''}</span>`;
+    }
+    case'cases':case'aligned':{
+      const nr=Number(rawBraced());if(!Number.isInteger(nr)||nr<1||nr>6)return'<span class="math-error">عدد أسطر غير صالح</span>';
+      const data=[];for(let k=0;k<nr;k++){sp();if(s[i]!=='{')return'<span class="math-error">أسطر غير مكتملة</span>';const a=rawBraced();sp();if(s[i]!=='{')return'<span class="math-error">أسطر غير مكتملة</span>';data.push([a,rawBraced()]);}
+      return name==='cases'?`<span class="mcases"><span class="mcases-br">${fenceSVG('{')}</span><span class="mcases-grid">${data.map(pair=>`<span class="mcases-row"><span>${cell(texToHTML(pair[0],lang))}</span><span class="mcases-cond">${pair[1]?texToHTML(pair[1],lang):''}</span></span>`).join('')}</span></span>`:
+        `<span class="maligned">${data.map(pair=>`<span class="maligned-row"><span>${cell(texToHTML(pair[0],lang))}</span><span>${cell(texToHTML(pair[1],lang))}</span></span>`).join('')}</span>`;
+    }
+    case'overbrace':case'underbrace':{
+      const body=braced(),label=braced();return`<span class="mbrace mbrace-${name==='overbrace'?'over':'under'}">${name==='overbrace'?`<span class="mbrace-label">${label}</span>`:''}<span class="mbrace-main">${cell(body)}</span>${name==='underbrace'?`<span class="mbrace-label">${label}</span>`:''}</span>`;
+    }
     case'isotope':{const a=braced(),z=braced(),x=braced().replace(/<\/?i>/g,'');return`<span class="miso"><span class="mss pre"><span>${a}</span><span>${z}</span></span>${x}</span>`;}
     case'system':{const a=braced(),b=braced();return`<span class="mfence msys-w"><span class="mfz">${fenceSVG('{')}</span><span class="msys"><span>${a}</span><span>${b}</span></span></span>`;}
-    case'lim':return`<span class="mlim mfn">${lang==='ar'?'نها':'lim'}</span>`;
+    case'lim':case'limsup':case'liminf':return`<span class="mlim mfn">${name==='lim'?(lang==='ar'?'نها':'lim'):name==='limsup'?'lim sup':'lim inf'}</span>`;
     case'sum':return`<span class="mlim mbig">∑</span>`;
     case'prod':return`<span class="mlim mbig">∏</span>`;
-    case'int':return`<span class="mint">∫</span>`;
+    case'int':case'iint':case'iiint':return`<span class="mint">${name==='int'?'∫':name==='iint'?'∬':'∭'}</span>`;
     case'oint':return`<span class="mint">∮</span>`;
     case'dot':return`<span class="mdot">${braced()}</span>`;
     case'hat':return`<span class="mhat">${braced()}</span>`;
@@ -206,6 +223,15 @@ function parseLegacyPieces(tex){
  }
  flush();return out;
 }
+function matTex(p){
+ const r=Math.max(1,Math.min(4,Number(p.r)||2)),c=Math.max(1,Math.min(4,Number(p.c)||2));
+ const style=p.t==='det'?'v':(['p','b','v','n'].includes(p.style)?p.style:'p');
+ return`\\mat{${r}}{${c}}{${style}}`+Array.from({length:r*c},(_,i)=>`{${p.cells?.[i]??''}}`).join('');
+}
+function rowsTex(p){
+ const n=Math.max(1,Math.min(6,Number(p.n)||2));
+ return`\\${p.t}{${n}}`+Array.from({length:n},(_,i)=>`{${p.lines?.[i]?.[0]??''}}{${p.lines?.[i]?.[1]??''}}`).join('');
+}
 function piecesToTex(ps){
  return ps.map(p=>({text:()=>p.v,frac:()=>`\\frac{${p.a}}{${p.b}}`,mixed:()=>`{${p.w}}\\frac{${p.a}}{${p.b}}`,sqrt:()=>`\\sqrt{${p.x}}`,nroot:()=>`\\sqrt[${p.n}]{${p.x}}`,root:()=>p.n&&!/^\s*[2٢]?\s*$/.test(p.n)?`\\sqrt[${p.n}]{${p.x}}`:`\\sqrt{${p.x}}`,
   unit:()=>`\\qty{${p.v}}{${p.u}}`,iso:()=>`\\isotope{${p.a}}{${p.z}}{${p.x}}`,sys:()=>`\\system{${p.a}}{${p.b}}`,log:()=>`\\log_{${p.b}}{${p.x}}`,lim:()=>`\\lim_{${p.v} \\to ${p.a}}{${p.x}}`,
@@ -217,6 +243,16 @@ function piecesToTex(ps){
   partialderiv:()=>`\\frac{\\partial}{\\partial ${p.v}}\\left(${p.f}\\right)`,
   intindef:()=>`\\int{${p.f}}\\,${p.d}${p.v}`,
   intdef:()=>`\\int_{${p.a}}^{${p.b}}{${p.f}}\\,${p.d}${p.v}`,
+  iint:()=>`\\iint${p.a?`_{${p.a}}`:''}${p.b?`^{${p.b}}`:''}{${p.f}}\\,${p.d}${p.v}`,
+  iiint:()=>`\\iiint${p.a?`_{${p.a}}`:''}${p.b?`^{${p.b}}`:''}{${p.f}}\\,${p.d}${p.v}`,
+  oint:()=>`\\oint${p.a?`_{${p.a}}`:''}${p.b?`^{${p.b}}`:''}{${p.f}}\\,${p.d}${p.v}`,
+  derivn:()=>`\\frac{${p.d}^{${p.n}}}{${p.d}${p.v}^{${p.n}}}\\left(${p.f}\\right)`,
+  partialn:()=>`\\frac{\\partial^{${p.n}}}{\\partial ${p.v}^{${p.n}}}\\left(${p.f}\\right)`,
+  matrix:()=>matTex(p),det:()=>matTex(p),cases:()=>rowsTex(p),aligned:()=>rowsTex(p),
+  binom:()=>`\\binom{${p.a}}{${p.b}}`,
+  overbrace:()=>`\\overbrace{${p.x}}{${p.l}}`,underbrace:()=>`\\underbrace{${p.x}}{${p.l}}`,
+  limsup:()=>`\\limsup_{${p.v} \\to ${p.a}}{${p.x}}`,liminf:()=>`\\liminf_{${p.v} \\to ${p.a}}{${p.x}}`,
+  prod:()=>`\\prod_{${p.a}}^{${p.b}}{${p.x}}`,
   sum:()=>`\\sum_{${p.a}}^{${p.b}}{${p.x}}`,bar:()=>`\\overline{${p.x}}`,ppow:()=>`{\\left( ${p.x} \\right)}^{${p.e}}`,
   pow:()=>`{${p.x}}^{${p.e}}`,sub:()=>`{${p.x}}_{${p.s}}`,powsub:()=>`{${p.x}}^{${p.e}}_{${p.s}}`,longdiv:()=>`\\longdiv{${p.a}}{${p.b}}{${p.q}}{${p.steps?1:0}}`,
   arrow:()=>`\\${p.rev?'xrightleftharpoons':'xrightarrow'}${p.b?`[${p.b}]`:''}{${p.a}}`,vec:()=>`\\vec{${p.x}}`,abs:()=>`\\left| ${p.x} \\right|`,paren:()=>`\\left( ${p.x} \\right)`,chem:()=>`\\ce{${p.x}}`}[p.t]||(()=>''))()).join(' ');
@@ -235,6 +271,36 @@ function texProblem(tex){
    Compare with the canonical serialization to avoid silently mangling user-edited expressions. */
 function parseAdvancedPiece(raw){
  const s=String(raw||'').trim();let p=null;
+ if(s.startsWith('\\prod_{')){let i=6,a,b='',x;[a,i]=readGroup(s,i);if(s[i]==='^')[b,i]=readGroup(s,i+1);[x,i]=readGroup(s,i);if(i===s.length)p={t:'prod',a,b,x};}
+ const matrix=/^\\(?:mat|detmatrix)\{/.test(s);
+ if(matrix){
+   const cmd=s.startsWith('\\detmatrix')?'detmatrix':'mat';let i=cmd==='detmatrix'?10:4,r,c,style;
+   [r,i]=readGroup(s,i);[c,i]=readGroup(s,i);if(cmd==='mat')[style,i]=readGroup(s,i);else style='v';
+   const rows=Number(r),cols=Number(c);if(Number.isInteger(rows)&&Number.isInteger(cols)&&rows>=1&&rows<=4&&cols>=1&&cols<=4&&['p','b','v','n'].includes(style)){
+     const cells=[];for(let j=0;j<rows*cols;j++){let val;[val,i]=readGroup(s,i);if(val===null)return null;cells.push(val);}
+     if(i===s.length)p={t:style==='v'?'det':'matrix',r:String(rows),c:String(cols),style,cells};
+   }
+ }
+ const layout=/^\\(?:cases|aligned)\{/.test(s);
+ if(layout){
+   const cmd=s.startsWith('\\cases')?'cases':'aligned';let i=cmd==='cases'?6:8,n;[n,i]=readGroup(s,i);const count=Number(n);
+   if(Number.isInteger(count)&&count>=1&&count<=6){const lines=[];
+     for(let j=0;j<count;j++){let a,b;[a,i]=readGroup(s,i);[b,i]=readGroup(s,i);if(a===null||b===null)return null;lines.push([a,b]);}
+     if(i===s.length)p={t:cmd,n:String(count),lines};
+   }
+ }
+ const choose=/^\\binom\{/.test(s);
+ if(choose){let a,b,i;[a,i]=readGroup(s,6);[b,i]=readGroup(s,i);if(i===s.length)p={t:'binom',a,b};}
+ const braces=/^\\(?:overbrace|underbrace)\{/.exec(s);
+ if(braces){const cmd=s.startsWith('\\overbrace')?'overbrace':'underbrace';let a,b,i;[a,i]=readGroup(s,cmd.length+1);[b,i]=readGroup(s,i);if(i===s.length)p={t:cmd,x:a,l:b};}
+ const multi=/^\\(iint|iiint|oint)(?:_\{([^{}]+)\})?(?:\^\{([^{}]+)\})?\{([\s\S]*)\}\\,(d|د)(.+)$/.exec(s);
+ if(multi)p={t:multi[1],a:multi[2]||'',b:multi[3]||'',f:multi[4],d:multi[5],v:multi[6]};
+ const nth=/^\\frac\{(d|د)\^\{([^{}]+)\}\}\{\1([^{}]+)\^\{\2\}\}\\left\(([\s\S]*)\\right\)$/.exec(s);
+ if(nth)p={t:'derivn',d:nth[1],n:nth[2],v:nth[3],f:nth[4]};
+ const pnth=/^\\frac\{\\partial\^\{([^{}]+)\}\}\{\\partial ([^{}]+)\^\{\1\}\}\\left\(([\s\S]*)\\right\)$/.exec(s);
+ if(pnth)p={t:'partialn',n:pnth[1],v:pnth[2],f:pnth[3]};
+ const limsup=/^\\(limsup|liminf)_\{([^{}]+) \\to ([^{}]+)\}\{([\s\S]*)\}$/.exec(s);
+ if(limsup)p={t:limsup[1],v:limsup[2],a:limsup[3],x:limsup[4]};
  const tr=/^\\(sin|cos|tan|cot|sec|csc|arcsin|arccos|arctan)(?:\^\{([^{}]+)\})?\{([\s\S]*)\}$/.exec(s);
  if(tr)p={t:'trig',fn:tr[1],e:tr[2]||'',x:tr[3]};
  const id=/^\\sin\^\{2\}\{([\s\S]+)\}\+\\cos\^\{2\}\{\1\}=1$/.exec(s);

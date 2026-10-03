@@ -205,3 +205,25 @@
 
 /* Mathematical typography stays consistently dark in preview and in exported PDF. */
 @media print{.mx,.mx .mfn,.mx .mint,.mx .mf,.mx .mr{color:#101828!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+
+/* v18 printable advanced mathematics — dark, proportional and never green */
+.mx .mmat,.mx .mcases,.mx .maligned,.mx .mbinom{display:inline-flex;align-items:stretch;vertical-align:middle;max-width:100%;margin:0 .11em;font-weight:700;color:#101828}
+.mx .mmat-grid{display:grid;align-content:center;justify-items:center;align-items:center;gap:.28em .52em;padding:.16em .25em;max-width:100%}
+.mx .mmat-cell{display:flex;min-width:1.4em;justify-content:center;align-items:center;white-space:nowrap}
+.mx .mmat-br,.mx .mcases-br,.mx .mbinom-br{display:flex;align-self:stretch;flex:none;width:.44em;min-height:2.2em}
+.mx .mmat-br svg,.mx .mcases-br svg,.mx .mbinom-br svg{width:100%;height:100%;overflow:visible}
+.mx .mmat-v .mmat-grid{border-inline-start:.105em solid currentColor;border-inline-end:.105em solid currentColor;padding-inline:.5em}
+.mx .mcases-grid,.mx .maligned{display:inline-grid;gap:.3em;line-height:1.5;align-content:center}
+.mx .mcases-grid{padding:.15em .2em}
+.mx .mcases-row,.mx .maligned-row{display:grid;grid-template-columns:max-content max-content;align-items:baseline;gap:.5em;white-space:nowrap}
+.mx .mcases-cond{font-size:.78em;font-weight:600;opacity:.9}
+.mx .maligned{padding:.2em .35em;border-inline-start:.09em solid #5475a0}
+.mx .mbinom-stack{display:flex;flex-direction:column;text-align:center;justify-content:center;line-height:1.3;padding:0 .2em}
+.mx .mbinom-stack>span{padding:.08em .15em}
+.mx .mbrace{display:inline-flex;flex-direction:column;align-items:stretch;vertical-align:middle;line-height:1.2;margin:.1em}
+.mx .mbrace-main{display:block;text-align:center;padding:.17em .14em}
+.mx .mbrace-over .mbrace-main{border-top:.095em solid currentColor;border-radius:45% 45% 0 0}
+.mx .mbrace-under .mbrace-main{border-bottom:.095em solid currentColor;border-radius:0 0 45% 45%}
+.mx .mbrace-label{text-align:center;font-size:.69em;line-height:1.1;min-height:.75em;font-weight:700}
+.mx .mint{font-weight:800}
+@media print{.mx .mmat,.mx .mcases,.mx .maligned,.mx .mbinom,.mx .mbrace{color:#101828!important;font-weight:700!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}}

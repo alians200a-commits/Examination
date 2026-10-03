@@ -517,7 +517,15 @@ function finishWizard(){
 }
 
 /* ---------- محرر المعادلات: تختار الصيغة ثم تملأ خاناتها، والناتج يدخل داخل السطر ---------- */
-const EQG=[['الدوال المثلثية',['trig','identity']],['التفاضل',['deriv','deriv2','partialderiv']],['التكامل',['intindef','intdef','lim','sum']],['أساسيات',['frac','mixed','root','pow','sub','powsub','ppow','paren','abs']],['حساب',['longdiv','sys','log','int','bar']],['علوم',['chem','iso','arrow','vec','unit']],['نص',['text']]];
+const EQG=[
+ ['كسور وأسس',['frac','mixed','binom','root','pow','sub','powsub','ppow','paren','abs']],
+ ['الدوال والنهايات',['trig','identity','log','lim','limsup','liminf']],
+ ['التفاضل',['deriv','deriv2','derivn','partialderiv','partialn']],
+ ['التكامل',['intindef','intdef','iint','iiint','oint','sum','prod']],
+ ['المصفوفات والأنظمة',['matrix','det','cases','aligned','sys']],
+ ['هندسة وعلوم',['vec','bar','overbrace','underbrace','arrow','chem','iso','unit','longdiv']],
+ ['نص ورموز',['text']]
+];
 const EQT={
  frac:['كسر',[['a','البسط (فوق)'],['b','المقام (تحت)']],{a:'١',b:'٢'}],
  mixed:['عدد كسري',[['w','العدد الصحيح'],['a','البسط'],['b','المقام']],{w:'٢',a:'١',b:'٣'}],
@@ -549,12 +557,30 @@ const EQT={
  unit:['قيمة ووحدة',[['v','القيمة'],['u','الوحدة']],{v:'9.8',u:'m/s^{2}'}],
  text:['نص ورموز',[['v','اكتب أو استعمل لوحة الرموز']],{v:'='}]
 };
+/* Structured palette: no unverified external MathType dependencies; renders offline. */
+Object.assign(EQT,{
+ binom:['معامل ذات الحدين',[['a','العدد العلوي'],['b','العدد السفلي']],{a:'ن',b:'ك'},{a:'n',b:'k'}],
+ matrix:['مصفوفة',[['r','الصفوف'],['c','الأعمدة'],['style','شكل الإطار']],{r:'2',c:'2',style:'p',cells:['س','١','٠','ص']},{r:'2',c:'2',style:'p',cells:['a','1','0','b']}],
+ det:['محدد',[['r','عدد الصفوف'],['c','عدد الأعمدة']],{r:'2',c:'2',style:'v',cells:['س','١','٠','ص']},{r:'2',c:'2',style:'v',cells:['a','b','c','d']}],
+ cases:['دالة متعددة الحالات',[['n','عدد الحالات']],{n:'2',lines:[['س^{٢}','س\\ge ٠'],['-س','س<٠']]},{n:'2',lines:[['x^{2}','x\\ge 0'],['-x','x<0']]}],
+ aligned:['معادلات متعددة الأسطر',[['n','عدد الأسطر']],{n:'2',lines:[['س+ص','=٥'],['س-ص','=١']]},{n:'2',lines:[['x+y','=5'],['x-y','=1']]}],
+ derivn:['المشتقة من الرتبة ن',[['n','الرتبة'],['f','الدالة'],['v','المتغير']],{n:'٣',f:'س^{٣}',v:'س',d:'د'},{n:'3',f:'x^{3}',v:'x',d:'d'}],
+ partialn:['المشتقة الجزئية العليا',[['n','الرتبة'],['f','الدالة'],['v','المتغير']],{n:'٢',f:'س^{٢}+ص',v:'س'},{n:'2',f:'x^{2}+y',v:'x'}],
+ iint:['تكامل مزدوج',[['f','الدالة'],['v','متغير التكامل'],['a','الحد السفلي (اختياري)'],['b','الحد العلوي (اختياري)']],{f:'س+ص',v:'أ',a:'د',b:'',d:'د'},{f:'x+y',v:'A',a:'D',b:'',d:'d'}],
+ iiint:['تكامل ثلاثي',[['f','الدالة'],['v','متغير التكامل'],['a','الحد السفلي (اختياري)'],['b','الحد العلوي (اختياري)']],{f:'س+ص+ع',v:'ح',a:'ج',b:'',d:'د'},{f:'x+y+z',v:'V',a:'V',b:'',d:'d'}],
+ oint:['تكامل على مسار مغلق',[['f','الدالة'],['v','متغير التكامل'],['a','المسار (اختياري)'],['b','الحد العلوي (اختياري)']],{f:'س^{٢}',v:'س',a:'ج',b:'',d:'د'},{f:'x^{2}',v:'x',a:'C',b:'',d:'d'}],
+ limsup:['النهاية العليا',[['v','المتغير'],['a','يقترب من'],['x','الدالة']],{v:'ن',a:'\\infty',x:'س_{ن}'},{v:'n',a:'\\infty',x:'x_{n}'}],
+ liminf:['النهاية السفلى',[['v','المتغير'],['a','يقترب من'],['x','الدالة']],{v:'ن',a:'\\infty',x:'س_{ن}'},{v:'n',a:'\\infty',x:'x_{n}'}],
+ prod:['حاصل ضرب',[['a','الحد الأدنى'],['b','الحد الأعلى'],['x','الحد العام']],{a:'ك=١',b:'ن',x:'ك'},{a:'k=1',b:'n',x:'k'}],
+ overbrace:['قوس علوي مع وصف',[['x','المقدار داخل القوس'],['l','النص فوقه']],{x:'س+ص',l:'العدد'},{x:'a+b',l:'n'}],
+ underbrace:['قوس سفلي مع وصف',[['x','المقدار داخل القوس'],['l','النص تحته']],{x:'س+ص',l:'العدد'},{x:'a+b',l:'n'}]
+});
 const ROOTS=[['','تربيعي'],['3','تكعيبي'],['4','رابع'],['5','خامس'],['n','نوني']];
 const SYMS={
  'أساسية':['+','−','×','÷','=','±','∓','·','′','″','°','%','‰','…','∞','( .......... )'],
  'مقارنة':['≠','<','>','≤','≥','≈','≡','≅','∝','~','≪','≫'],
  'أسهم':['→','←','↑','↓','↔','⇒','⇐','⇔','⟶','⇌','⇋','↗','↘','↦'],
- 'هندسة':['∠','∡','△','⊥','∥','°','\\overline{AB}','\\vec{AB}','π','□','⊙'],
+ 'هندسة':['∠','∡','△','⊥','∥','°','\\overline{AB}','\\vec{AB}','π','□','⊙','≅','∼','∴','∵','∩','∪','\\triangle','\\angle','\\parallel','\\perp'],
  'وحدات':['\\text{m}','\\text{cm}','\\text{km}','\\text{s}','\\text{kg}','\\text{g}','\\text{N}','\\text{J}','\\text{W}','\\text{Pa}','\\text{V}','\\text{A}','\\text{Ω}','\\text{C}','\\text{F}','\\text{T}','\\text{Hz}','\\text{K}','\\text{eV}','\\text{kWh}','\\text{m/s}','\\text{m/s}^{2}','\\text{km/h}','\\text{N/C}','\\text{N·m}','\\text{kg/m}^{3}','\\text{rad/s}','^{\\circ}\\text{C}','\\text{mol}','\\text{L}','\\text{mL}','\\text{g/mol}','\\text{mol/L}'],
  'فيزياء':['Δ','Ω','μ','λ','θ','ω','α','β','γ','ρ','ε','η','τ','φ','ν','ℏ','\\Delta x','\\Delta t','\\Delta v','v_{0}','v_{f}','\\vec{F}','\\vec{v}','\\vec{a}','F_{net}','E_{k}','E_{p}','P_{E}','R_{eq}','\\varepsilon_{0}','\\mu_{0}','g','c','e^{-}','\\text{Å}','\\propto'],
  'كيمياء':['→','⇌','↑','↓','\\xrightarrow{\\Delta}','_{(s)}','_{(l)}','_{(g)}','_{(aq)}','^{+}','^{-}','^{2+}','^{2-}','^{3+}','^{3-}','e^{-}','\\Delta H','\\Delta G','\\Delta S','K_{c}','K_{p}','K_{a}','K_{b}','K_{w}','K_{sp}','\\text{pH}','\\text{pOH}','[\\text{H}^{+}]','[\\text{OH}^{-}]','\\text{M}','N_{A}','\\text{STP}','\\ce{H2O}','\\ce{CO2}','\\ce{H2SO4}','\\ce{NaCl}','\\ce{NH3}'],
@@ -577,7 +603,7 @@ function openEq(t){
  const chip=t.chip||null,lang=chip?chip.dataset.l:(ctx().ar?'ar':'en');
  const pieces=chip?parsePieces(chip.dataset.tex):[];
  const path=t.el.dataset.r||t.el.dataset.k;
- EQ={t,path,marked:markedText(t.el,chip,t.range),lang,pieces,sel:pieces.length?0:-1,focusKey:null,edit:!!chip,tab:EQ&&EQ.tab||'أساسية'};
+ EQ={t,path,marked:markedText(t.el,chip,t.range),lang,pieces,sel:pieces.length?0:-1,focusKey:null,edit:!!chip,tab:EQ&&EQ.tab||'أساسية',cat:EQ&&EQ.cat||'كسور وأسس'};
  renderEq();const d=$('#eqdlg');if(!d.open)d.showModal();
 }
 function pieceTex(p){return piecesToTex([p]);}
@@ -590,20 +616,30 @@ function renderEq(){
  const D=v=>ar?toAr(v):toLa(v);
  const field=(f,l)=>{
   if(sel.t==='trig'&&f==='fn')return`<label class="fld"><span>${l}</span><select data-eq="fn" aria-label="اختر الدالة المثلثية">${[['sin','جا / sin'],['cos','جتا / cos'],['tan','ظا / tan'],['cot','ظتا / cot'],['sec','قا / sec'],['csc','قتا / csc'],['arcsin','جا العكسية / arcsin'],['arccos','جتا العكسية / arccos'],['arctan','ظا العكسية / arctan']].map(([v,n])=>`<option value="${v}"${sel.fn===v?' selected':''}>${n}</option>`).join('')}</select></label>`;
+  if(['matrix','det'].includes(sel.t)&&['r','c'].includes(f))return`<label class="fld"><span>${l}</span><select data-eq-dim="${f}" aria-label="${l}">${[1,2,3,4].filter(n=>sel.t!=='det'||n>=2).map(n=>`<option value="${n}"${String(sel[f])===String(n)?' selected':''}>${D(String(n))}</option>`).join('')}</select></label>`;
+  if(sel.t==='matrix'&&f==='style')return`<label class="fld"><span>${l}</span><select data-eq="style">${[['p','( ) أقواس'],['b','[ ] مربعة'],['v','| | محدد'],['n','بدون إطار']].map(([v,name])=>`<option value="${v}"${sel.style===v?' selected':''}>${name}</option>`).join('')}</select></label>`;
+  if(['cases','aligned'].includes(sel.t)&&f==='n')return`<label class="fld"><span>${l}</span><select data-eq-dim="n">${[2,3,4,5,6].map(n=>`<option value="${n}"${String(sel.n)===String(n)?' selected':''}>${D(String(n))}</option>`).join('')}</select></label>`;
   if(sel.t==='root'&&f==='n'){const cur=ROOTS.some(([v])=>v===toLa(sel.n||'')&&v!=='n')?toLa(sel.n||''):'n';
    return`<div class="fld wide"><span>${l}</span><div class="seg sm" role="group">${ROOTS.map(([v,n])=>`<button type="button" data-act="eqRoot" data-v="${v}" aria-pressed="${cur===v}">${n}${v&&v!=='n'?` <small>${D(v)}</small>`:''}</button>`).join('')}</div>${cur==='n'?`<input data-eq="n" value="${esc(sel.n??'')}" dir="${ar?'rtl':'ltr'}" placeholder="${ar?'ن أو ٦':'n or 6'}" autocomplete="off">`:''}</div>`;}
   return`<label class="fld"><span>${l}</span><input data-eq="${f}" value="${esc(sel[f]??'')}" dir="${ar?'rtl':'ltr'}" autocomplete="off"></label>`;};
  const form=sel?`<div class="eqform"><div class="eqform-h"><b>${EQT[sel.t]?EQT[sel.t][0]:''}</b><span class="sp"></span><button type="button" class="ib" data-act="eqMove" data-d="-1" title="تقديم"${e.sel===0?' disabled':''}>${ic(ar?'arrow-right':'arrow-left',17)}</button><button type="button" class="ib" data-act="eqMove" data-d="1" title="تأخير"${e.sel===e.pieces.length-1?' disabled':''}>${ic(ar?'arrow-left':'arrow-right',17)}</button><button type="button" class="ib danger" data-act="eqDel" title="حذف الجزء">${ic('trash-2',17)}</button></div>
   <div class="eqfields">${(EQT[sel.t]?EQT[sel.t][1]:[]).map(([f,l])=>field(f,l)).join('')}
+  ${['matrix','det'].includes(sel.t)?`<div class="eq-matrix-fields" style="--eq-cols:${Math.min(4,Number(sel.c)||2)}" role="group" aria-label="خلايا المصفوفة">${Array.from({length:(Number(sel.r)||2)*(Number(sel.c)||2)},(_,i)=>`<label><small>${ar?'صف':'Row'} ${D(String(Math.floor(i/(Number(sel.c)||2)+1)))} · ${ar?'عمود':'Col'} ${D(String(i%(Number(sel.c)||2)+1))}</small><input data-eq-cell="${i}" aria-label="خلية ${i+1}" value="${esc(sel.cells?.[i]??'')}" dir="${ar?'rtl':'ltr'}" autocomplete="off"></label>`).join('')}</div>`:''}
+  ${['cases','aligned'].includes(sel.t)?`<div class="eq-multiline" role="group" aria-label="الأسطر الرياضية">${Array.from({length:Number(sel.n)||2},(_,i)=>`<div class="eq-line"><b>${D(String(i+1))}</b><label><span>${sel.t==='cases'?'التعبير':'الطرف الأول'}</span><input data-eq-line="${i}.0" value="${esc(sel.lines?.[i]?.[0]??'')}" dir="${ar?'rtl':'ltr'}"></label><label><span>${sel.t==='cases'?'الشرط (اختياري)':'الطرف الثاني'}</span><input data-eq-line="${i}.1" value="${esc(sel.lines?.[i]?.[1]??'')}" dir="${ar?'rtl':'ltr'}"></label></div>`).join('')}</div>`:''}
   ${sel.t==='longdiv'?`<label class="chk"><input type="checkbox" data-eq="steps"${sel.steps?' checked':''}><span>إظهار خطوات الحل تحت المقسوم</span></label>`:''}${sel.t==='arrow'?`<label class="chk"><input type="checkbox" data-eq="rev"${sel.rev?' checked':''}><span>سهم انعكاسي ⇌ (تفاعل متزن)</span></label>`:''}</div></div>`:'';
  const tab=e.tab||'أساسية';
  $('#eqdlg').innerHTML=`<div class="eq" dir="rtl">
-  <header><b>${e.edit?'تعديل المعادلة':'إدراج معادلة'}</b>${seg('eqlang',e.lang,[['ar','عربية ١٢٣'],['en','English 123']],'sm')}<button type="button" class="ib" data-act="eqClose" title="إغلاق">${ic('x',20)}</button></header>
-  <div class="eqprev" dir="${ar?'rtl':'ltr'}">${prev}</div>
+  <header><b>${e.edit?'محرّر المعادلات · تعديل':'محرّر المعادلات · لوحة القوالب'}</b>${seg('eqlang',e.lang,[['ar','عربية ١٢٣'],['en','English 123']],'sm')}<button type="button" class="ib" data-act="eqClose" title="إغلاق">${ic('x',20)}</button></header>
+  <div class="eq-preview-label">معاينة فورية · كما ستظهر بالورقة</div><div class="eqprev" role="status" aria-live="polite" dir="${ar?'rtl':'ltr'}">${prev}</div>
   ${e.pieces.length>1?`<div class="strip" dir="${ar?'rtl':'ltr'}">${strip}</div>`:''}
   ${form}
   <div class="math-fast" aria-label="أدوات الرياضيات المتقدمة"><b>رياضيات: أضف الصيغة</b><div class="math-fast-scroll">${[['trig','جا / sin'],['identity','جا² + جتا²'],['deriv','المشتقة'],['deriv2','المشتقة الثانية'],['partialderiv','∂ مشتقة جزئية'],['intindef','∫ غير محدد'],['intdef','∫ بحدود']].map(([k,n])=>`<button type="button" data-act="eqAdd" data-t="${k}">${n}</button>`).join('')}</div></div>
-  <details class="eqtemplates"${e.pieces.length?'':' open'}><summary>${e.pieces.length?'إضافة صيغة أخرى':'اختر صيغة المعادلة'}${ic('chevron-down',16)}</summary><div class="eqgal">${EQG.map(([g,ks])=>`<div class="gal-g"><span class="gal-h">${g}</span><div class="gal">${ks.map(k=>{const [n,,smp,enSmp]=EQT[k],preview=e.lang==='en'&&enSmp?enSmp:smp;return`<button type="button" class="gt" data-act="eqAdd" data-t="${k}"><span class="gt-v" dir="${ar&&!['chem','iso','int','lim','sum','unit'].includes(k)?'rtl':'ltr'}">${texToHTML(pieceTex({t:k,...toPieceDigits(preview,['chem','iso','int','lim','sum','unit'].includes(k)?'en':e.lang),steps:false}),['chem','iso','int','lim','sum','unit'].includes(k)?'en':e.lang)}</span><small>${n}</small></button>`;}).join('')}</div></div>`).join('')}</div></details>
+  <section class="eq-palette" aria-label="قوالب محرّر المعادلات">
+    <div class="eq-palette-title"><b>مكتبة الصيغ</b><span>اختر فئة ثم اضغط على شكل المعادلة</span></div>
+    <div class="eq-cat-tabs" role="tablist" aria-label="فئات المعادلات">${EQG.map(([g])=>`<button type="button" role="tab" aria-selected="${(e.cat||'كسور وأسس')===g}" data-act="eqCategory" data-cat="${g}">${g}</button>`).join('')}</div>
+    <div class="eq-template-grid" role="tabpanel">${(EQG.find(([g])=>g===(e.cat||'كسور وأسس'))||EQG[0])[1].map(k=>{const [label,,arSample,enSample]=EQT[k],sample=e.lang==='en'&&enSample?enSample:arSample;const sampleLang=e.lang==='en'?'en':'ar';return`<button type="button" class="eq-template-tile" data-act="eqAdd" data-t="${k}" title="${label}"><span class="eq-tile-symbol" dir="${ar?'rtl':'ltr'}">${texToHTML(pieceTex({t:k,...sample}),sampleLang)}</span><span class="eq-tile-caption">${label}</span></button>`}).join('')}</div>
+  </section>
+  <details class="eq-code"><summary>صيغة مخصّصة متقدمة (LaTeX)</summary><label>اكتب صيغة تدعمها مكتبة المفيد<textarea data-eq-tex dir="ltr" spellcheck="false" rows="3">${esc(piecesToTex(e.pieces))}</textarea></label><button type="button" class="btn sm" data-act="eqApplyTex">تطبيق الصيغة</button><small>مثال: \\frac{س+١}{٢} — الصيغ غير المدعومة تُرفض بدل طباعتها بصورة خاطئة.</small></details>
   <div class="sub-h">الرموز، تُكتب في الخانة المحددة</div>
   <div class="symtabs">${Object.keys(SYMS).map(k=>`<button type="button" data-act="eqTab" data-k="${k}" aria-pressed="${tab===k}">${k}</button>`).join('')}</div>
   <div class="syms">${SYMS[tab].map(symBtn).join('')}</div>
@@ -616,7 +652,7 @@ function renderEq(){
 }
 function eqLive(){$('#eqdlg .eqprev').innerHTML=EQ.pieces.length?texToHTML(piecesToTex(EQ.pieces),EQ.lang):'';const b=$$('#eqdlg .pc')[EQ.sel];if(b)b.innerHTML=texToHTML(pieceTex(EQ.pieces[EQ.sel]),EQ.lang);const err=$('#eqError');if(err)err.hidden=true;}
 function eqSym(s){
- let el=EQ.focusKey?$('#eqdlg [data-eq="'+EQ.focusKey+'"]'):null;
+ let el=EQ.focusKey?(EQ.focusKey.startsWith('cell:')?$('#eqdlg [data-eq-cell="'+EQ.focusKey.slice(5)+'"]'):EQ.focusKey.startsWith('line:')?$('#eqdlg [data-eq-line="'+EQ.focusKey.slice(5)+'"]'):$('#eqdlg [data-eq="'+EQ.focusKey+'"]')):null;
  if(!el){const sel=EQ.pieces[EQ.sel];if(!sel||sel.t!=='text'){EQ.pieces.splice(EQ.sel+1,0,{t:'text',v:''});EQ.sel++;renderEq();}el=$('#eqdlg [data-eq]');}
  const a=el.selectionStart??el.value.length,b=el.selectionEnd??a;el.value=el.value.slice(0,a)+s+el.value.slice(b);el.focus();el.setSelectionRange(a+s.length,a+s.length);el.dispatchEvent(new Event('input',{bubbles:true}));
 }
@@ -639,7 +675,14 @@ function equationProblem(pieces,tex){
  for(const p of pieces){
   if(p.t==='root'){const n=toLa(p.n||'').trim();if(n&&!/^(?:[2-9]|[1-9]\d+|n|ن)$/.test(n))return'درجة الجذر: عدد صحيح ٢ أو أكثر، أو ن';}
   if(p.t==='longdiv'&&/^[0٠]+$/.test(String(p.b).trim()))return'القسمة على صفر غير معرّفة';
-  const optional={root:['n'],arrow:['a','b'],longdiv:['q'],int:['a','b'],trig:['e']};
+  if(['matrix','det'].includes(p.t)){
+    const r=Number(p.r),c=Number(p.c);if(r<1||c<1||r>4||c>4||(p.t==='det'&&r!==c))return'أبعاد المصفوفة غير صحيحة';
+    if(!p.cells||p.cells.length!==r*c||p.cells.some(v=>!String(v).trim()))return'أكمل جميع خلايا المصفوفة أو المحدد';
+  }
+  if(['cases','aligned'].includes(p.t)){
+    if(!p.lines||p.lines.length!==Number(p.n)||p.lines.some(pair=>!String(pair?.[0]||'').trim()||(p.t==='aligned'&&!String(pair?.[1]||'').trim())))return'أكمل أسطر المعادلة أو الدالة';
+  }
+  const optional={root:['n'],arrow:['a','b'],longdiv:['q'],int:['a','b'],trig:['e'],iint:['a','b'],iiint:['a','b'],oint:['a','b']};
   for(const [f,l] of EQT[p.t]?.[1]||[]){if(!(optional[p.t]||[]).includes(f)&&!String(p[f]??'').trim())return'أكمل خانة: '+l;}
  }
  return'';
@@ -758,7 +801,7 @@ document.addEventListener('click',e=>{
  if(a==='addEqItem'&&q.items.length>=80){toast('الحد ٨٠ فرعاً لكل سؤال');return;}
  if(a==='exAdd'&&q.extra.length>=10){toast('الحد ١٠ إجابات زائدة');return;}
  if(a==='chAdd'){const [,qid,iid]=b.dataset.path.split('.'),x=findQ(qid)?.items.find(i=>i.id===iid);if(x&&x.choices.length>=40){toast('الحد ٤٠ خياراً');return;}}
- if(!['jumpQuestion','symOpen','symTab','symClose','eqRoot','eqRemove','fmt','rEq','rSym','view','toggle','adding','more','zin','zout','zfit','eq','eqEdit','eqAdd','eqSel','eqMove','eqDel','eqClose','eqOk','eqTab','wz','wzNext','wzBack','wzClose','img','logo','font','open','save','print','wizard','undo','redo'].includes(a))pushHist();
+ if(!['jumpQuestion','symOpen','symTab','symClose','eqRoot','eqRemove','fmt','rEq','rSym','view','toggle','adding','more','zin','zout','zfit','eq','eqEdit','eqAdd','eqCategory','eqApplyTex','eqSel','eqMove','eqDel','eqClose','eqOk','eqTab','wz','wzNext','wzBack','wzClose','img','logo','font','open','save','print','wizard','undo','redo'].includes(a))pushHist();
  switch(a){
   case'view':setView(b.dataset.v);break;
   case'jumpQuestion':{const target=b.dataset.target;UI.open=target;UI.view='questions';renderSide();requestAnimationFrame(()=>{$(`.qc[data-qid="${target}"]`)?.scrollIntoView({behavior:'smooth',block:'center'});});break;}
@@ -770,7 +813,7 @@ document.addEventListener('click',e=>{
   case'homeLearn':$('#learnSection').scrollIntoView({behavior:'smooth'});break;
   case'lessonNext':lessonIndex=Math.min(LESSONS.length-1,lessonIndex+1);renderLesson();break;
   case'lessonPrev':lessonIndex=Math.max(0,lessonIndex-1);renderLesson();break;
-  case'set':if(b.dataset.path==='eqlang'){EQ.lang=b.dataset.v;EQ.pieces=EQ.pieces.map(x=>{const y={...x};for(const k in y)if(typeof y[k]==='string'&&k!=='t')y[k]=EQ.lang==='ar'?toAr(y[k]):toLa(y[k]);return y;});renderEq();break;}
+  case'set':if(b.dataset.path==='eqlang'){EQ.lang=b.dataset.v;EQ.pieces=EQ.pieces.map(x=>{const y={...x};const convert=v=>typeof v==='string'?(EQ.lang==='ar'?toAr(v):toLa(v)):Array.isArray(v)?v.map(convert):v;for(const k in y)if(k!=='t'&&!( ['matrix','det','cases','aligned'].includes(y.t)&&['r','c','n','style'].includes(k)))y[k]=convert(y[k]);return y;});renderEq();break;}
    setPath(b.dataset.path,b.dataset.v);commit();break;
   case'eye':{const k=b.dataset.k;p.meta.show[k]=!(p.meta.show[k]!==false);commit();break;}
   case'toggle':UI.open=UI.open===q.id?null:q.id;renderSide();renderPaper();break;
@@ -826,10 +869,12 @@ document.addEventListener('click',e=>{
    else if(a==='tbRow'){const w=x.table.rows[0].length;if(+b.dataset.d>0){if(x.table.rows.length>=30){toast('الحد ٣٠ صفاً، وزّع المحتوى على أكثر من جدول');break;}x.table.rows.push(Array(w).fill(''));}else if(x.table.rows.length>1)x.table.rows.pop();}
    else{if(+b.dataset.d>0)x.table.rows.forEach(r=>r.push(''));else if(x.table.rows[0].length>1)x.table.rows.forEach(r=>r.pop());}
    p.pristine=false;commit();if(a==='tbDel')toast('حُذف الجدول',{label:'تراجع',run:()=>undo(-1)});break;}
-  case'eqAdd':{const [,,smp]=EQT[b.dataset.t];const np={t:b.dataset.t,steps:false};EQT[b.dataset.t][1].forEach(([f])=>np[f]='');if(b.dataset.t==='text')np.v='';if(b.dataset.t==='trig')np.fn='sin';if(['deriv','deriv2','intindef','intdef'].includes(b.dataset.t)){np.v=EQ.lang==='ar'?'س':'x';np.d=EQ.lang==='ar'?'د':'d';}if(b.dataset.t==='partialderiv')np.v=EQ.lang==='ar'?'س':'x';if(['chem','iso','unit'].includes(b.dataset.t))EQ.lang='en';EQ.pieces.splice(EQ.sel+1,0,np);EQ.sel++;EQ.focusKey=null;EQ.autofocus=true;renderEq();break;}
+  case'eqAdd':{const [,,smp,enSmp]=EQT[b.dataset.t];const np={t:b.dataset.t,steps:false};EQT[b.dataset.t][1].forEach(([f])=>np[f]='');const advanced=['matrix','det','cases','aligned','binom','derivn','partialn','iint','iiint','oint','limsup','liminf','prod','overbrace','underbrace'];if(advanced.includes(b.dataset.t))Object.assign(np,JSON.parse(JSON.stringify(EQ.lang==='en'&&enSmp?enSmp:smp)));if(b.dataset.t==='text')np.v='';if(b.dataset.t==='trig')np.fn='sin';if(['deriv','deriv2','intindef','intdef'].includes(b.dataset.t)){np.v=EQ.lang==='ar'?'س':'x';np.d=EQ.lang==='ar'?'د':'d';}if(b.dataset.t==='partialderiv')np.v=EQ.lang==='ar'?'س':'x';if(['chem','iso','unit'].includes(b.dataset.t))EQ.lang='en';EQ.pieces.splice(EQ.sel+1,0,np);EQ.sel++;EQ.focusKey=null;EQ.autofocus=true;renderEq();break;}
   case'eqSel':EQ.sel=+b.dataset.i;EQ.focusKey=null;EQ.autofocus=true;renderEq();break;
   case'eqMove':{const d=+b.dataset.d;move(EQ.pieces,EQ.sel,d);EQ.sel=Math.max(0,Math.min(EQ.pieces.length-1,EQ.sel+d));EQ.focusKey=null;renderEq();break;}
   case'eqDel':EQ.pieces.splice(EQ.sel,1);EQ.sel=Math.min(EQ.sel,EQ.pieces.length-1);EQ.focusKey=null;renderEq();break;
+  case'eqCategory':EQ.cat=b.dataset.cat;EQ.focusKey=null;renderEq();break;
+  case'eqApplyTex':{const raw=$('#eqdlg [data-eq-tex]')?.value||'';const issue=texProblem(raw);const rendered=issue?'':texToHTML(raw,EQ.lang);if(issue||rendered.includes('math-error')){const box=$('#eqError');box.textContent=issue||'هذه الصيغة غير مدعومة حاليًا';box.hidden=false;break;}EQ.pieces=parsePieces(raw);EQ.sel=0;EQ.focusKey=null;renderEq();break;}
   case'eqTab':EQ.tab=b.dataset.k;renderEq();break;
   case'eqOk':eqOk();break;case'eqClose':$('#eqdlg').close();break;
   case'img':imgTarget=b.dataset.path;$('#imgIn').click();break;
@@ -854,13 +899,21 @@ document.addEventListener('click',e=>{
   case'zfit':UI.zoom='fit';applyZoom();break;
  }
 });
-document.addEventListener('focusin',e=>{if(EQ&&e.target.dataset&&e.target.dataset.eq!==undefined&&e.target.type!=='checkbox'){EQ.focusKey=e.target.dataset.eq;EQ.caret=null;}
+document.addEventListener('focusin',e=>{if(EQ&&e.target.dataset&&e.target.type!=='checkbox'){if(e.target.dataset.eq!==undefined)EQ.focusKey=e.target.dataset.eq;else if(e.target.dataset.eqCell!==undefined)EQ.focusKey='cell:'+e.target.dataset.eqCell;else if(e.target.dataset.eqLine!==undefined)EQ.focusKey='line:'+e.target.dataset.eqLine;EQ.caret=null;}
  const path=e.target.dataset?.r||e.target.dataset?.k,m=path&&/^(it\.[a-z0-9]+\.[a-z0-9]+)\.cell\.(\d+)\.(\d+)$/.exec(path);
  if(m){UI.tableCells[m[1]]=[+m[2],+m[3]];const info=$(`[data-cell-info="${m[1]}"]`);if(info)info.textContent=`الصف ${+m[2]+1}، العمود ${+m[3]+1}. اضغط على خلية لتحديدها.`;const grid=e.target.closest('.tbed-g');if(grid){$$('.tbed-cell.current',grid).forEach(el=>el.classList.remove('current'));e.target.closest('.tbed-cell')?.classList.add('current');}}
 });
 document.addEventListener('input',e=>{
  const el=e.target;
- if(el.dataset&&el.dataset.eq!==undefined){const p=EQ.pieces[EQ.sel];if(!p)return;p[el.dataset.eq]=el.type==='checkbox'?el.checked:el.value;eqLive();return;}
+ if(el.dataset&&el.dataset.eqDim!==undefined){const p=EQ?.pieces[EQ.sel];if(!p)return;const key=el.dataset.eqDim,value=Math.max(1,Math.min(key==='n'?6:4,Number(el.value)||2));if(['matrix','det'].includes(p.t)){
+   const prevR=Number(p.r)||2,prevC=Number(p.c)||2,old=p.cells||[],nextR=key==='r'?value:prevR,nextC=p.t==='det'?nextR:key==='c'?value:prevC;
+   p.cells=Array.from({length:nextR*nextC},(_,i)=>old[Math.floor(i/nextC)*prevC+i%nextC]??'');p.r=String(nextR);p.c=String(nextC);
+  }else if(['cases','aligned'].includes(p.t)){p.n=String(value);p.lines=Array.from({length:value},(_,i)=>p.lines?.[i]||['','']);}
+  EQ.focusKey=null;renderEq();return;
+ }
+ if(el.dataset&&el.dataset.eqCell!==undefined){const p=EQ?.pieces[EQ.sel];if(!p)return;el.value=EQ.lang==='ar'?toAr(el.value):toLa(el.value);p.cells[Number(el.dataset.eqCell)]=el.value;eqLive();return;}
+ if(el.dataset&&el.dataset.eqLine!==undefined){const p=EQ?.pieces[EQ.sel];if(!p)return;const [row,col]=el.dataset.eqLine.split('.').map(Number);el.value=EQ.lang==='ar'?toAr(el.value):toLa(el.value);p.lines[row][col]=el.value;eqLive();return;}
+ if(el.dataset&&el.dataset.eq!==undefined){const p=EQ.pieces[EQ.sel];if(!p)return;if(el.type!=='checkbox'&&el.tagName!=='SELECT'&&el.dataset.eq!=='style'&&el.dataset.eq!=='fn')el.value=EQ.lang==='ar'?toAr(el.value):toLa(el.value);p[el.dataset.eq]=el.type==='checkbox'?el.checked:el.value;eqLive();return;}
  if(el.dataset&&el.dataset.wz){W[el.dataset.wz]=el.type==='checkbox'?el.checked:el.value;if(el.dataset.wz==='subject'&&el.value.trim()){W.subject=el.value.trim();$$('#wizard [data-f=subject]').forEach(c=>c.setAttribute('aria-pressed','false'));$('#wizard [data-act=wzNext]').disabled=false;}return;}
  if(el.dataset&&el.dataset.b){
   const path=el.dataset.b;setPath(path,el.type==='checkbox'?el.checked:el.value);
