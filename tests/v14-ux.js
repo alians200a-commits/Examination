@@ -22,6 +22,13 @@ const root=path.resolve(__dirname,'..');
   ok('other question types are available under disclosure',await page.locator('.picker-more [data-act=addQ]').count()>0);
   await page.waitForTimeout(420);await page.locator('#toast').evaluate(el=>el.hidden=true);
   await page.screenshot({path:path.join(root,'tests','v14-editor-mobile.png')});
+  console.log('MOBILE_LAYOUT_DIAGNOSTIC',JSON.stringify(await page.evaluate(()=>{
+    const pick=document.querySelector('.question-picker [data-kind=branches]');
+    const names=['.app','.ribbon','.main','.side','.sbody','.question-picker','.nav'];
+    const geom=Object.fromEntries(names.map(key=>{const e=document.querySelector(key),b=e?.getBoundingClientRect(),cs=e&&getComputedStyle(e);return [key,{top:b?.top,bottom:b?.bottom,height:b?.height,position:cs?.position,gridRows:cs?.gridTemplateRows,overflow:cs?.overflowY,scrollHeight:e?.scrollHeight,clientHeight:e?.clientHeight}]}));
+    const b=pick.getBoundingClientRect();
+    return {viewport:{width:innerWidth,height:innerHeight},geom,picker:{top:b.top,bottom:b.bottom,hit:document.elementFromPoint(b.left+b.width/2,b.top+b.height/2)?.closest('.nav')?'NAV':'BUTTON'},cssNavigationTrack:[...document.styleSheets].some(sheet=>{try{return [...sheet.cssRules].some(x=>x.cssText.includes('Mobile navigation occupies'))}catch{return false}})};
+  })));
   await page.locator('.question-picker [data-kind=branches]').click();
   const qid=await page.evaluate(()=>__test.P().questions.at(-1).id);
   await page.locator(`[data-r="q.${qid}.prompt"]`).fill('أجب عن السؤال الآتي:');
