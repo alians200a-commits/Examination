@@ -266,3 +266,15 @@ body{background:var(--bg);font-size:14px;color:var(--ink)}
 @media print{
  .grade-audit,.tbed-head,.tbed-help,.tbed-scroll,.tbed-a{display:none!important}
 }
+
+/* Mobile navigation occupies a real grid track: never cover the last question-picker row.
+   This solves short-height Chromium/WebView click interception without test-specific scrolling. */
+@media screen and (max-width:1023px){
+ .app{grid-template-rows:var(--top-h) auto minmax(0,1fr) calc(var(--nav-h) + env(safe-area-inset-bottom))}
+ .app.has-lesson{grid-template-rows:var(--top-h) auto auto minmax(0,1fr) calc(var(--nav-h) + env(safe-area-inset-bottom))}
+ .app[data-view=paper],.app[data-view=style],.app[data-view=preview]{grid-template-rows:var(--top-h) minmax(0,1fr) calc(var(--nav-h) + env(safe-area-inset-bottom))}
+ .app.has-lesson[data-view=paper],.app.has-lesson[data-view=style],.app.has-lesson[data-view=preview]{grid-template-rows:var(--top-h) auto minmax(0,1fr) calc(var(--nav-h) + env(safe-area-inset-bottom))}
+ .nav{position:relative;inset:auto;grid-row:auto;height:calc(var(--nav-h) + env(safe-area-inset-bottom));z-index:15}
+ .sbody{padding-bottom:28px;scroll-padding-block-end:32px}
+ .canvas{padding-bottom:8px}
+}

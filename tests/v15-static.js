@@ -9,4 +9,5 @@ assert(ui.includes('role="columnheader"')&&ui.includes('role="rowheader"'),'Tabl
 assert(css.includes('.tbed-scroll')&&css.includes('.tbed-cell.current'),'Mobile table editing');
 assert(paper.includes('.ph.box')&&paper.includes('grid-template-columns'),'Formal ministry exam header');
 assert(paper.includes('table-header-group'),'Semantic printed tables');
+assert(css.includes('.nav{position:relative;inset:auto;grid-row:auto'),'Mobile navigation must reserve a grid row');
 console.log('PASS premium table editor, score checks, ministry header, print structure');
