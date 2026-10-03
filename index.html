@@ -688,13 +688,220 @@ input:not([type=checkbox]):not([type=range]):focus,textarea:focus{outline:none;b
 .hr>div:not(.hl){white-space:normal}
 .hlft .hl{white-space:normal;max-width:100%;overflow-wrap:anywhere}
 .qtab td>[data-k],.qtab th>[data-k],.mtab td>[data-k],.mtab th>[data-k]{display:inline-block;min-width:8mm;min-height:1.2em}
+/* v14 — unified, progressive, mobile-first workspace. Paper CSS remains unchanged. */
+:root {
+  --bg:#F2F5F9;
+  --panel:#FFFFFF;
+  --sunk:#F7F9FC;
+  --ink:#1B2D43;
+  --ink2:#52657B;
+  --muted:#73849A;
+  --line:#DDE5EE;
+  --line2:#EAF0F6;
+  --acc:#24568D;
+  --acc-h:#173E70;
+  --acc-soft:#EBF2FA;
+  --acc-line:#BED2EA;
+  --danger:#B43C3C;
+  --danger-soft:#FFF2F1;
+  --ok:#258365;
+  --warn:#BC8F43;
+  --r:16px;
+  --r-sm:11px;
+  --sh-1:0 2px 9px rgba(19,44,77,.04);
+  --sh-2:0 18px 54px -20px rgba(19,44,77,.25);
+  --top-h:64px;
+  --nav-h:66px;
+}
+body{background:var(--bg);font-size:14px;color:var(--ink)}
+.app{grid-template-rows:var(--top-h) auto minmax(0,1fr);background:var(--bg)}
+.app.has-lesson{grid-template-rows:var(--top-h) auto auto minmax(0,1fr)}
+.top{gap:10px;padding:0 14px;border-bottom:1px solid #DEE6EF;box-shadow:0 1px 0 rgba(19,44,77,.03)}
+.brand{gap:10px}
+.mark{border-radius:11px;background:#173A63;box-shadow:0 5px 12px rgba(23,58,99,.13)}
+.brand b{font-size:16px;line-height:1.2;letter-spacing:-.015em}
+.brand small{font-size:11px;line-height:1.45;color:#657990;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;max-width:41vw}
+.status{width:8px;height:8px;margin-inline:0}
+.top .undo{border:0;background:var(--sunk);gap:2px;padding:0}
+.top .undo .ib{width:34px;height:36px}
+.top .btn.primary{border-radius:11px;min-height:40px;padding:0 13px;box-shadow:0 5px 15px -9px rgba(23,58,99,.5)}
+.top details.menu summary{width:36px;height:40px}
+.workflow{display:none}
+/* A single contextual editing ribbon, visible in writing modes only. */
+.ribbon{height:50px;padding:5px 13px;gap:8px;background:var(--panel);border-bottom:1px solid var(--line)}
+.rb{border:1px solid transparent;height:39px;min-width:39px;border-radius:10px;color:#3C536F;font-size:13px}
+.rb:hover{background:var(--acc-soft);color:var(--acc)}
+.rb[data-act=rQuestion]{background:var(--acc-soft);color:var(--acc);border:1px solid #DCE9F7}
+.rhint{color:#8090A4;font-size:11px}
+.app[data-view=paper] .ribbon,.app[data-view=style] .ribbon,.app[data-view=preview] .ribbon{display:none}
+.main{background:var(--bg)}
+.side{background:var(--bg)}
+.sbody{padding-bottom:calc(var(--nav-h) + 25px + env(safe-area-inset-bottom));scrollbar-gutter:stable}
+.pad{padding:17px 15px 24px;gap:15px;max-width:740px}
+.nav{grid-template-columns:repeat(3,minmax(0,1fr));height:calc(var(--nav-h) + env(safe-area-inset-bottom));padding:5px 8px calc(4px + env(safe-area-inset-bottom));gap:4px;background:rgba(255,255,255,.97);box-shadow:0 -8px 35px rgba(29,58,99,.06);border-top:1px solid #DFE7F0}
+.nav button{gap:4px;font-size:12px;font-weight:700;color:#667991;border-radius:13px;min-width:0;transition:background .15s,color .15s}
+.nav button[aria-current=true]{color:#1E4B7A;background:#ECF3FB}
+.nav button[aria-current=true] .ico{background:none;padding:0}
+.nav button .ico{width:19px;height:19px}
+/* Structured steps, status, and clear primary action */
+.work-heading{padding:4px 2px 2px;display:flex;flex-direction:column;gap:8px}
+.work-heading h2{font-size:22px;font-weight:800;letter-spacing:-.025em}
+.work-heading .bar{gap:8px;flex-wrap:wrap}
+.work-heading .bar .btn{min-height:39px;font-size:12.5px;padding:0 12px}
+.work-heading p{color:var(--muted);font-size:13px;margin:0;line-height:1.85;max-width:58ch}
+.step-kicker{color:var(--acc);font-weight:800;font-size:11px;letter-spacing:.01em}
+.exam-statline{display:flex;align-items:center;flex-wrap:wrap;gap:9px 12px;padding:11px 13px;border-radius:13px;border:1px solid #DBE7F4;background:#EFF5FC;color:#38536F;font-size:12px;font-weight:600}
+.exam-statline b{font-size:15px;color:#173A63;font-weight:800}
+.exam-statline .stat-divider{width:1px;height:19px;background:#C6D8EB}
+.stat-alert{color:#A33E36;background:#FFF6F1;border:1px solid #F2D4CC;padding:3px 8px;border-radius:20px;font-size:11px}
+.step-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:14px 0 6px;margin-top:3px;border-top:1px solid var(--line)}
+.step-footer .btn{min-height:44px;flex:1 1 auto}
+.step-footer .btn.primary{flex:1.4}
+.step-footer .btn:not(.primary){color:#435A73}
+/* Selection of common question types; rare templates are behind an explicit disclosure. */
+.question-picker{background:var(--panel);border:1px solid #D9E3EF;border-radius:17px;padding:14px;box-shadow:var(--sh-1);animation:rise .2s ease-out}
+.picker-title{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:11px;gap:8px}
+.picker-title strong{font-weight:800;font-size:15px}
+.picker-title small{color:#8291A2;font-size:11px}
+.question-picker .addsheet{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.question-picker .kind{min-width:0;min-height:78px;padding:12px 12px 10px;align-items:flex-start;gap:3px;border:1px solid #DEE7F1;border-radius:12px;background:#FFFFFF;box-shadow:none;transition:border-color .15s,transform .15s,background .15s}
+.question-picker .kind b{font-size:14px;color:#223A56;font-weight:800}
+.question-picker .kind small{font-size:11.5px;line-height:1.65;color:#7A8AA0}
+.question-picker .kind:hover{border-color:#91B2D7;background:#F5F9FE;transform:translateY(-1px)}
+.picker-more{margin-top:9px;border-top:1px solid #E8EEF5}
+.picker-more summary{list-style:none;display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:700;color:#355C83;min-height:42px}
+.picker-more summary::-webkit-details-marker{display:none}
+.picker-more summary svg:last-child{margin-inline-start:auto;transition:transform .15s}
+.picker-more[open] summary svg:last-child{transform:rotate(180deg)}
+.picker-more .addsheet{padding:7px 0 1px}
+.pick-hint{text-align:center;color:#7A8A9E;font-size:12px;margin:0}
+/* Question cards become the center of the workspace. */
+.qlist{margin:0;padding:0;display:flex;flex-direction:column;gap:12px;list-style:none}
+.qc{border:1px solid #DCE5EE;background:var(--panel);border-radius:15px;overflow:hidden;box-shadow:0 2px 11px rgba(24,53,85,.035)}
+.qc.open{border-color:#BCD0E7;box-shadow:0 5px 23px rgba(26,61,102,.07)}
+.qc-h{border-radius:0;gap:10px;min-height:62px;padding:11px 13px;background:#fff}
+.qc.open .qc-h{background:#F7FAFE;border-bottom:1px solid #E4EDF7}
+.qc-h>.qbadge{border-radius:9px;background:#E9F1FA;color:#28588B;min-width:40px;min-height:32px;display:inline-flex;justify-content:center;align-items:center;font-size:13px}
+.qc-h .qc-t{color:#2F455F;font-size:13px;font-weight:700}
+.qc-s{background:#F6F1E9;color:#8C6A34;border-color:#E4D6B9;white-space:nowrap}
+.qed{padding:14px;gap:13px;border-top:0}
+.qed>.fld:first-child{margin-top:0}
+.qed .rte{min-height:50px}
+.qed .sub-h{color:#375472}
+.qed .item{border:1px solid #E8EDF5;border-radius:11px;background:#FCFDFE;padding:10px;gap:9px}
+.qed .items{gap:9px}
+.qfoot{margin-top:4px;padding-top:11px}
+/* Setup keeps short decisions first; details remain collapsible. */
+.setup-appearance{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:14px 15px;border:1px solid #BCD3EA;border-radius:14px;background:linear-gradient(135deg,#F7FAFE,#EDF4FC)}
+.setup-appearance>div{display:flex;flex-direction:column;gap:3px}
+.setup-appearance b{color:#244D78;font-size:14px}
+.setup-appearance small{color:#68809A;font-size:11.5px}
+.pad-setup .summary{margin:0}
+.pad-setup .summary span{background:#fff;color:#4F6580;border-color:#E1E8F0}
+.sec{border-color:#DFE7F1;border-radius:14px;background:#fff;box-shadow:var(--sh-1)}
+.sec>summary{min-height:55px;padding:13px 15px;font-size:14px}
+.sec[open]{border-color:#C9D9EA}
+/* Print preview should visually dominate, with controls subordinate. */
+.canvas{background:#E9EFF6;padding-bottom:calc(var(--nav-h) + 16px)}
+.cbar{background:rgba(244,248,252,.97);border-bottom:1px solid #D6E1EC;padding:10px 15px;gap:9px;font-size:12px;backdrop-filter:blur(12px)}
+.cbar .canvas-label{font-weight:800;color:#314B67;margin-inline-end:4px}
+.cbar #pinfo{color:#708398;min-width:0}
+.cbar #pinfo b{color:#1D4269}
+.cbar .zoom{margin-inline-start:auto}
+#zoomer{padding:16px 12px 45px}
+/* Consistent identity across welcome and editor. */
+.welcome{background:#F7F9FC;color:#1D3044;padding:24px clamp(18px,5vw,72px) 48px}
+.welcome-brand .mark,.welcome .primary{background:#173A63!important;border-color:#173A63!important;color:white!important}
+.welcome-brand{color:#203F60}
+.welcome-hero{padding:52px 0 45px;gap:54px}
+.welcome .eyebrow{color:#47729D}
+.welcome h1{font-size:clamp(38px,5vw,62px);color:#20364E}
+.welcome h1 span{font-size:clamp(21px,2.6vw,28px);color:#43607D}
+.welcome .intro{color:#596F87}
+.welcome .btn{border-radius:11px!important;min-height:46px}
+.welcome-preview{transform:none!important;border:1px solid #CBD8E7;border-radius:16px;box-shadow:0 22px 46px -29px rgba(22,55,96,.28);background:#fff}
+.welcome-preview header{border-color:#B2C6DB;color:#2B4D72}
+.welcome .welcome-actions{gap:10px}
+.home-flow{display:flex;align-items:center;flex-wrap:wrap;gap:9px;margin:17px 0 0}
+.home-flow span{display:inline-flex;align-items:center;gap:6px;color:#667A91;font-size:12px;font-weight:700}
+.home-flow span b{width:23px;height:23px;display:inline-grid;place-items:center;border-radius:7px;background:#E4EEF8;color:#24568D}
+.welcome-hero .trust{margin-bottom:0}
+/* Responsive without hiding essential operations. */
+@media(max-width:600px){
+  .top{gap:5px;padding:0 10px}
+  .brand{gap:7px}
+  .brand b{font-size:14px}
+  .brand small{max-width:32vw;font-size:10px}
+  .mark{width:33px;height:33px}
+  .top .undo{gap:0}
+  .top .undo .ib{width:27px}
+  .top .btn.primary{min-height:36px;padding:0 9px;font-size:12px}
+  .top .btn.primary svg{width:16px}
+  .pad{padding:13px 12px 21px;gap:13px}
+  .work-heading h2{font-size:20px}
+  .work-heading p{font-size:12px}
+  .question-picker{padding:12px}
+  .question-picker .kind{min-height:72px;padding:10px}
+  .question-picker .kind b{font-size:12.5px}
+  .question-picker .kind small{font-size:11px}
+  .cbar{gap:7px;padding:7px 10px}
+  .cbar .canvas-label{font-size:11px}
+  .cbar #pinfo{font-size:11px}
+}
+@media(min-width:640px){
+  .question-picker .addsheet{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .home-flow{gap:17px}
+}
+@media(min-width:1024px){
+  .app{grid-template-rows:var(--top-h) 56px auto minmax(0,1fr)}
+  .app[data-view=paper],.app[data-view=style],.app[data-view=preview]{grid-template-rows:var(--top-h) 56px minmax(0,1fr)}
+  .app.has-lesson{grid-template-rows:var(--top-h) 56px auto auto minmax(0,1fr)}
+  .workflow{display:flex;align-items:center;justify-content:center;gap:14px;background:#fff;border-bottom:1px solid #DFE7F0;padding:6px 15px}
+  .workflow button{border:0;background:transparent;display:inline-flex;align-items:center;gap:9px;padding:7px 14px;min-height:41px;color:#7A8B9E;font-size:13px;font-weight:700;border-radius:10px;white-space:nowrap}
+  .workflow button:hover{color:var(--acc);background:var(--acc-soft)}
+  .workflow button[aria-current=step]{color:var(--acc);background:#EAF2FB}
+  .workflow .step-num{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:8px;border:1px solid #DCE7F2;font-size:11px;background:#fff;color:#8394A9}
+  .workflow button[aria-current=step] .step-num{background:#24568D;border-color:#24568D;color:#fff}
+  .workflow .step-link{width:32px;height:1px;background:#DCE5EE}
+  .main{grid-template-columns:minmax(355px,450px) minmax(0,1fr);min-width:0}
+  .stabs{display:none!important}
+  .side{border-inline-end:1px solid #DCE5EF}
+  .sbody{padding-bottom:20px}
+  .pad{padding:23px 21px 28px;gap:17px}
+  .canvas{padding-bottom:0}
+  .cbar{top:0}
+  .app[data-view=preview] .side{display:none!important}
+  .app[data-view=preview] .main{grid-template-columns:minmax(0,1fr)}
+  .app[data-view=write] .side{display:flex!important;visibility:visible}
+  .app[data-view=write] .main{grid-template-columns:minmax(355px,450px) minmax(0,1fr)}
+  #zoomer{padding:20px 28px 60px}
+}
+@media(min-width:1450px){.main{grid-template-columns:475px minmax(0,1fr)}.pad{max-width:850px}}
+@media print{
+  .workflow,.home-flow,.question-picker,.step-footer,.exam-statline,.setup-appearance{display:none!important}
+  .app{display:block!important}
+  .canvas{background:transparent}
+}
+/* App views without a ribbon need a two-row layout, not an empty grid track. */
+@media(max-width:1023px){
+ .app[data-view=paper],.app[data-view=style],.app[data-view=preview]{grid-template-rows:var(--top-h) minmax(0,1fr)}
+ .app.has-lesson[data-view=paper],.app.has-lesson[data-view=style],.app.has-lesson[data-view=preview]{grid-template-rows:var(--top-h) auto minmax(0,1fr)}
+}
+/* Print operates on the exact A4 page nodes, without preview spacing or zoom. */
+@media print{
+ html,body{width:210mm!important;min-width:210mm!important;height:auto!important;margin:0!important;padding:0!important;background:#fff!important;overflow:visible!important}
+ .app,.main,.canvas,#zoomer,#pages{display:block!important;width:210mm!important;max-width:210mm!important;height:auto!important;min-height:0!important;overflow:visible!important;padding:0!important;margin:0!important;background:#fff!important;zoom:1!important}
+ .canvas{position:static!important;visibility:visible!important;pointer-events:auto!important}
+ #pages .page{width:210mm!important;height:297mm!important;margin:0!important;box-shadow:none!important;break-inside:avoid!important;page-break-inside:avoid!important}
+ #pages .page:last-child{break-after:auto!important;page-break-after:auto!important}
+}
 </style>
 </head>
 <body dir="rtl">
 <section id="welcome" class="welcome" dir="rtl" aria-label="الرئيسية"></section>
 <div class="app" id="app" data-view="questions" dir="rtl">
  <header class="top">
-  <div class="brand"><span class="mark" aria-hidden="true">م</span><div><b>المفيد</b><small>في تنضيد الامتحانات</small></div></div>
+  <div class="brand"><span class="mark" aria-hidden="true">م</span><div><b>المفيد</b><small id="docContext">أنشئ امتحانك بخطوات واضحة</small></div></div>
   <span class="status" data-s="saved" title="محفوظ تلقائياً"></span>
   <div class="undo"><button type="button" class="ib" data-act="undo" title="تراجع (Ctrl+Z)"><i data-lucide="undo-2" width="19" height="19"></i></button><button type="button" class="ib" data-act="redo" title="إعادة (Ctrl+Y)"><i data-lucide="redo-2" width="19" height="19"></i></button></div>
   <details class="menu"><summary class="ib" title="المزيد"><i data-lucide="ellipsis-vertical" width="19" height="19"></i></summary>
@@ -709,7 +916,14 @@ input:not([type=checkbox]):not([type=range]):focus,textarea:focus{outline:none;b
    </div></details>
   <button type="button" class="btn primary" data-act="print"><i data-lucide="file-down" width="18" height="18"></i>PDF</button>
  </header>
- <div class="ribbon" role="toolbar" aria-label="أدوات الكتابة">
+ <nav class="workflow" aria-label="خطوات إعداد الامتحان">
+  <button type="button" data-act="view" data-v="paper"><span class="step-num">١</span><span>إعداد الورقة</span></button>
+  <span class="step-link" aria-hidden="true"></span>
+  <button type="button" data-act="view" data-v="questions"><span class="step-num">٢</span><span>كتابة الأسئلة</span></button>
+  <span class="step-link" aria-hidden="true"></span>
+  <button type="button" data-act="view" data-v="preview"><span class="step-num">٣</span><span>المعاينة والطباعة</span></button>
+ </nav>
+ <div class="ribbon" role="toolbar" aria-label="أدوات تحرير نصوص الأسئلة">
   <button type="button" class="rb wide" data-act="rQuestion" title="إضافة سؤال فارغ"><i data-lucide="plus" width="17" height="17"></i><span>سؤال</span></button>
   <span class="rsep"></span>
   <button type="button" class="rb keep" data-act="fmt" data-c="bold" title="عريض"><b>B</b></button>
@@ -723,21 +937,19 @@ input:not([type=checkbox]):not([type=range]):focus,textarea:focus{outline:none;b
  <section id="lessonBar" class="lesson-bar" hidden aria-label="دليل التجربة"></section>
  <main class="main">
   <aside class="side" aria-label="التحرير">
-   <nav class="stabs"><button type="button" data-act="view" data-v="questions">المحتوى</button><button type="button" data-act="view" data-v="paper">الورقة</button><button type="button" data-act="view" data-v="style">التنسيق</button></nav>
+
    <div class="sbody" id="sideBody"></div>
   </aside>
   <section class="canvas" id="canvas" aria-label="الورقة">
-   <div class="cbar"><span id="pinfo"></span><div class="zoom"><button type="button" class="ib" data-act="zout" title="تصغير"><i data-lucide="minus" width="17" height="17"></i></button><button type="button" id="zval" data-act="zfit" title="ملاءمة العرض">100%</button><button type="button" class="ib" data-act="zin" title="تكبير"><i data-lucide="plus" width="17" height="17"></i></button></div></div>
+   <div class="cbar"><span class="canvas-label">معاينة الطباعة · A4</span><span id="pinfo"></span><div class="zoom"><button type="button" class="ib" data-act="zout" title="تصغير"><i data-lucide="minus" width="17" height="17"></i></button><button type="button" id="zval" data-act="zfit" title="ملاءمة العرض">100%</button><button type="button" class="ib" data-act="zin" title="تكبير"><i data-lucide="plus" width="17" height="17"></i></button></div></div>
    <div class="write-sheet" id="mobileWriter" aria-label="ورقة الكتابة"></div>
    <div id="zoomer"><div id="pages" class="pages"></div></div>
   </section>
  </main>
  <nav class="nav" aria-label="الأقسام">
-  <button type="button" data-act="view" data-v="write"><i data-lucide="pencil" width="20" height="20"></i>الكتابة</button>
-  <button type="button" data-act="view" data-v="questions"><i data-lucide="list-ordered" width="20" height="20"></i>المحتوى</button>
-  <button type="button" data-act="view" data-v="preview"><i data-lucide="eye" width="20" height="20"></i>المعاينة</button>
-  <button type="button" data-act="view" data-v="paper"><i data-lucide="file-text" width="20" height="20"></i>الورقة</button>
-  <button type="button" data-act="view" data-v="style"><i data-lucide="palette" width="20" height="20"></i>التنسيق</button>
+  <button type="button" data-act="view" data-v="paper"><i data-lucide="settings-2" width="20" height="20"></i><span>الإعداد</span></button>
+  <button type="button" data-act="view" data-v="questions"><i data-lucide="pencil" width="20" height="20"></i><span>الأسئلة</span></button>
+  <button type="button" data-act="view" data-v="preview"><i data-lucide="eye" width="20" height="20"></i><span>المعاينة</span></button>
  </nav>
 </div>
 <div class="wizard" id="wizard" dir="rtl" hidden></div>
@@ -1358,6 +1570,20 @@ function loadState(){
 const S=loadState();
 const desk=()=>matchMedia('(min-width:1024px)').matches;
 const UI={view:'questions',open:null,more:{},lay:{},tableCells:{},adding:false,zoom:'fit'};
+const currentStep=()=>['paper','style'].includes(UI.view)?'paper':['questions','write'].includes(UI.view)?'questions':'preview';
+function examStats(p){
+ const questions=p.questions.filter(q=>q.kind!=='text'&&q.kind!=='section');
+ const toNumber=value=>String(value??'').trim()?Number(String(value).replace(/[٠-٩]/g,c=>String('٠١٢٣٤٥٦٧٨٩'.indexOf(c))).replace(/[۰-۹]/g,c=>String('۰۱۲۳۴۵۶۷۸۹'.indexOf(c))).trim()):NaN;
+ const scores=questions.map(q=>toNumber(q.score));
+ const invalid=scores.filter(v=>!Number.isFinite(v)||v<0).length;
+ const empty=questions.filter(q=>!q.prompt?.trim()&&!q.items.some(x=>x.text?.trim())).length;
+ return {count:questions.length,marks:scores.reduce((n,v)=>n+(Number.isFinite(v)&&v>=0?v:0),0),invalid,empty};
+}
+function examStatsMarkup(stats){
+ return `<span class="stat-main"><b>${stats.count.toLocaleString('ar-IQ')}</b> ${stats.count===1?'سؤال':stats.count<11?'أسئلة':'سؤالاً'}</span><span class="stat-divider"></span><span><b>${stats.marks.toLocaleString('ar-IQ')}</b> مجموع الدرجات</span>${stats.invalid?`<span class="stat-alert">${stats.invalid} درجة غير صالحة</span>`:''}${stats.empty?`<span class="stat-alert">${stats.empty} سؤال غير مكتمل</span>`:''}`;
+}
+function refreshStats(){const node=document.querySelector('.exam-statline');if(node)node.innerHTML=examStatsMarkup(examStats(P()));}
+
 const P=()=>S.stages[S.active];
 const ctx=()=>makeCtx(P(),S.active);
 const findQ=id=>P().questions.find(q=>q.id===id);
@@ -1369,7 +1595,7 @@ function pushHist(){clearTimeout(histT);const s=snap();if(H.stack[H.idx]===s)ret
  let bytes=H.stack.reduce((n,v)=>n+v.length*2,0);while(H.stack.length>2&&(H.stack.length>80||bytes>20*1024*1024)){bytes-=H.stack[0].length*2;H.stack.shift();}
  H.idx=H.stack.length-1;updUndo();}
 function save(){clearTimeout(saveT);if(DEMO){setStatus('saved');return;}const saved=store.set(JSON.stringify(S));setStatus(saved?'saved':'error');if(!saved&&!storageWarning){storageWarning=true;toast('الحفظ المحلي تعذّر. احفظ ملف المشروع الآن حتى لا يضيع عملك',{label:'حفظ ملف',run:download});}if(saved)storageWarning=false;}
-function changed(o={}){setStatus('saving');clearTimeout(saveT);saveT=setTimeout(save,450);clearTimeout(histT);histT=setTimeout(pushHist,450);if(o.paper!==false){clearTimeout(paperT);paperT=setTimeout(renderPaper,160);}}
+function changed(o={}){setStatus('saving');refreshStats();clearTimeout(saveT);saveT=setTimeout(save,450);clearTimeout(histT);histT=setTimeout(pushHist,450);if(o.paper!==false){clearTimeout(paperT);paperT=setTimeout(renderPaper,160);}}
 function commit(){changed({paper:false});pushHist();renderSide();renderPaper();}
 function undo(dir){pushHist();const n=H.idx+dir;if(n<0||n>=H.stack.length)return;H.idx=n;const o=JSON.parse(H.stack[n]);S.active=o.active;S.started=o.started;S.stages=o.stages;UI.open=null;LAST=null;loadFont();save();renderAll();toast(dir<0?'تم التراجع':'تمت الإعادة');}
 function updUndo(){$$('[data-act=undo]').forEach(b=>b.disabled=H.idx<=0);$$('[data-act=redo]').forEach(b=>b.disabled=H.idx>=H.stack.length-1);}
@@ -1514,13 +1740,20 @@ function questionsView(p,c){
   return`<li class="qc${open?' open':''}" data-qid="${q.id}"><button type="button" class="qc-h" data-act="toggle" data-q="${q.id}" aria-expanded="${open}">
    <span class="qbadge">${esc(num)}</span><span class="qc-t">${esc(q.prompt||(q.items[0]&&q.items[0].text)||'سؤال بلا نص').replace(/\$+[^$]*\$+/g,'∑')}</span>${q.showScore&&q.score?`<span class="qc-s">${esc(scoreText(q.score,c.en,c.D,false))}</span>`:''}${ic(open?'chevron-up':'chevron-down',18)}</button>
    ${open?qEditor(q,c,i,p):''}</li>`;}).join('');
- return`<div class="pad">
-  <div class="bar"><h2>المحتوى</h2><button type="button" class="btn soft" data-act="adding">${ic(UI.adding?'x':'plus',18)}${UI.adding?'إغلاق':'إضافة'}</button></div>
+ const stats=examStats(p);
+ return`<div class="pad pad-questions">
+  <header class="work-heading"><span class="step-kicker">الخطوة ٢ من ٣</span><div class="bar"><h2>كتابة الأسئلة</h2><button type="button" class="btn soft" data-act="adding" aria-expanded="${UI.adding}">${ic(UI.adding?'x':'plus',18)}${UI.adding?'إغلاق الأنواع':'سؤال جديد'}</button></div><p>كل سؤال في مكانه: اكتب النص، أضف الفروع ثم المعادلة أو الصورة عند الحاجة.</p></header>
+  <div class="exam-statline" role="status" aria-live="polite">${examStatsMarkup(stats)}</div>
   ${UI.adding?addSheet():''}
-  ${p.questions.length?`<ol class="qlist">${rows}</ol>`:`<div class="empty write-welcome"><b>ابدأ بمحتواك، مو بمثال جاهز</b><span>اكتب مباشرة على الورقة، أو أضف سؤالاً فارغاً واختر نوعه.</span><button type="button" class="btn primary" data-act="startWriting">الكتابة على الورقة</button><button type="button" class="text-link" data-act="demo">فتح تجربة بأمثلة</button></div>`}
+  ${p.questions.length?`<ol class="qlist">${rows}</ol>`:UI.adding?`<p class="pick-hint">اختر نوع السؤال أعلاه. ويمكنك تغيير تنسيقه وتحرير نصه بعد إضافته.</p>`:`<div class="empty write-welcome"><b>ورقتك جاهزة لإضافة أول سؤال</b><span>ابدأ بسؤال من الأنواع الجاهزة، أو اكتب نصاً حرّاً داخل الورقة.</span><button type="button" class="btn primary" data-act="adding">${ic('plus',17)}إضافة السؤال الأول</button><button type="button" class="text-link" data-act="startWriting">أفضّل الكتابة المباشرة</button></div>`}
+  <div class="step-footer"><button type="button" class="btn" data-act="startWriting">${ic('pencil',17)}تحرير مباشر</button><button type="button" class="btn primary" data-act="view" data-v="preview">معاينة الورقة ${ic('arrow-left',17)}</button></div>
  </div>`;
 }
-const addSheet=()=>`<div class="addsheet">${Object.entries(KIND_INFO).map(([k,[t,d]])=>`<button type="button" class="kind" data-act="addQ" data-kind="${k}"><b>${t}</b><small>${d}</small></button>`).join('')}</div>`;
+const addSheet=()=>{
+ const primary=['branches','definitions','blanks','mcq','math','text'];
+ const cards=keys=>keys.filter(k=>KIND_INFO[k]).map(k=>{const[t,d]=KIND_INFO[k];return`<button type="button" class="kind" data-act="addQ" data-kind="${k}"><b>${esc(t)}</b><small>${esc(d)}</small></button>`;}).join('');
+ return`<section class="question-picker" aria-label="اختيار نوع السؤال"><div class="picker-title"><strong>اختر نوع السؤال</strong><small>الأكثر استخدامًا</small></div><div class="addsheet">${cards(primary)}</div><details class="picker-more"><summary>${ic('layout-grid',16)}أنواع إضافية${ic('chevron-down',17)}</summary><div class="addsheet">${cards(Object.keys(KIND_INFO).filter(k=>!primary.includes(k)))}</div></details></section>`;
+};
 function imgCtl(img,path){
  return`<div class="imgctl"><img src="${img.src}" alt=""><div class="imgctl-b">
   <label class="rng"><span>الحجم <b>${img.w}%</b></span><input type="range" min="10" max="100" step="5" value="${img.w}" data-b="${path}.image.w"></label>
@@ -1607,8 +1840,9 @@ function qEditor(q,c,qi,p){
 function rowF(k,label,body){const m=P().meta,on=m.show[k]!==false;return`<div class="frow${on?'':' off'}">${eye(k,on)}<div class="frow-b"><span class="frow-l">${label}</span>${body}</div></div>`;}
 function paperView(p,c){
  const m=p.meta;
- return`<div class="pad">
-  <div class="bar"><h2>الورقة</h2><button type="button" class="btn soft" data-act="wizard">${ic('wand-sparkles',17)}المرحلة والمادة</button></div>
+ return`<div class="pad pad-setup">
+  <header class="work-heading"><span class="step-kicker">الخطوة ١ من ٣</span><div class="bar"><h2>إعداد الورقة</h2><button type="button" class="btn soft" data-act="wizard">${ic('settings-2',17)}تغيير المرحلة والمادة</button></div><p>راجع بيانات الترويسة، ثم اختر مظهر الورقة وانتقل إلى كتابة الأسئلة.</p></header>
+  <div class="setup-appearance"><div><b>مظهر الامتحان</b><small>الثيم، نوع الخط، الحجم والهوامش</small></div><button type="button" class="btn sm" data-act="view" data-v="style">${ic('palette',16)}تخصيص المظهر</button></div>
   <div class="summary"><span>${STAGES[S.active].label}</span><span>${esc(m.grade)}</span><span>${esc(m.subject)}</span><span>${esc(m.examKind)}${hasRound(m.examKind)?' · '+esc(m.round):''}</span></div>
   ${sec('الترويسة',`
    ${rowF('country','السطر الأول',inp('meta.country',m.country))}
@@ -1632,14 +1866,14 @@ function paperView(p,c){
    ${rowF('footLeft','توقيع ثانٍ',`<div class="pair">${inp('meta.footLeftLabel',m.footLeftLabel,{cls:'lb',ph:'لجنة المادة:'})}${inp('meta.footLeft',m.footLeft)}</div>`)}
    ${rowF('flip','نهاية الصفحة غير الأخيرة',inp('meta.flip',m.flip))}
    ${rowF('pageNo','أرقام الصفحات','<span class="hint">تظهر عند وجود أكثر من صفحة</span>')}`,false,'panel-bottom')}
-  ${sec('الملف',`<div class="row wrap"><button type="button" class="btn" data-act="save">${ic('download',17)}حفظ المشروع</button><button type="button" class="btn" data-act="open">${ic('folder-open',17)}فتح مشروع</button><button type="button" class="btn" data-act="new">${ic('file-plus-2',17)}ورقة فارغة</button></div><p class="hint">التصدير النهائي PDF من زر PDF. ملف المشروع يحفظ عملك لتكمل تحريره لاحقاً.</p>`,false,'folder')}
+  ${sec('إدارة الملف',`<div class="row wrap"><button type="button" class="btn" data-act="save">${ic('download',17)}حفظ المشروع</button><button type="button" class="btn" data-act="open">${ic('folder-open',17)}فتح مشروع</button><button type="button" class="btn" data-act="new">${ic('file-plus-2',17)}ورقة فارغة</button></div><p class="hint">التصدير النهائي PDF من زر PDF. ملف المشروع يحفظ عملك لتكمل تحريره لاحقاً.</p>`,false,'folder')}
+  <div class="step-footer"><button type="button" class="btn primary" data-act="view" data-v="questions">التالي: كتابة الأسئلة ${ic('arrow-left',17)}</button></div>
  </div>`;
 }
 
 /* ---------- لوحة التنسيق ---------- */
 function styleView(p,c){
- return`<div class="pad">
-  <div class="bar"><h2>التنسيق</h2></div>
+ return`<div class="pad pad-style"><header class="work-heading"><span class="step-kicker">تخصيص إعداد الورقة</span><div class="bar"><h2>المظهر والخطوط</h2><button type="button" class="btn soft" data-act="view" data-v="paper">${ic('arrow-right',17)}عودة</button></div><p>غيّر الألوان والخطوط والمسافات دون المساس بمحتوى الأسئلة أو بيانات الترويسة.</p></header>
   ${sec('الثيمات',`<div class="themes">${Object.entries(THEMES).map(([k,t])=>`<button type="button" class="theme th-${k}" data-act="set" data-path="p.theme" data-v="${k}" aria-pressed="${p.theme===k}"><span class="sw"><span style="background:var(--p)"></span><span style="background:var(--score)"></span><span style="background:var(--soft);border:1px solid var(--line)"></span></span><b>${t.label}</b></button>`).join('')}</div>`,true,'palette')}
   ${sec('الخط',`<div class="fonts">${Object.entries(FONTS).filter(([k])=>k!=='custom'||p.customFont).map(([k,f])=>`<button type="button" data-act="set" data-path="p.font" data-v="${k}" aria-pressed="${p.font===k}"><span style="font-family:${f.css.replace(/"/g,'&quot;')}">أبجد هوز Abc</span><small>${k==='custom'?esc(p.customFont.name):f.label}</small></button>`).join('')}</div>
    <button type="button" class="btn soft sm" data-act="font">${ic('upload',16)}${p.customFont?'تبديل الخط المرفوع':'رفع خط خاص'}</button>
@@ -1651,11 +1885,14 @@ function styleView(p,c){
    <p class="hint">التلقائي: الابتدائية عربي عدا الإنكليزية، والمتوسطة والإعدادية إنكليزي عدا الإسلامية والعربية والاجتماعيات والتاريخ والجغرافية والاقتصاد.</p>
    <div class="opt"><span>اتجاه الأسئلة</span>${seg('p.dir',p.dir,[['auto','تلقائي'],['rtl','عربي'],['ltr','English']],'sm')}</div>
    <div class="opt"><span>رقم السؤال</span>${seg('p.qStyle',p.qStyle,Object.keys(QSTYLES).map(k=>[k,qnum(1,c,{qStyle:k})]),'sm')}</div>`,false,'settings-2')}
+  <div class="step-footer"><button type="button" class="btn" data-act="view" data-v="paper">${ic('arrow-right',17)}إعداد الورقة</button><button type="button" class="btn primary" data-act="view" data-v="questions">الانتقال للأسئلة ${ic('arrow-left',17)}</button></div>
  </div>`;
 }
 function renderSide(){
  const p=P(),c=ctx(),body=$('#sideBody'),st=body.scrollTop,v=['preview','write'].includes(UI.view)?'questions':UI.view;
- $$('[data-act=view]').forEach(b=>b.setAttribute('aria-current',String(b.closest('.nav')?b.dataset.v===UI.view:b.dataset.v===v)));
+ const step=currentStep();
+ $$('[data-act=view]').forEach(b=>{const active=b.dataset.v===UI.view||((b.closest('.nav')||b.closest('.workflow'))&&b.dataset.v===step);b.setAttribute('aria-current',String(!!active));if(b.closest('.workflow'))b.setAttribute('aria-current',active?'step': 'false');});
+ const context=$('#docContext');if(context)context.textContent=[STAGES[S.active].label,p.meta.grade,p.meta.subject].filter(Boolean).join(' · ');
  body.innerHTML=v==='paper'?paperView(p,c):v==='style'?styleView(p,c):questionsView(p,c);
  body.scrollTop=st;$$('textarea',body).forEach(grow);icons();updUndo();
  $('#app').dataset.view=UI.view;
@@ -1728,7 +1965,7 @@ function showWelcome(){
  ['شغلك يبقى إلك','حفظ محلي، وملف مشروع للرجوع لاحقاً، وتراجع عن التعديلات. ما يحتاج إنشاء حساب.']
  ];
  host.innerHTML=`<div class="welcome-inner"><nav class="welcome-nav" aria-label="تنقل البداية"><div class="welcome-brand"><span class="mark">م</span><span>المفيد<br><small>في تنضيد الامتحانات</small></span></div><div class="welcome-actions"><button type="button" class="btn sm" data-act="homeLearn">دليل الاستخدام</button>${S.started?'<button type="button" class="btn sm" data-act="continueProject">متابعة مشروعي</button>':''}</div></nav>
- <section class="welcome-hero"><div><p class="eyebrow">تنضيد أوراق الامتحانات العراقية</p><h1>المفيد<span>في تنضيد الامتحانات</span></h1><p class="intro">أسئلتك، بترتيب واضح وجاهز للطباعة.<br>جهّز الترويسة، أضف الأسئلة، وراجع الورقة قبل إخراجها بصيغة PDF.</p><div class="welcome-actions"><button type="button" class="btn primary" data-act="homeNew">${ic('plus',18)}مشروع جديد</button><button type="button" class="btn" data-act="demo">${ic('pencil',18)}جرّب وتعلّم</button><button type="button" class="btn" data-act="homeOpen">${ic('folder-open',18)}فتح ملف مشروع</button></div><p class="trust">لا يحتاج حساباً. ملفاتك تبقى على جهازك.</p></div>
+ <section class="welcome-hero"><div><p class="eyebrow">تنضيد أوراق الامتحانات العراقية</p><h1>المفيد<span>في تنضيد الامتحانات</span></h1><p class="intro">أسئلتك، بترتيب واضح وجاهز للطباعة.<br>جهّز الترويسة، أضف الأسئلة، وراجع الورقة قبل إخراجها بصيغة PDF.</p><div class="welcome-actions"><button type="button" class="btn primary" data-act="homeNew">${ic('plus',18)}مشروع جديد</button><button type="button" class="btn" data-act="demo">${ic('pencil',18)}جرّب وتعلّم</button><button type="button" class="btn" data-act="homeOpen">${ic('folder-open',18)}فتح ملف مشروع</button></div><p class="trust">لا يحتاج حساباً. ملفاتك تبقى على جهازك.</p><div class="home-flow" aria-label="خطوات إنشاء الامتحان"><span><b>١</b>إعداد الورقة</span><span><b>٢</b>كتابة الأسئلة</span><span><b>٣</b>معاينة PDF</span></div></div>
  <div class="welcome-preview" aria-label="مثال توضيحي لورقة امتحان"><header>أسئلة امتحان الشهر الأول<small>٢٠٢٦ - ٢٠٢٧ · نموذج توضيحي</small></header><div class="preview-question"><b>س١/ أجب عما يأتي:</b><p>أ- اشرح الفكرة بأسلوبك، مع ذكر مثال.</p><div class="writing-lines"></div></div><div class="preview-question"><b>س٢/ اختر الإجابة الصحيحة:</b><p>أ- الخيار الأول &nbsp; ب- الخيار الثاني</p></div><div class="preview-question"><b>س٣/ حل المسألة الآتية:</b><p dir="ltr" style="text-align:center">x² + 2x − 3 = 0</p><div class="writing-lines"></div></div></div></section>
  <section class="welcome-section"><p class="eyebrow">أدوات التنضيد</p><h2>من الترويسة إلى آخر سؤال</h2><div class="features">${features.map(([title,text],i)=>`<article class="feature"><div><h3>${title}</h3><p>${text}</p></div></article>`).join('')}</div></section>
  <section class="welcome-section learn-section" id="learnSection"><div><p class="eyebrow">دليل عملي</p><h2>افتح النموذج وجرّب عليه</h2><p>خمس خطوات داخل المحرر نفسه. غيّر السؤال، أدرج معادلة وجرّب الجدول. ارجع إلى مشروعك متى تريد، من دون أن تتغيّر بياناته.</p><button type="button" class="btn" data-act="demo">ابدأ التعليم العملي</button></div><ol class="learn-steps"><li>إعداد الترويسة ومعلومات الامتحان.</li><li>إدخال الأسئلة والأفرع والاختيارات.</li><li>إضافة المعادلات والجداول.</li><li>المعاينة والحفظ بصيغة PDF.</li></ol></section>
