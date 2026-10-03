@@ -278,3 +278,29 @@ body{background:var(--bg);font-size:14px;color:var(--ink)}
  .sbody{padding-bottom:28px;scroll-padding-block-end:32px}
  .canvas{padding-bottom:8px}
 }
+
+/* v16: each definition is a dedicated and discoverable data-entry field. */
+.qed .definitions-list{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;margin:0;padding:0;list-style:none}
+.qed .def-entry{min-width:0;background:#FBFCFF;border:1px solid #D4E1F0;border-radius:13px;padding:12px;display:flex;flex-direction:column;gap:9px;box-shadow:0 2px 9px rgba(29,58,99,.045)}
+.def-entry-head{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+.def-counter{border:1px solid #B8CDE5;background:#ECF3FB;border-radius:9px;color:#173A63;font-weight:800;font-size:13px;padding:4px 10px;white-space:nowrap}
+.def-entry-hint{font-size:11px;color:#617590;flex:1 1 120px;line-height:1.5}
+.def-entry .tools{margin-inline-start:auto;display:flex;gap:4px;align-items:center}
+.def-entry .definition-input{min-height:51px;border:1px solid #BCCEE5;border-radius:10px;background:#FFF;padding:11px 12px;font-size:15px;line-height:1.8;outline-offset:2px;overflow-wrap:anywhere}
+.def-entry .definition-input:focus-visible{border-color:#2F69A8;outline:2px solid #B5D0EC}
+.def-entry-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.def-entry-actions .btn{padding:0 10px;min-height:36px;font-size:12px;color:#264B76;background:#F4F8FD}
+.def-score{margin-inline-start:auto;display:flex;align-items:center;gap:6px;font-size:11px;color:#4F617A;font-weight:700}
+.def-score input{border:1px solid #D2DBE9;border-radius:8px;max-width:66px;min-height:36px;padding:5px;text-align:center;background:#FFF}
+.field-help{display:block;font-size:11px;color:#697C94;font-weight:500;line-height:1.6;margin:3px 0}
+.content-audit{border:1px solid #DBB6C0;border-radius:12px;background:#FCF5F7;color:#793B50;margin:12px 0;overflow:hidden}
+.content-audit summary{cursor:pointer;padding:12px 14px;display:flex;align-items:center;gap:9px;font-size:13px;font-weight:800}
+.content-audit summary small{font-size:11px;margin-inline-start:auto;font-weight:500;color:#795567}
+.content-audit>div{display:grid;padding:0 10px 10px;gap:5px}
+.content-audit>div button{border:1px solid #EACED5;color:#663B53;border-radius:9px;background:#FFF;padding:9px;text-align:start;min-height:40px}
+@media(min-width:900px){.qed .definitions-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:400px){.def-entry-head .tools{width:100%;justify-content:flex-end}.def-entry-actions .btn{flex:1;min-width:80px}.def-score{margin-inline-start:0;width:100%;justify-content:space-between}}
+@media print{.qed .definitions-list,.content-audit{display:none!important}}
+.free-convert{display:flex;flex-direction:column;gap:5px;padding:12px 14px;border:1px solid #C6D6EC;border-radius:12px;background:#F0F5FC;color:#2F4B71;font-size:12px}
+.free-convert b{font-size:13px;color:#1E416C}
+.free-convert .btn{width:fit-content;margin-top:5px}

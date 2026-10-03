@@ -48,10 +48,21 @@ function footerHTML(p,c){
 }
 const flipHTML=(p,c)=>vis(p.meta,'flip')?`<div class="pflip"><span class="ln"></span>${ed(c,'meta.flip',p.meta.flip)}<span class="ln"></span></div>`:'';
 function imgHTML(img){return`<figure class="qi al-${img.align}${img.side?' side':''}" style="width:${img.w}%"><img src="${img.src}" alt="" style="aspect-ratio:${img.r}"></figure>`;}
-function qnum(n,c,p){const N=c.D(String(n)),s=c.en?'Q':'س';return{slash:`${s}${N}/`,paren:`${s}${N})`,colon:`${s}${N}:`,pre:`${s}:${N})`}[p.qStyle];}
+// One canonical exam prefix; imported legacy slash/paren formats render consistently.
+function qnum(n,c){return `س:${c.D(String(n))})`;}
+function branchNumber(q,n,i,c){
+ if(q.label==='none')return '';
+ if(['branches','enumerate'].includes(q.kind)){const label=q.label.startsWith('l')?c.L(i):c.lab(q.label,i).replace(/[.)-]$/,'');return `س:${c.D(String(n))}- ${label})`;}
+ return c.lab(q.label,i);
+}
+function numberedTitle(q,n,c){
+ const custom=String(q.title||'').trim();
+ if(custom&&!/^(?:س|Q)?\s*[:：\/]?\s*[0-9٠-٩۰-۹]+[.)\/]?$/.test(custom))return c.D(custom);
+ return qnum(n,c);
+}
 const scoreH=(raw,c,p,cls='qs')=>{const t=scoreText(raw,c.en,c.D,p.style==='source');return t?`<span class="${cls}">${esc(t)}</span>`:'';};
-function itemHTML(q,x,i,c,p,cols,part){
- const lb=c.lab(q.label,i),img=x.image?imgHTML(x.image):'',side=x.image&&x.image.side;
+function itemHTML(q,x,i,c,p,cols,part,n){
+ const lb=branchNumber(q,n,i,c),img=x.image?imgHTML(x.image):'',side=x.image&&x.image.side;
  const chIdx=x.choices.map((s,j)=>s.trim()?j:-1).filter(j=>j>=0),ch=chIdx.map(j=>x.choices[j].trim());
  const cE=j=>ed(c,`it.${q.id}.${x.id}.choice.${chIdx[j]}`,ch[j]);
  const letter=j=>q.chStyle==='letters'?`${c.ar?(PART_AR[j]||c.D(j+1)):(PART_EN[j]||String(j+1))}- `:'';
@@ -65,7 +76,7 @@ function itemHTML(q,x,i,c,p,cols,part){
  const subH=subs.length?`<div class="subs">${subs.map((v,k)=>`<span class="sb"><span class="il">${esc(c.lab(x.subLabel,k))}</span> ${ed(c,`it.${q.id}.${x.id}.sub.${v.j}`,v.s)}</span>`).join('')}</div>`:'';
  const strong=q.label.startsWith('l')&&cols===1;
  const answer=x.answerLines&&(!part||part.last)?`<div class="answer-lines" aria-label="${c.en?'Answer space':'مساحة الإجابة'}">${'<div></div>'.repeat(x.answerLines)}</div>`:'';
- return`<div class="ir${strong?' br':''}">${lb?`<span class="il">${esc(lb)}</span>`:''}<div class="ix"${x.align&&x.align!=='auto'?` style="text-align:${x.align}"`:''}>${side?img:''}${ed(c,`it.${q.id}.${x.id}.text`,x.text,'',c.en?'Type here':'اكتب هنا')}${chH}${x.score.trim()?' '+scoreH(x.score,c,p,'qs in'):''}${chB}${side?'':img}${subH}${tb}${answer}</div></div>`;
+ return`<div class="ir${strong?' br':''}">${lb?`<span class="il">${esc(lb)}</span>`:''}<div class="ix"${x.align&&x.align!=='auto'?` style="text-align:${x.align}"`:''}>${side?img:''}${ed(c,`it.${q.id}.${x.id}.text`,stripExamItemPrefix(x.text,q.kind),'',c.en?'Type here':'اكتب هنا')}${chH}${x.score.trim()?' '+scoreH(x.score,c,p,'qs in'):''}${chB}${side?'':img}${subH}${tb}${answer}</div></div>`;
 }
 function tableHTML(t,c,path,part){
  const from=part?.from??0,to=part?.to??t.rows.length;
@@ -96,16 +107,16 @@ function matchHTML(q,c,from,to){
 }
 function blockHTML(q,n,c,p,from,to,head,part){
  if(q.kind==='text'&&!q.prompt.trim()&&!q.showScore){
-  return`<section class="qb free-block" data-q="${q.id}" dir="${c.en?'ltr':'rtl'}"><div class="qbody" style="--cols:1">${q.items.slice(from,to).map((x,k)=>itemHTML(q,x,from+k,c,p,1,part)).join('')}</div></section>`;
+  return`<section class="qb free-block" data-q="${q.id}" dir="${c.en?'ltr':'rtl'}"><div class="qbody" style="--cols:1">${q.items.slice(from,to).map((x,k)=>itemHTML(q,x,from+k,c,p,1,part,n)).join('')}</div></section>`;
  }
  if(q.kind==='section')return`<section class="qb sec" data-q="${q.id}"><span class="sec-t">${ed(c,`q.${q.id}.prompt`,q.prompt,'','عنوان القسم')}${q.showScore&&q.score?` (${esc(scoreText(q.score,c.en,c.D,false))})`:''}</span></section>`;
  const cols=part?1:autoCols(q);let h='';
- if(head)h+=`<div class="qh"><span class="qmk"></span><h2><span class="qn">${esc(q.title.trim()?c.D(q.title.trim()):qnum(n,c,p))}</span> ${ed(c,`q.${q.id}.prompt`,q.prompt,'',c.en?'Question':'نص السؤال')}</h2>${q.showScore?scoreH(q.score,c,p):''}</div>`;
- else h+=`<div class="qcontinue">${esc(q.title.trim()?c.D(q.title.trim()):qnum(n,c,p))} ${c.en?'(continued)':'(تابع)'}</div>`;
+ if(head)h+=`<div class="qh"><span class="qmk"></span><h2><span class="qn">${esc(numberedTitle(q,n,c))}</span> ${ed(c,`q.${q.id}.prompt`,stripExamNumberPrefix(q.prompt),'',c.en?'Question':'نص السؤال')}</h2>${q.showScore?scoreH(q.score,c,p):''}</div>`;
+ else h+=`<div class="qcontinue">${esc(numberedTitle(q,n,c))} ${c.en?'(continued)':'(تابع)'}</div>`;
  if(head&&q.image)h+=imgHTML(q.image);
  const items=q.items.slice(from,to);
  if(q.kind==='match'){if(items.length||(head&&q.extra.length))h+=`<div class="qbody" style="--cols:1">${matchHTML(q,c,from,to)}</div>`;return`<section class="qb${head?'':' cont'}" data-q="${q.id}" dir="${c.en?'ltr':'rtl'}">${h}</section>`;}
- if(items.length)h+=`<div class="qbody${q.boxed?' boxed':''}" style="--cols:${cols}">${items.map((x,k)=>itemHTML(q,x,from+k,c,p,cols,part)).join('')}</div>`;
+ if(items.length)h+=`<div class="qbody${q.boxed?' boxed':''}" style="--cols:${cols}">${items.map((x,k)=>itemHTML(q,x,from+k,c,p,cols,part,n)).join('')}</div>`;
  return`<section class="qb${head?'':' cont'}" data-q="${q.id}" dir="${c.en?'ltr':'rtl'}">${h}</section>`;
 }
 function pageShell(p,c,first,inner,bottom){

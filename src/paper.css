@@ -199,3 +199,6 @@
 .hr>div:not(.hl){white-space:normal}
 .hlft .hl{white-space:normal;max-width:100%;overflow-wrap:anywhere}
 .qtab td>[data-k],.qtab th>[data-k],.mtab td>[data-k],.mtab th>[data-k]{display:inline-block;min-width:8mm;min-height:1.2em}
+/* v16: keep definition cells aligned across A4 preview and print. */
+.qbody.boxed .ir{align-items:center;min-width:0;break-inside:avoid}
+.qbody.boxed .il{font-weight:700;color:var(--p)}

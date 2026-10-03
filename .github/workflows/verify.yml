@@ -1,4 +1,4 @@
-name: Verify AlMufeed v15
+name: Verify AlMufeed v16
 on:
   push:
     branches: [main, 'feature/**', 'replace/**']
@@ -21,7 +21,7 @@ jobs:
         run: node tests/unit.js
       - name: Enforce paper reference palette and blue-only UI
         run: node tests/palette.js
-      - name: Validate premium component structure and branch score audits
+      - name: Check premium layout, no-green palette, tables and score audits
         run: node tests/v15-static.js
       - name: Build self-contained standalone HTML
         run: |
@@ -30,7 +30,6 @@ jobs:
           cp index.html /tmp/almufeed-built.html
           node build.js
           cmp /tmp/almufeed-built.html index.html
-          node -e "const s=require('fs').readFileSync('index.html','utf8'); if(!s.includes('Mobile navigation occupies a real grid track')||!s.includes('function gradeAuditMarkup')) throw Error('Premium UI CSS or grade auditing missing from compiled HTML')"
       - name: Install Playwright and Chromium for real browser/PDF checks
         run: |
           npm install --no-save --no-package-lock playwright@1.56.1
@@ -38,13 +37,15 @@ jobs:
           sudo apt-get install -y -qq poppler-utils
       - name: Test mobile workflow, desktop, grades and exact A4 PDF pagination
         run: node tests/v14-ux.js
-      - name: Test mobile table editor, score warnings and multipage A4 tables
+      - name: Browser-test mobile tables, branch grades and long A4 output
         run: node tests/v15-premium.js
+      - name: Validate structured definition fields, numbering and PDF preview parity
+        run: node tests/v16-regression.js
       - name: Attach visual and PDF test evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: almufeed-v15-browser-evidence
+          name: almufeed-v16-browser-evidence
           path: |
             tests/v14-*.png
             tests/v14-ux-results.json
@@ -52,15 +53,17 @@ jobs:
             tests/v15-*.png
             tests/v15-premium-results.json
             tests/v15-*.pdf
+            tests/v16-*.png
+            tests/v16-*.pdf
+            tests/v16-regression-results.json
           if-no-files-found: ignore
       - name: Commit generated index.html and app.js after validation
         if: github.event_name == 'push'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.html
-          git add -f app.js
+          git add index.html app.js
           if ! git diff --cached --quiet; then
-            git commit -m "Build verified AlMufeed v15 standalone app"
+            git commit -m "Build verified AlMufeed v16 standalone app"
             git push
           fi

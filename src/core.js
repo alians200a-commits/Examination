@@ -55,12 +55,18 @@ const FONTS={
  custom:{label:'خطي',css:"'ExamUserFont','Noto Sans Arabic',sans-serif"}
 };
 const LABELS={'n-dot':'1.','n-dash':'1-','n-paren':'1)','l-dash':'أ-','l-paren':'أ)','none':'بلا'};
+// Stable exam numbering: teachers should never have to type 'س:١)' themselves.
+// Legacy style keys are retained only so older JSON project files can still be opened.
 const QSTYLES={slash:'س1/',paren:'س1)',colon:'س1:',pre:'س:1)'};
+const EXAM_NUMBER_PREFIX=/^\s*(?:س|سؤال|Q(?:uestion)?)\s*[:：\/]\s*[0-9٠-٩۰-۹]+\s*(?:[-–ـ]\s*(?:[A-Z]|[أ-ي])\s*\)|[.)])\s*[-:]?\s*/iu;
+function stripExamNumberPrefix(value){return String(value??'').replace(EXAM_NUMBER_PREFIX,'').trimStart();}
+function stripExamItemPrefix(value,kind){const text=stripExamNumberPrefix(value);if(kind==='definitions')return text.replace(/^\s*[0-9٠-٩۰-۹]+\s*[.)-]\s*/u,'').trimStart();if(['branches','enumerate'].includes(kind))return text.replace(/^\s*(?:[A-Z]|[أبجدهـوزحطيكلمنسعفصقر])\s*[)-]\s*/iu,'').trimStart();return text;}
+
 const KIND_INFO={
- definitions:['تعريفات','مصطلحات قصيرة في مربعات'],
+ definitions:['إضافة تعاريف','كل تعريف في حقل مستقل وجدول منسق تلقائيًا'],
  blanks:['فراغات','عبارات فيها نقاط للإكمال'],
  mcq:['اختيار من متعدد','خيارات بين قوسين'],
- branches:['أفرع','أ- ب- ج- مع فقرات داخلية'],
+ branches:['سؤال بأفرع','ترقيم تلقائي: س:١- أ) أو س:1- A)'],
  enumerate:['عدّد','أفرع قصيرة في سطر واحد'],
  truefalse:['صح أو خطأ','عبارات للحكم عليها'],
  match:['وصل وزاوج','عمود (أ) وعمود (ب) للربط بينهما'],
@@ -180,7 +186,7 @@ function baseMeta(stage){
 function autoTitles(p){const m=p.meta;if(m.titleAuto)m.title=kindTitle(m.examKind)+(m.subject?' في مادة '+m.subject:'');if(m.subtitleAuto)m.subtitle=m.grade?'للصف '+String(m.grade).replace(/^الصف\s+/,''):'';}
 function makeProject(stage,blank){
  if(blank===undefined)blank=true;
- const p={meta:baseMeta(stage),style:'source',theme:'source',font:'sans',customFont:null,size:13,density:'normal',digits:'auto',dir:'auto',qStyle:'slash',rules:true,fit:true,pristine:true,questions:[]};
+ const p={meta:baseMeta(stage),style:'source',theme:'source',font:'sans',customFont:null,size:13,density:'normal',digits:'auto',dir:'auto',qStyle:'pre',rules:true,fit:true,pristine:true,questions:[]};
  autoTitles(p);if(!blank)p.questions=starter(stage,p.meta.grade,p.meta.subject);return p;
 }
 function blankQuestion(kind,en){
@@ -219,7 +225,7 @@ function normProject(p,stage){
  const cf=p.customFont&&typeof p.customFont.src==='string'&&/^data:(font\/[\w.+-]+|application\/[\w.+-]+|);base64,[A-Za-z0-9+/]+={0,2}$/.test(p.customFont.src)?{name:str(p.customFont.name,120),src:p.customFont.src}:null;
  const out={meta,style:'source',theme:pick(p.theme==='teal'?'steel':p.theme,Object.keys(THEMES),'source'),font:pick(p.font,Object.keys(FONTS),'sans'),customFont:cf,
   size:pick(+p.size,[13,14,15],13),density:pick(p.density,['tight','normal','airy'],'normal'),digits:pick(p.digits,['auto','arabic','latin'],'auto'),dir:pick(p.dir,['auto','rtl','ltr'],'auto'),
-  qStyle:pick(p.qStyle,Object.keys(QSTYLES),'slash'),rules:p.rules!==false,fit:p.fit!==false,pristine:!!p.pristine,questions:(Array.isArray(p.questions)?p.questions:[]).slice(0,80).map(normQ).filter(Boolean)};
+  qStyle:'pre',/* Old question formats normalize on display. */rules:p.rules!==false,fit:p.fit!==false,pristine:!!p.pristine,questions:(Array.isArray(p.questions)?p.questions:[]).slice(0,80).map(normQ).filter(Boolean)};
  const ids=new Set();const unique=x=>{while(ids.has(x.id))x.id=uid();ids.add(x.id);};
  out.questions.forEach(q=>{unique(q);q.items.forEach(unique);});
  if(out.font==='custom'&&!cf)out.font='sans';autoTitles(out);return out;
