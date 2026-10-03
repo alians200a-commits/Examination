@@ -3,7 +3,7 @@ const SYM={times:'×',div:'÷',pm:'±',mp:'∓',cdot:'·',le:'≤',leq:'≤',ge:
  alpha:'α',beta:'β',gamma:'γ',delta:'δ',epsilon:'ε',theta:'θ',lambda:'λ',mu:'μ',pi:'π',rho:'ρ',sigma:'σ',tau:'τ',phi:'φ',omega:'ω',Delta:'Δ',Gamma:'Γ',Theta:'Θ',Lambda:'Λ',Pi:'Π',Sigma:'Σ',Phi:'Φ',Omega:'Ω'};
 Object.assign(SYM,{varepsilon:'ε',vartheta:'ϑ',varphi:'φ',eta:'η',kappa:'κ',nu:'ν',xi:'ξ',chi:'χ',psi:'ψ',zeta:'ζ',Psi:'Ψ',ell:'ℓ',AA:'Å',deg:'°',permil:'‰',bullet:'•',star:'⋆',leftrightharpoons:'⇋',rightharpoonup:'⇀',mapsto:'↦',implies:'⇒',iff:'⇔',ni:'∋',setminus:'∖',sqcup:'⊔',top:'⊤',bot:'⊥',cong:'≅',simeq:'≃',ll:'≪',gg:'≫',dagger:'†',measuredangle:'∡',square:'□',Box:'□',lozenge:'◊'});
 Object.assign(SYM,{uparrow:'↑',downarrow:'↓',longrightarrow:'⟶',longleftarrow:'⟵',Leftarrow:'⇐',nearrow:'↗',searrow:'↘',propto:'∝',hbar:'ℏ',ohm:'Ω'});
-const AR_FN={sin:'جا',cos:'جتا',tan:'ظا',cot:'ظتا',sec:'قا',csc:'قتا',log:'لو'};
+const AR_FN={sin:'جا',cos:'جتا',tan:'ظا',cot:'ظتا',sec:'قا',csc:'قتا',arcsin:'جا⁻¹',arccos:'جتا⁻¹',arctan:'ظا⁻¹',log:'لو'};
 const FUNCS=new Set(['sin','cos','tan','cot','sec','csc','log','ln','exp','min','max','det','mod','arcsin','arccos','arctan','sinh','cosh','tanh']);
 const OPS='+-−×÷=<>≤≥≠±∓≈≡→←⇌⇒⇔↔⟶∨∧∩∪∈∉⊂⊆⊃∝·';
 const REL='=<>≤≥≠≈≡→←⇌⇒⇔↔⟶∈∉⊂⊆⊃∝';
@@ -209,7 +209,15 @@ function parseLegacyPieces(tex){
 function piecesToTex(ps){
  return ps.map(p=>({text:()=>p.v,frac:()=>`\\frac{${p.a}}{${p.b}}`,mixed:()=>`{${p.w}}\\frac{${p.a}}{${p.b}}`,sqrt:()=>`\\sqrt{${p.x}}`,nroot:()=>`\\sqrt[${p.n}]{${p.x}}`,root:()=>p.n&&!/^\s*[2٢]?\s*$/.test(p.n)?`\\sqrt[${p.n}]{${p.x}}`:`\\sqrt{${p.x}}`,
   unit:()=>`\\qty{${p.v}}{${p.u}}`,iso:()=>`\\isotope{${p.a}}{${p.z}}{${p.x}}`,sys:()=>`\\system{${p.a}}{${p.b}}`,log:()=>`\\log_{${p.b}}{${p.x}}`,lim:()=>`\\lim_{${p.v} \\to ${p.a}}{${p.x}}`,
-  int:()=>`\\int_{${p.a}}^{${p.b}}{${p.f}}`,sum:()=>`\\sum_{${p.a}}^{${p.b}}{${p.x}}`,bar:()=>`\\overline{${p.x}}`,ppow:()=>`{\\left( ${p.x} \\right)}^{${p.e}}`,
+  int:()=>`\\int_{${p.a}}^{${p.b}}{${p.f}}`,
+  trig:()=>`\\${['sin','cos','tan','cot','sec','csc','arcsin','arccos','arctan'].includes(p.fn)?p.fn:'sin'}${p.e?`^{${p.e}}`:''}{${p.x}}`,
+  identity:()=>`\\sin^{2}{${p.x}}+\\cos^{2}{${p.x}}=1`,
+  deriv:()=>`\\frac{${p.d}}{${p.d}${p.v}}\\left(${p.f}\\right)`,
+  deriv2:()=>`\\frac{${p.d}^{2}}{${p.d}${p.v}^{2}}\\left(${p.f}\\right)`,
+  partialderiv:()=>`\\frac{\\partial}{\\partial ${p.v}}\\left(${p.f}\\right)`,
+  intindef:()=>`\\int{${p.f}}\\,${p.d}${p.v}`,
+  intdef:()=>`\\int_{${p.a}}^{${p.b}}{${p.f}}\\,${p.d}${p.v}`,
+  sum:()=>`\\sum_{${p.a}}^{${p.b}}{${p.x}}`,bar:()=>`\\overline{${p.x}}`,ppow:()=>`{\\left( ${p.x} \\right)}^{${p.e}}`,
   pow:()=>`{${p.x}}^{${p.e}}`,sub:()=>`{${p.x}}_{${p.s}}`,powsub:()=>`{${p.x}}^{${p.e}}_{${p.s}}`,longdiv:()=>`\\longdiv{${p.a}}{${p.b}}{${p.q}}{${p.steps?1:0}}`,
   arrow:()=>`\\${p.rev?'xrightleftharpoons':'xrightarrow'}${p.b?`[${p.b}]`:''}{${p.a}}`,vec:()=>`\\vec{${p.x}}`,abs:()=>`\\left| ${p.x} \\right|`,paren:()=>`\\left( ${p.x} \\right)`,chem:()=>`\\ce{${p.x}}`}[p.t]||(()=>''))()).join(' ');
 }
@@ -223,9 +231,32 @@ function texProblem(tex){
  if(/\\(?:dfrac|tfrac|frac)\{[^{}]*\}\{[0٠۰]+\}/.test(t)||/\\longdiv\{[^{}]*\}\{[0٠۰]+\}/.test(t))return'القسمة على صفر غير معرّفة';
  return'';
 }
+/* Recognize native calculus templates when reopening a saved inline equation.
+   Compare with the canonical serialization to avoid silently mangling user-edited expressions. */
+function parseAdvancedPiece(raw){
+ const s=String(raw||'').trim();let p=null;
+ const tr=/^\\(sin|cos|tan|cot|sec|csc|arcsin|arccos|arctan)(?:\^\{([^{}]+)\})?\{([\s\S]*)\}$/.exec(s);
+ if(tr)p={t:'trig',fn:tr[1],e:tr[2]||'',x:tr[3]};
+ const id=/^\\sin\^\{2\}\{([\s\S]+)\}\+\\cos\^\{2\}\{\1\}=1$/.exec(s);
+ if(id)p={t:'identity',x:id[1]};
+ const der=/^\\frac\{(d|د)(\^\{2\})?\}\{\1([^{}]+?)(\^\{2\})?\}\\left\(([\s\S]*)\\right\)$/.exec(s);
+ if(der&&Boolean(der[2])===Boolean(der[4]))p={t:der[2]?'deriv2':'deriv',d:der[1],v:der[3],f:der[5]};
+ const par=/^\\frac\{\\partial\}\{\\partial ([^{}]+)\}\\left\(([\s\S]*)\\right\)$/.exec(s);
+ if(par)p={t:'partialderiv',v:par[1],f:par[2]};
+ if(s.startsWith('\\int')){
+   let i=4,a='',b='';
+   if(s[i]==='_'){[a,i]=readGroup(s,i+1);if(a===null)return null;}
+   if(s[i]==='^'){[b,i]=readGroup(s,i+1);if(b===null)return null;}
+   let f;[f,i]=readGroup(s,i);if(f===null)return null;
+   const end=/^\\,(d|د)(.+)$/.exec(s.slice(i));
+   if(end)p=a||b?{t:'intdef',a,b,f,d:end[1],v:end[2]}:{t:'intindef',f,d:end[1],v:end[2]};
+ }
+ return p&&piecesToTex([p])===s?p:null;
+}
 function parsePieces(tex){
  const t=String(tex||'');if(!t.trim())return[];
  if(texProblem(t))return[{t:'text',v:t}];
+ const advanced=parseAdvancedPiece(t);if(advanced)return[advanced];
  const ps=parseLegacyPieces(t),back=piecesToTex(ps);
  /* المعادلات المتداخلة أو غير المدعومة تبقى بصيغتها الأصلية، لا نغير معناها لتناسب القوالب. */
  const compact=x=>x.replace(/\s+/g,'').replace(/\\sqrt\[[2٢]\]/g,'\\sqrt');

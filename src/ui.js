@@ -517,7 +517,7 @@ function finishWizard(){
 }
 
 /* ---------- محرر المعادلات: تختار الصيغة ثم تملأ خاناتها، والناتج يدخل داخل السطر ---------- */
-const EQG=[['أساسيات',['frac','mixed','root','pow','sub','powsub','ppow','paren','abs']],['حساب',['longdiv','sys','log','lim','int','sum','bar']],['علوم',['chem','iso','arrow','vec','unit']],['نص',['text']]];
+const EQG=[['الدوال المثلثية',['trig','identity']],['التفاضل',['deriv','deriv2','partialderiv']],['التكامل',['intindef','intdef','lim','sum']],['أساسيات',['frac','mixed','root','pow','sub','powsub','ppow','paren','abs']],['حساب',['longdiv','sys','log','int','bar']],['علوم',['chem','iso','arrow','vec','unit']],['نص',['text']]];
 const EQT={
  frac:['كسر',[['a','البسط (فوق)'],['b','المقام (تحت)']],{a:'١',b:'٢'}],
  mixed:['عدد كسري',[['w','العدد الصحيح'],['a','البسط'],['b','المقام']],{w:'٢',a:'١',b:'٣'}],
@@ -533,6 +533,13 @@ const EQT={
  log:['لوغاريتم',[['b','الأساس'],['x','العدد']],{b:'٢',x:'٨'}],
  lim:['غاية',[['v','المتغير'],['a','يقترب من'],['x','الدالة']],{v:'x',a:'2',x:'x^{2}'}],
  int:['تكامل',[['a','الحد الأدنى'],['b','الحد الأعلى'],['f','الدالة مع dx']],{a:'0',b:'1',f:'2x\\,dx'}],
+  trig:['دالة مثلثية',[['fn','اختر الدالة'],['x','الزاوية أو التعبير'],['e','أس الدالة (اختياري)']],{fn:'sin',x:'س',e:''},{fn:'sin',x:'x',e:''}],
+  identity:['هوية مثلثية',[['x','الزاوية أو المتغير']],{x:'س'},{x:'x'}],
+  deriv:['المشتقة الأولى',[['f','الدالة المراد اشتقاقها'],['v','متغير الاشتقاق']],{f:'س^{٢}+٣س',v:'س',d:'د'},{f:'x^{2}+3x',v:'x',d:'d'}],
+  deriv2:['المشتقة الثانية',[['f','الدالة المراد اشتقاقها'],['v','متغير الاشتقاق']],{f:'س^{٣}',v:'س',d:'د'},{f:'x^{3}',v:'x',d:'d'}],
+  partialderiv:['مشتقة جزئية',[['f','الدالة'],['v','متغير الاشتقاق']],{f:'س^{٢}+ص',v:'س'},{f:'x^{2}+y',v:'x'}],
+  intindef:['تكامل غير محدد',[['f','الدالة تحت إشارة التكامل'],['v','متغير التكامل']],{f:'س^{٢}',v:'س',d:'د'},{f:'x^{2}',v:'x',d:'d'}],
+  intdef:['تكامل محدد',[['a','الحد الأدنى'],['b','الحد الأعلى'],['f','الدالة تحت إشارة التكامل'],['v','متغير التكامل']],{a:'٠',b:'١',f:'س^{٢}',v:'س',d:'د'},{a:'0',b:'1',f:'x^{2}',v:'x',d:'d'}],
  sum:['مجموع',[['a','من (تحت)'],['b','إلى (فوق)'],['x','الحد العام']],{a:'i=1',b:'n',x:'i'}],
  bar:['خط علوي',[['x','الرمز (قطعة، عدد دوري)']],{x:'AB'}],
  chem:['صيغة كيميائية',[['x','اكتب: 2H2 + O2 -> 2H2O أو <=> للمتزن، و ->[Δ] لشرط']],{x:'H2O'}],
@@ -582,6 +589,7 @@ function renderEq(){
  const strip=e.pieces.map((p,i)=>`<button type="button" class="pc${i===e.sel?' sel':''}" data-act="eqSel" data-i="${i}">${texToHTML(pieceTex(p),e.lang)}</button>`).join('');
  const D=v=>ar?toAr(v):toLa(v);
  const field=(f,l)=>{
+  if(sel.t==='trig'&&f==='fn')return`<label class="fld"><span>${l}</span><select data-eq="fn" aria-label="اختر الدالة المثلثية">${[['sin','جا / sin'],['cos','جتا / cos'],['tan','ظا / tan'],['cot','ظتا / cot'],['sec','قا / sec'],['csc','قتا / csc'],['arcsin','جا العكسية / arcsin'],['arccos','جتا العكسية / arccos'],['arctan','ظا العكسية / arctan']].map(([v,n])=>`<option value="${v}"${sel.fn===v?' selected':''}>${n}</option>`).join('')}</select></label>`;
   if(sel.t==='root'&&f==='n'){const cur=ROOTS.some(([v])=>v===toLa(sel.n||'')&&v!=='n')?toLa(sel.n||''):'n';
    return`<div class="fld wide"><span>${l}</span><div class="seg sm" role="group">${ROOTS.map(([v,n])=>`<button type="button" data-act="eqRoot" data-v="${v}" aria-pressed="${cur===v}">${n}${v&&v!=='n'?` <small>${D(v)}</small>`:''}</button>`).join('')}</div>${cur==='n'?`<input data-eq="n" value="${esc(sel.n??'')}" dir="${ar?'rtl':'ltr'}" placeholder="${ar?'ن أو ٦':'n or 6'}" autocomplete="off">`:''}</div>`;}
   return`<label class="fld"><span>${l}</span><input data-eq="${f}" value="${esc(sel[f]??'')}" dir="${ar?'rtl':'ltr'}" autocomplete="off"></label>`;};
@@ -594,7 +602,8 @@ function renderEq(){
   <div class="eqprev" dir="${ar?'rtl':'ltr'}">${prev}</div>
   ${e.pieces.length>1?`<div class="strip" dir="${ar?'rtl':'ltr'}">${strip}</div>`:''}
   ${form}
-  <details class="eqtemplates"${e.pieces.length?'':' open'}><summary>${e.pieces.length?'إضافة صيغة أخرى':'اختر صيغة المعادلة'}${ic('chevron-down',16)}</summary><div class="eqgal">${EQG.map(([g,ks])=>`<div class="gal-g"><span class="gal-h">${g}</span><div class="gal">${ks.map(k=>{const [n,,smp]=EQT[k];return`<button type="button" class="gt" data-act="eqAdd" data-t="${k}"><span class="gt-v" dir="${ar&&!['chem','iso','int','lim','sum','unit'].includes(k)?'rtl':'ltr'}">${texToHTML(pieceTex({t:k,...toPieceDigits(smp,['chem','iso','int','lim','sum','unit'].includes(k)?'en':e.lang),steps:false}),['chem','iso','int','lim','sum','unit'].includes(k)?'en':e.lang)}</span><small>${n}</small></button>`;}).join('')}</div></div>`).join('')}</div></details>
+  <div class="math-fast" aria-label="أدوات الرياضيات المتقدمة"><b>رياضيات: أضف الصيغة</b><div class="math-fast-scroll">${[['trig','جا / sin'],['identity','جا² + جتا²'],['deriv','المشتقة'],['deriv2','المشتقة الثانية'],['partialderiv','∂ مشتقة جزئية'],['intindef','∫ غير محدد'],['intdef','∫ بحدود']].map(([k,n])=>`<button type="button" data-act="eqAdd" data-t="${k}">${n}</button>`).join('')}</div></div>
+  <details class="eqtemplates"${e.pieces.length?'':' open'}><summary>${e.pieces.length?'إضافة صيغة أخرى':'اختر صيغة المعادلة'}${ic('chevron-down',16)}</summary><div class="eqgal">${EQG.map(([g,ks])=>`<div class="gal-g"><span class="gal-h">${g}</span><div class="gal">${ks.map(k=>{const [n,,smp,enSmp]=EQT[k],preview=e.lang==='en'&&enSmp?enSmp:smp;return`<button type="button" class="gt" data-act="eqAdd" data-t="${k}"><span class="gt-v" dir="${ar&&!['chem','iso','int','lim','sum','unit'].includes(k)?'rtl':'ltr'}">${texToHTML(pieceTex({t:k,...toPieceDigits(preview,['chem','iso','int','lim','sum','unit'].includes(k)?'en':e.lang),steps:false}),['chem','iso','int','lim','sum','unit'].includes(k)?'en':e.lang)}</span><small>${n}</small></button>`;}).join('')}</div></div>`).join('')}</div></details>
   <div class="sub-h">الرموز، تُكتب في الخانة المحددة</div>
   <div class="symtabs">${Object.keys(SYMS).map(k=>`<button type="button" data-act="eqTab" data-k="${k}" aria-pressed="${tab===k}">${k}</button>`).join('')}</div>
   <div class="syms">${SYMS[tab].map(symBtn).join('')}</div>
@@ -630,7 +639,7 @@ function equationProblem(pieces,tex){
  for(const p of pieces){
   if(p.t==='root'){const n=toLa(p.n||'').trim();if(n&&!/^(?:[2-9]|[1-9]\d+|n|ن)$/.test(n))return'درجة الجذر: عدد صحيح ٢ أو أكثر، أو ن';}
   if(p.t==='longdiv'&&/^[0٠]+$/.test(String(p.b).trim()))return'القسمة على صفر غير معرّفة';
-  const optional={root:['n'],arrow:['a','b'],longdiv:['q'],int:['a','b']};
+  const optional={root:['n'],arrow:['a','b'],longdiv:['q'],int:['a','b'],trig:['e']};
   for(const [f,l] of EQT[p.t]?.[1]||[]){if(!(optional[p.t]||[]).includes(f)&&!String(p[f]??'').trim())return'أكمل خانة: '+l;}
  }
  return'';
@@ -817,7 +826,7 @@ document.addEventListener('click',e=>{
    else if(a==='tbRow'){const w=x.table.rows[0].length;if(+b.dataset.d>0){if(x.table.rows.length>=30){toast('الحد ٣٠ صفاً، وزّع المحتوى على أكثر من جدول');break;}x.table.rows.push(Array(w).fill(''));}else if(x.table.rows.length>1)x.table.rows.pop();}
    else{if(+b.dataset.d>0)x.table.rows.forEach(r=>r.push(''));else if(x.table.rows[0].length>1)x.table.rows.forEach(r=>r.pop());}
    p.pristine=false;commit();if(a==='tbDel')toast('حُذف الجدول',{label:'تراجع',run:()=>undo(-1)});break;}
-  case'eqAdd':{const [,,smp]=EQT[b.dataset.t];const np={t:b.dataset.t,steps:false};EQT[b.dataset.t][1].forEach(([f])=>np[f]='');if(b.dataset.t==='text')np.v='';if(['chem','iso','unit'].includes(b.dataset.t))EQ.lang='en';EQ.pieces.splice(EQ.sel+1,0,np);EQ.sel++;EQ.focusKey=null;EQ.autofocus=true;renderEq();break;}
+  case'eqAdd':{const [,,smp]=EQT[b.dataset.t];const np={t:b.dataset.t,steps:false};EQT[b.dataset.t][1].forEach(([f])=>np[f]='');if(b.dataset.t==='text')np.v='';if(b.dataset.t==='trig')np.fn='sin';if(['deriv','deriv2','intindef','intdef'].includes(b.dataset.t)){np.v=EQ.lang==='ar'?'س':'x';np.d=EQ.lang==='ar'?'د':'d';}if(b.dataset.t==='partialderiv')np.v=EQ.lang==='ar'?'س':'x';if(['chem','iso','unit'].includes(b.dataset.t))EQ.lang='en';EQ.pieces.splice(EQ.sel+1,0,np);EQ.sel++;EQ.focusKey=null;EQ.autofocus=true;renderEq();break;}
   case'eqSel':EQ.sel=+b.dataset.i;EQ.focusKey=null;EQ.autofocus=true;renderEq();break;
   case'eqMove':{const d=+b.dataset.d;move(EQ.pieces,EQ.sel,d);EQ.sel=Math.max(0,Math.min(EQ.pieces.length-1,EQ.sel+d));EQ.focusKey=null;renderEq();break;}
   case'eqDel':EQ.pieces.splice(EQ.sel,1);EQ.sel=Math.min(EQ.sel,EQ.pieces.length-1);EQ.focusKey=null;renderEq();break;
