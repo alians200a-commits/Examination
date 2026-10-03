@@ -8,6 +8,6 @@ const fontSpecs=[
  ['STIX Two Math','math','400','normal']
 ];
 const fonts=fontSpecs.map(([family,file,weight,style])=>`@font-face{font-family:'${family}';font-weight:${weight};font-style:${style};font-display:swap;src:url(data:font/woff2;base64,${fs.readFileSync(path.join(d,'fonts',file+'.woff2')).toString('base64')}) format('woff2')}`).join('\n');
-const html=src('shell_head.html').replace('/* EMBEDDED_FONTS */',()=>fonts)+src('paper.css')+src('workspace.css')+src('shell_body.html')+js+'\n</script>\n</body>\n</html>\n';
+const html=src('shell_head.html').replace('/* EMBEDDED_FONTS */',()=>fonts)+src('paper.css')+src('shell_body.html')+js+'\n</script>\n</body>\n</html>\n';
 fs.writeFileSync(path.join(d,'index.html'),html);fs.writeFileSync(path.join(d,'app.js'),js);
 console.log('index.html',Math.round(html.length/1024)+' KB');

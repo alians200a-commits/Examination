@@ -1,10 +1,9 @@
-/* A4 print palettes: reference-matched navy / muted blue / pale burgundy score chips. */
-/* The legacy `teal` theme ID remains loadable, but now renders steel blue; no green palette. */
+/* ===== الورقة A4 (ألوان HEX فاتحة صالحة للطباعة) ===== */
 .pages{font-family:var(--pf);color:var(--ink)}
-.th-source{--p:#293D68;--soft:#F1F4FA;--line:#E2E7EF;--cell:#D5DBE6;--ink:#202739;--score:#823B4C;--score-bd:#E9C7CE;--score-bg:#FBECEF;--choice:#2C648A}
-.th-sky{--p:#365E9A;--soft:#F0F5FC;--line:#DEE7F3;--cell:#CBD9EB;--ink:#212D43;--score:#874456;--score-bd:#E9CDD5;--score-bg:#FCEFF2;--choice:#2E6B9D}
-.th-teal{--p:#496889;--soft:#F1F4F8;--line:#DEE5EC;--cell:#CCD7E2;--ink:#223247;--score:#874456;--score-bd:#E9CDD5;--score-bg:#FCEFF2;--choice:#376588}
-.th-gray{--p:#4E5B73;--soft:#F2F4F7;--line:#E1E4E9;--cell:#D0D6DF;--ink:#232A35;--score:#823B4C;--score-bd:#E9C7CE;--score-bg:#FBECEF;--choice:#455F80}
+.th-source{--p:#2f4f8f;--soft:#eef1f6;--line:#dfe3ea;--cell:#cfd5df;--ink:#1d2433;--score:#c0392b;--score-bd:#e8b4ad;--score-bg:#fdf2f0;--choice:#1f6fa8}
+.th-sky{--p:#3d6fb6;--soft:#edf3fb;--line:#dbe5f2;--cell:#c9d8ec;--ink:#1f2a3a;--score:#c4483a;--score-bd:#efc0b8;--score-bg:#fdf3f1;--choice:#2a7bbf}
+.th-teal{--p:#2b7a78;--soft:#eaf5f4;--line:#d6e8e6;--cell:#c3dcd9;--ink:#1c2b2b;--score:#b5523b;--score-bd:#e9c2b5;--score-bg:#fcf3ef;--choice:#23807d}
+.th-gray{--p:#4a5160;--soft:#f1f2f4;--line:#e0e2e6;--cell:#cfd2d8;--ink:#1f2227;--score:#a33a2f;--score-bd:#e2bdb7;--score-bg:#faf1f0;--choice:#3b4250}
 .th-ink{--p:#111111;--soft:#f0f0f0;--line:#bdbdbd;--cell:#a8a8a8;--ink:#111111;--score:#111111;--score-bd:#8a8a8a;--score-bg:#ffffff;--choice:#111111}
 .page{width:210mm;height:297mm;background:#fff;position:relative;overflow:hidden;margin:0 auto 18px;box-shadow:0 1px 2px rgba(40,40,60,.08),0 10px 30px -12px rgba(40,40,60,.25);-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .pin{position:absolute;top:10mm;bottom:8mm;left:11mm;right:11mm;display:flex;flex-direction:column;font-size:var(--fs);line-height:1.58}
@@ -40,8 +39,8 @@
 .pnote .nl{text-decoration:underline;text-underline-offset:.25em}
 .lg{position:relative;display:inline-block;touch-action:none;cursor:grab;user-select:none;vertical-align:middle}
 .lg img{height:100%;width:auto;max-width:55mm;object-fit:contain;display:block;pointer-events:none}
-.lg-h{position:absolute;left:-1.6mm;bottom:-1.6mm;width:3.4mm;height:3.4mm;border-radius:50%;background:#fff;border:1.5px solid var(--p);cursor:nwse-resize;opacity:0}
-.lg:hover .lg-h,.lg.drag .lg-h{opacity:1}.lg.drag{outline:1px dashed var(--p)}
+.lg-h{position:absolute;left:-1.6mm;bottom:-1.6mm;width:3.4mm;height:3.4mm;border-radius:50%;background:#fff;border:1.5px solid #2f4f8f;cursor:nwse-resize;opacity:0}
+.lg:hover .lg-h,.lg.drag .lg-h{opacity:1}.lg.drag{outline:1px dashed #2f4f8f}
 /* السؤال بنمط المصدر */
 .qb{flex:none;border:.7pt solid var(--line);border-radius:2mm;padding:1.4mm 1.8mm 2mm;margin-bottom:var(--gap);position:relative}
 .qb.cont{border-top-style:dashed}

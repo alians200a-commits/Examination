@@ -18,20 +18,6 @@ function loadState(){
 const S=loadState();
 const desk=()=>matchMedia('(min-width:1024px)').matches;
 const UI={view:'questions',open:null,more:{},lay:{},tableCells:{},adding:false,zoom:'fit'};
-const currentStep=()=>['paper','style'].includes(UI.view)?'paper':['questions','write'].includes(UI.view)?'questions':'preview';
-function examStats(p){
- const questions=p.questions.filter(q=>q.kind!=='text'&&q.kind!=='section');
- const toNumber=value=>String(value??'').trim()?Number(String(value).replace(/[٠-٩]/g,c=>String('٠١٢٣٤٥٦٧٨٩'.indexOf(c))).replace(/[۰-۹]/g,c=>String('۰۱۲۳۴۵۶۷۸۹'.indexOf(c))).trim()):NaN;
- const scores=questions.map(q=>toNumber(q.score));
- const invalid=scores.filter(v=>!Number.isFinite(v)||v<0).length;
- const empty=questions.filter(q=>!q.prompt?.trim()&&!q.items.some(x=>x.text?.trim())).length;
- return {count:questions.length,marks:scores.reduce((n,v)=>n+(Number.isFinite(v)&&v>=0?v:0),0),invalid,empty};
-}
-function examStatsMarkup(stats){
- return `<span class="stat-main"><b>${stats.count.toLocaleString('ar-IQ')}</b> ${stats.count===1?'سؤال':stats.count<11?'أسئلة':'سؤالاً'}</span><span class="stat-divider"></span><span><b>${stats.marks.toLocaleString('ar-IQ')}</b> مجموع الدرجات</span>${stats.invalid?`<span class="stat-alert">${stats.invalid} درجة غير صالحة</span>`:''}${stats.empty?`<span class="stat-alert">${stats.empty} سؤال غير مكتمل</span>`:''}`;
-}
-function refreshStats(){const node=document.querySelector('.exam-statline');if(node)node.innerHTML=examStatsMarkup(examStats(P()));}
-
 const P=()=>S.stages[S.active];
 const ctx=()=>makeCtx(P(),S.active);
 const findQ=id=>P().questions.find(q=>q.id===id);
@@ -43,7 +29,7 @@ function pushHist(){clearTimeout(histT);const s=snap();if(H.stack[H.idx]===s)ret
  let bytes=H.stack.reduce((n,v)=>n+v.length*2,0);while(H.stack.length>2&&(H.stack.length>80||bytes>20*1024*1024)){bytes-=H.stack[0].length*2;H.stack.shift();}
  H.idx=H.stack.length-1;updUndo();}
 function save(){clearTimeout(saveT);if(DEMO){setStatus('saved');return;}const saved=store.set(JSON.stringify(S));setStatus(saved?'saved':'error');if(!saved&&!storageWarning){storageWarning=true;toast('الحفظ المحلي تعذّر. احفظ ملف المشروع الآن حتى لا يضيع عملك',{label:'حفظ ملف',run:download});}if(saved)storageWarning=false;}
-function changed(o={}){setStatus('saving');refreshStats();clearTimeout(saveT);saveT=setTimeout(save,450);clearTimeout(histT);histT=setTimeout(pushHist,450);if(o.paper!==false){clearTimeout(paperT);paperT=setTimeout(renderPaper,160);}}
+function changed(o={}){setStatus('saving');clearTimeout(saveT);saveT=setTimeout(save,450);clearTimeout(histT);histT=setTimeout(pushHist,450);if(o.paper!==false){clearTimeout(paperT);paperT=setTimeout(renderPaper,160);}}
 function commit(){changed({paper:false});pushHist();renderSide();renderPaper();}
 function undo(dir){pushHist();const n=H.idx+dir;if(n<0||n>=H.stack.length)return;H.idx=n;const o=JSON.parse(H.stack[n]);S.active=o.active;S.started=o.started;S.stages=o.stages;UI.open=null;LAST=null;loadFont();save();renderAll();toast(dir<0?'تم التراجع':'تمت الإعادة');}
 function updUndo(){$$('[data-act=undo]').forEach(b=>b.disabled=H.idx<=0);$$('[data-act=redo]').forEach(b=>b.disabled=H.idx>=H.stack.length-1);}
@@ -188,20 +174,13 @@ function questionsView(p,c){
   return`<li class="qc${open?' open':''}" data-qid="${q.id}"><button type="button" class="qc-h" data-act="toggle" data-q="${q.id}" aria-expanded="${open}">
    <span class="qbadge">${esc(num)}</span><span class="qc-t">${esc(q.prompt||(q.items[0]&&q.items[0].text)||'سؤال بلا نص').replace(/\$+[^$]*\$+/g,'∑')}</span>${q.showScore&&q.score?`<span class="qc-s">${esc(scoreText(q.score,c.en,c.D,false))}</span>`:''}${ic(open?'chevron-up':'chevron-down',18)}</button>
    ${open?qEditor(q,c,i,p):''}</li>`;}).join('');
- const stats=examStats(p);
- return`<div class="pad pad-questions">
-  <header class="work-heading"><span class="step-kicker">الخطوة ٢ من ٣</span><div class="bar"><h2>كتابة الأسئلة</h2><button type="button" class="btn soft" data-act="adding" aria-expanded="${UI.adding}">${ic(UI.adding?'x':'plus',18)}${UI.adding?'إغلاق الأنواع':'سؤال جديد'}</button></div><p>كل سؤال في مكانه: اكتب النص، أضف الفروع ثم المعادلة أو الصورة عند الحاجة.</p></header>
-  <div class="exam-statline" role="status" aria-live="polite">${examStatsMarkup(stats)}</div>
+ return`<div class="pad">
+  <div class="bar"><h2>المحتوى</h2><button type="button" class="btn soft" data-act="adding">${ic(UI.adding?'x':'plus',18)}${UI.adding?'إغلاق':'إضافة'}</button></div>
   ${UI.adding?addSheet():''}
-  ${p.questions.length?`<ol class="qlist">${rows}</ol>`:UI.adding?`<p class="pick-hint">اختر نوع السؤال أعلاه. ويمكنك تغيير تنسيقه وتحرير نصه بعد إضافته.</p>`:`<div class="empty write-welcome"><b>ورقتك جاهزة لإضافة أول سؤال</b><span>ابدأ بسؤال من الأنواع الجاهزة، أو اكتب نصاً حرّاً داخل الورقة.</span><button type="button" class="btn primary" data-act="adding">${ic('plus',17)}إضافة السؤال الأول</button><button type="button" class="text-link" data-act="startWriting">أفضّل الكتابة المباشرة</button></div>`}
-  <div class="step-footer"><button type="button" class="btn" data-act="startWriting">${ic('pencil',17)}تحرير مباشر</button><button type="button" class="btn primary" data-act="view" data-v="preview">معاينة الورقة ${ic('arrow-left',17)}</button></div>
+  ${p.questions.length?`<ol class="qlist">${rows}</ol>`:`<div class="empty write-welcome"><b>ابدأ بمحتواك، مو بمثال جاهز</b><span>اكتب مباشرة على الورقة، أو أضف سؤالاً فارغاً واختر نوعه.</span><button type="button" class="btn primary" data-act="startWriting">الكتابة على الورقة</button><button type="button" class="text-link" data-act="demo">فتح تجربة بأمثلة</button></div>`}
  </div>`;
 }
-const addSheet=()=>{
- const primary=['branches','definitions','blanks','mcq','math','text'];
- const cards=keys=>keys.filter(k=>KIND_INFO[k]).map(k=>{const[t,d]=KIND_INFO[k];return`<button type="button" class="kind" data-act="addQ" data-kind="${k}"><b>${esc(t)}</b><small>${esc(d)}</small></button>`;}).join('');
- return`<section class="question-picker" aria-label="اختيار نوع السؤال"><div class="picker-title"><strong>اختر نوع السؤال</strong><small>الأكثر استخدامًا</small></div><div class="addsheet">${cards(primary)}</div><details class="picker-more"><summary>${ic('layout-grid',16)}أنواع إضافية${ic('chevron-down',17)}</summary><div class="addsheet">${cards(Object.keys(KIND_INFO).filter(k=>!primary.includes(k)))}</div></details></section>`;
-};
+const addSheet=()=>`<div class="addsheet">${Object.entries(KIND_INFO).map(([k,[t,d]])=>`<button type="button" class="kind" data-act="addQ" data-kind="${k}"><b>${t}</b><small>${d}</small></button>`).join('')}</div>`;
 function imgCtl(img,path){
  return`<div class="imgctl"><img src="${img.src}" alt=""><div class="imgctl-b">
   <label class="rng"><span>الحجم <b>${img.w}%</b></span><input type="range" min="10" max="100" step="5" value="${img.w}" data-b="${path}.image.w"></label>
@@ -288,9 +267,8 @@ function qEditor(q,c,qi,p){
 function rowF(k,label,body){const m=P().meta,on=m.show[k]!==false;return`<div class="frow${on?'':' off'}">${eye(k,on)}<div class="frow-b"><span class="frow-l">${label}</span>${body}</div></div>`;}
 function paperView(p,c){
  const m=p.meta;
- return`<div class="pad pad-setup">
-  <header class="work-heading"><span class="step-kicker">الخطوة ١ من ٣</span><div class="bar"><h2>إعداد الورقة</h2><button type="button" class="btn soft" data-act="wizard">${ic('settings-2',17)}تغيير المرحلة والمادة</button></div><p>راجع بيانات الترويسة، ثم اختر مظهر الورقة وانتقل إلى كتابة الأسئلة.</p></header>
-  <div class="setup-appearance"><div><b>مظهر الامتحان</b><small>الثيم، نوع الخط، الحجم والهوامش</small></div><button type="button" class="btn sm" data-act="view" data-v="style">${ic('palette',16)}تخصيص المظهر</button></div>
+ return`<div class="pad">
+  <div class="bar"><h2>الورقة</h2><button type="button" class="btn soft" data-act="wizard">${ic('wand-sparkles',17)}المرحلة والمادة</button></div>
   <div class="summary"><span>${STAGES[S.active].label}</span><span>${esc(m.grade)}</span><span>${esc(m.subject)}</span><span>${esc(m.examKind)}${hasRound(m.examKind)?' · '+esc(m.round):''}</span></div>
   ${sec('الترويسة',`
    ${rowF('country','السطر الأول',inp('meta.country',m.country))}
@@ -314,14 +292,14 @@ function paperView(p,c){
    ${rowF('footLeft','توقيع ثانٍ',`<div class="pair">${inp('meta.footLeftLabel',m.footLeftLabel,{cls:'lb',ph:'لجنة المادة:'})}${inp('meta.footLeft',m.footLeft)}</div>`)}
    ${rowF('flip','نهاية الصفحة غير الأخيرة',inp('meta.flip',m.flip))}
    ${rowF('pageNo','أرقام الصفحات','<span class="hint">تظهر عند وجود أكثر من صفحة</span>')}`,false,'panel-bottom')}
-  ${sec('إدارة الملف',`<div class="row wrap"><button type="button" class="btn" data-act="save">${ic('download',17)}حفظ المشروع</button><button type="button" class="btn" data-act="open">${ic('folder-open',17)}فتح مشروع</button><button type="button" class="btn" data-act="new">${ic('file-plus-2',17)}ورقة فارغة</button></div><p class="hint">التصدير النهائي PDF من زر PDF. ملف المشروع يحفظ عملك لتكمل تحريره لاحقاً.</p>`,false,'folder')}
-  <div class="step-footer"><button type="button" class="btn primary" data-act="view" data-v="questions">التالي: كتابة الأسئلة ${ic('arrow-left',17)}</button></div>
+  ${sec('الملف',`<div class="row wrap"><button type="button" class="btn" data-act="save">${ic('download',17)}حفظ المشروع</button><button type="button" class="btn" data-act="open">${ic('folder-open',17)}فتح مشروع</button><button type="button" class="btn" data-act="new">${ic('file-plus-2',17)}ورقة فارغة</button></div><p class="hint">التصدير النهائي PDF من زر PDF. ملف المشروع يحفظ عملك لتكمل تحريره لاحقاً.</p>`,false,'folder')}
  </div>`;
 }
 
 /* ---------- لوحة التنسيق ---------- */
 function styleView(p,c){
- return`<div class="pad pad-style"><header class="work-heading"><span class="step-kicker">تخصيص إعداد الورقة</span><div class="bar"><h2>المظهر والخطوط</h2><button type="button" class="btn soft" data-act="view" data-v="paper">${ic('arrow-right',17)}عودة</button></div><p>غيّر الألوان والخطوط والمسافات دون المساس بمحتوى الأسئلة أو بيانات الترويسة.</p></header>
+ return`<div class="pad">
+  <div class="bar"><h2>التنسيق</h2></div>
   ${sec('الثيمات',`<div class="themes">${Object.entries(THEMES).map(([k,t])=>`<button type="button" class="theme th-${k}" data-act="set" data-path="p.theme" data-v="${k}" aria-pressed="${p.theme===k}"><span class="sw"><span style="background:var(--p)"></span><span style="background:var(--score)"></span><span style="background:var(--soft);border:1px solid var(--line)"></span></span><b>${t.label}</b></button>`).join('')}</div>`,true,'palette')}
   ${sec('الخط',`<div class="fonts">${Object.entries(FONTS).filter(([k])=>k!=='custom'||p.customFont).map(([k,f])=>`<button type="button" data-act="set" data-path="p.font" data-v="${k}" aria-pressed="${p.font===k}"><span style="font-family:${f.css.replace(/"/g,'&quot;')}">أبجد هوز Abc</span><small>${k==='custom'?esc(p.customFont.name):f.label}</small></button>`).join('')}</div>
    <button type="button" class="btn soft sm" data-act="font">${ic('upload',16)}${p.customFont?'تبديل الخط المرفوع':'رفع خط خاص'}</button>
@@ -333,14 +311,11 @@ function styleView(p,c){
    <p class="hint">التلقائي: الابتدائية عربي عدا الإنكليزية، والمتوسطة والإعدادية إنكليزي عدا الإسلامية والعربية والاجتماعيات والتاريخ والجغرافية والاقتصاد.</p>
    <div class="opt"><span>اتجاه الأسئلة</span>${seg('p.dir',p.dir,[['auto','تلقائي'],['rtl','عربي'],['ltr','English']],'sm')}</div>
    <div class="opt"><span>رقم السؤال</span>${seg('p.qStyle',p.qStyle,Object.keys(QSTYLES).map(k=>[k,qnum(1,c,{qStyle:k})]),'sm')}</div>`,false,'settings-2')}
-  <div class="step-footer"><button type="button" class="btn" data-act="view" data-v="paper">${ic('arrow-right',17)}إعداد الورقة</button><button type="button" class="btn primary" data-act="view" data-v="questions">الانتقال للأسئلة ${ic('arrow-left',17)}</button></div>
  </div>`;
 }
 function renderSide(){
  const p=P(),c=ctx(),body=$('#sideBody'),st=body.scrollTop,v=['preview','write'].includes(UI.view)?'questions':UI.view;
- const step=currentStep();
- $$('[data-act=view]').forEach(b=>{const active=b.dataset.v===UI.view||((b.closest('.nav')||b.closest('.workflow'))&&b.dataset.v===step);b.setAttribute('aria-current',String(!!active));if(b.closest('.workflow'))b.setAttribute('aria-current',active?'step': 'false');});
- const context=$('#docContext');if(context)context.textContent=[STAGES[S.active].label,p.meta.grade,p.meta.subject].filter(Boolean).join(' · ');
+ $$('[data-act=view]').forEach(b=>b.setAttribute('aria-current',String(b.closest('.nav')?b.dataset.v===UI.view:b.dataset.v===v)));
  body.innerHTML=v==='paper'?paperView(p,c):v==='style'?styleView(p,c):questionsView(p,c);
  body.scrollTop=st;$$('textarea',body).forEach(grow);icons();updUndo();
  $('#app').dataset.view=UI.view;
@@ -413,7 +388,7 @@ function showWelcome(){
  ['شغلك يبقى إلك','حفظ محلي، وملف مشروع للرجوع لاحقاً، وتراجع عن التعديلات. ما يحتاج إنشاء حساب.']
  ];
  host.innerHTML=`<div class="welcome-inner"><nav class="welcome-nav" aria-label="تنقل البداية"><div class="welcome-brand"><span class="mark">م</span><span>المفيد<br><small>في تنضيد الامتحانات</small></span></div><div class="welcome-actions"><button type="button" class="btn sm" data-act="homeLearn">دليل الاستخدام</button>${S.started?'<button type="button" class="btn sm" data-act="continueProject">متابعة مشروعي</button>':''}</div></nav>
- <section class="welcome-hero"><div><p class="eyebrow">تنضيد أوراق الامتحانات العراقية</p><h1>المفيد<span>في تنضيد الامتحانات</span></h1><p class="intro">أسئلتك، بترتيب واضح وجاهز للطباعة.<br>جهّز الترويسة، أضف الأسئلة، وراجع الورقة قبل إخراجها بصيغة PDF.</p><div class="welcome-actions"><button type="button" class="btn primary" data-act="homeNew">${ic('plus',18)}مشروع جديد</button><button type="button" class="btn" data-act="demo">${ic('pencil',18)}جرّب وتعلّم</button><button type="button" class="btn" data-act="homeOpen">${ic('folder-open',18)}فتح ملف مشروع</button></div><p class="trust">لا يحتاج حساباً. ملفاتك تبقى على جهازك.</p><div class="home-flow" aria-label="خطوات إنشاء الامتحان"><span><b>١</b>إعداد الورقة</span><span><b>٢</b>كتابة الأسئلة</span><span><b>٣</b>معاينة PDF</span></div></div>
+ <section class="welcome-hero"><div><p class="eyebrow">تنضيد أوراق الامتحانات العراقية</p><h1>المفيد<span>في تنضيد الامتحانات</span></h1><p class="intro">أسئلتك، بترتيب واضح وجاهز للطباعة.<br>جهّز الترويسة، أضف الأسئلة، وراجع الورقة قبل إخراجها بصيغة PDF.</p><div class="welcome-actions"><button type="button" class="btn primary" data-act="homeNew">${ic('plus',18)}مشروع جديد</button><button type="button" class="btn" data-act="demo">${ic('pencil',18)}جرّب وتعلّم</button><button type="button" class="btn" data-act="homeOpen">${ic('folder-open',18)}فتح ملف مشروع</button></div><p class="trust">لا يحتاج حساباً. ملفاتك تبقى على جهازك.</p></div>
  <div class="welcome-preview" aria-label="مثال توضيحي لورقة امتحان"><header>أسئلة امتحان الشهر الأول<small>٢٠٢٦ - ٢٠٢٧ · نموذج توضيحي</small></header><div class="preview-question"><b>س١/ أجب عما يأتي:</b><p>أ- اشرح الفكرة بأسلوبك، مع ذكر مثال.</p><div class="writing-lines"></div></div><div class="preview-question"><b>س٢/ اختر الإجابة الصحيحة:</b><p>أ- الخيار الأول &nbsp; ب- الخيار الثاني</p></div><div class="preview-question"><b>س٣/ حل المسألة الآتية:</b><p dir="ltr" style="text-align:center">x² + 2x − 3 = 0</p><div class="writing-lines"></div></div></div></section>
  <section class="welcome-section"><p class="eyebrow">أدوات التنضيد</p><h2>من الترويسة إلى آخر سؤال</h2><div class="features">${features.map(([title,text],i)=>`<article class="feature"><div><h3>${title}</h3><p>${text}</p></div></article>`).join('')}</div></section>
  <section class="welcome-section learn-section" id="learnSection"><div><p class="eyebrow">دليل عملي</p><h2>افتح النموذج وجرّب عليه</h2><p>خمس خطوات داخل المحرر نفسه. غيّر السؤال، أدرج معادلة وجرّب الجدول. ارجع إلى مشروعك متى تريد، من دون أن تتغيّر بياناته.</p><button type="button" class="btn" data-act="demo">ابدأ التعليم العملي</button></div><ol class="learn-steps"><li>إعداد الترويسة ومعلومات الامتحان.</li><li>إدخال الأسئلة والأفرع والاختيارات.</li><li>إضافة المعادلات والجداول.</li><li>المعاينة والحفظ بصيغة PDF.</li></ol></section>
