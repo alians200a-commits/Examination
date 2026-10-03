@@ -1,38 +1,65 @@
-name: Verify AlMufeed v13
+name: Verify AlMufeed v15
 on:
   push:
-    branches: [main, 'replace/**']
+    branches: [main, 'feature/**', 'replace/**']
   pull_request:
     branches: [main]
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Check out the standalone project
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Check mathematical and content functions
+      - name: Run 38 core and mathematical checks
         run: node tests/unit.js
-      - name: Verify standalone HTML builds byte-for-byte
+      - name: Enforce paper reference palette and blue-only UI
+        run: node tests/palette.js
+      - name: Validate premium component structure and branch score audits
+        run: node tests/v15-static.js
+      - name: Build self-contained standalone HTML
         run: |
-          cp index.html /tmp/almufeed-before.html
           node build.js
-          cmp /tmp/almufeed-before.html index.html
           node --check app.js
-      - name: Install headless browser for original test suite
+          cp index.html /tmp/almufeed-built.html
+          node build.js
+          cmp /tmp/almufeed-built.html index.html
+      - name: Install Playwright and Chromium for real browser/PDF checks
         run: |
-          npm init -y >/dev/null
-          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+          npm install --no-save --no-package-lock playwright@1.56.1
           npx playwright install --with-deps chromium
-      - name: Test actual browser workflows and print layout
+          sudo apt-get install -y -qq poppler-utils
+      - name: Test mobile workflow, desktop, grades and exact A4 PDF pagination
+        run: node tests/v14-ux.js
+      - name: Test mobile table editor, score warnings and multipage A4 tables
+        run: node tests/v15-premium.js
+      - name: Attach visual and PDF test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: almufeed-v15-browser-evidence
+          path: |
+            tests/v14-*.png
+            tests/v14-ux-results.json
+            tests/v14-*.pdf
+            tests/v15-*.png
+            tests/v15-premium-results.json
+            tests/v15-*.pdf
+          if-no-files-found: ignore
+      - name: Commit generated index.html and app.js after validation
+        if: github.event_name == 'push'
         run: |
-          node tests/browser.js
-          node tests/layout.js
-          node tests/extended.js
-          node tests/pagination.js
-          node tests/entry.js
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git add -f app.js
+          if ! git diff --cached --quiet; then
+            git commit -m "Build verified AlMufeed v15 standalone app"
+            git push
+          fi

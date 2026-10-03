@@ -42,7 +42,7 @@ function scoreText(raw,en,D,paren){
 const THEMES={
  source:{label:'كحلي'},
  sky:{label:'أزرق سماوي'},
- teal:{label:'فيروزي'},
+ steel:{label:'أزرق فولاذي'},
  gray:{label:'رمادي'},
  ink:{label:'أسود'}
 };
@@ -217,7 +217,7 @@ function normProject(p,stage){
  meta.logoH=Math.min(40,Math.max(8,meta.logoH));
  const pick=(v,list,d)=>list.includes(v)?v:d;
  const cf=p.customFont&&typeof p.customFont.src==='string'&&/^data:(font\/[\w.+-]+|application\/[\w.+-]+|);base64,[A-Za-z0-9+/]+={0,2}$/.test(p.customFont.src)?{name:str(p.customFont.name,120),src:p.customFont.src}:null;
- const out={meta,style:'source',theme:pick(p.theme,Object.keys(THEMES),'source'),font:pick(p.font,Object.keys(FONTS),'sans'),customFont:cf,
+ const out={meta,style:'source',theme:pick(p.theme==='teal'?'steel':p.theme,Object.keys(THEMES),'source'),font:pick(p.font,Object.keys(FONTS),'sans'),customFont:cf,
   size:pick(+p.size,[13,14,15],13),density:pick(p.density,['tight','normal','airy'],'normal'),digits:pick(p.digits,['auto','arabic','latin'],'auto'),dir:pick(p.dir,['auto','rtl','ltr'],'auto'),
   qStyle:pick(p.qStyle,Object.keys(QSTYLES),'slash'),rules:p.rules!==false,fit:p.fit!==false,pristine:!!p.pristine,questions:(Array.isArray(p.questions)?p.questions:[]).slice(0,80).map(normQ).filter(Boolean)};
  const ids=new Set();const unique=x=>{while(ids.has(x.id))x.id=uid();ids.add(x.id);};

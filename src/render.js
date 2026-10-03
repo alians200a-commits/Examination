@@ -71,7 +71,9 @@ function tableHTML(t,c,path,part){
  const from=part?.from??0,to=part?.to??t.rows.length;
  const indices=Array.from({length:Math.max(0,to-from)},(_,i)=>from+i);
  if(part?.cont&&t.head&&from>0)indices.unshift(0);
- return`<table class="qtab${t.full?' full':' ctr'}" data-table="${path}" style="--ta:${t.align||'center'}">${indices.map(i=>{const r=t.rows[i];return`<tr data-table-row="${i}">${r.map((v,j)=>{const tg=t.head&&i===0?'th':'td';return`<${tg}>${ed(c,`${path}.cell.${i}.${j}`,v)}</${tg}>`;}).join('')}</tr>`;}).join('')}</table>`;
+ const hasHeader=t.head&&indices.includes(0);
+ const row=i=>`<tr data-table-row="${i}">${t.rows[i].map((v,j)=>{const tag=hasHeader&&i===0?'th':'td';return`<${tag}${tag==='th'?' scope="col"':''}>${ed(c,`${path}.cell.${i}.${j}`,v)}</${tag}>`;}).join('')}</tr>`;
+ return`<table class="qtab${t.full?' full':' ctr'}" data-table="${path}" style="--ta:${t.align||'center'}" aria-label="${c.en?'Exam question table':'جدول السؤال'}">${hasHeader?`<thead>${row(0)}</thead>`:''}<tbody>${indices.filter(i=>!(hasHeader&&i===0)).map(row).join('')}</tbody></table>`;
 }
 /* ترتيب العمود (ب) مخلوط بشكل ثابت حسب رقم السؤال حتى لا يتغير مع كل عرض */
 function matchOrder(q){

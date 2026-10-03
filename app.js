@@ -1,3 +1,592 @@
+(()=>{'use strict';
+const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
+const uid=()=>Math.random().toString(36).slice(2,10);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const AR='٠١٢٣٤٥٦٧٨٩',FA='۰۱۲۳۴۵۶۷۸۹';
+const toAr=s=>String(s).replace(/[0-9]/g,d=>AR[d]).replace(/[۰-۹]/g,d=>AR[FA.indexOf(d)]);
+const toLa=s=>String(s).replace(/[٠-٩]/g,d=>AR.indexOf(d)).replace(/[۰-۹]/g,d=>FA.indexOf(d));
+/* ===== محرك الرياضيات: صيغة LaTeX مبسطة تُرسم HTML حقيقي ===== */
+const SYM={times:'×',div:'÷',pm:'±',mp:'∓',cdot:'·',le:'≤',leq:'≤',ge:'≥',geq:'≥',ne:'≠',neq:'≠',approx:'≈',equiv:'≡',sim:'~',to:'→',rightarrow:'→',leftarrow:'←',Rightarrow:'⇒',Leftrightarrow:'⇔',leftrightarrow:'↔',rightleftharpoons:'⇌',lor:'∨',land:'∧',neg:'~',lnot:'~',cap:'∩',cup:'∪',in:'∈',notin:'∉',subset:'⊂',subseteq:'⊆',supset:'⊃',emptyset:'∅',varnothing:'∅',infty:'∞',angle:'∠',triangle:'△',degree:'°',circ:'°',perp:'⊥',parallel:'∥',therefore:'∴',because:'∵',forall:'∀',exists:'∃',sum:'∑',int:'∫',prod:'∏',partial:'∂',nabla:'∇',prime:'′',ldots:'…',cdots:'⋯',
+ alpha:'α',beta:'β',gamma:'γ',delta:'δ',epsilon:'ε',theta:'θ',lambda:'λ',mu:'μ',pi:'π',rho:'ρ',sigma:'σ',tau:'τ',phi:'φ',omega:'ω',Delta:'Δ',Gamma:'Γ',Theta:'Θ',Lambda:'Λ',Pi:'Π',Sigma:'Σ',Phi:'Φ',Omega:'Ω'};
+Object.assign(SYM,{varepsilon:'ε',vartheta:'ϑ',varphi:'φ',eta:'η',kappa:'κ',nu:'ν',xi:'ξ',chi:'χ',psi:'ψ',zeta:'ζ',Psi:'Ψ',ell:'ℓ',AA:'Å',deg:'°',permil:'‰',bullet:'•',star:'⋆',leftrightharpoons:'⇋',rightharpoonup:'⇀',mapsto:'↦',implies:'⇒',iff:'⇔',ni:'∋',setminus:'∖',sqcup:'⊔',top:'⊤',bot:'⊥',cong:'≅',simeq:'≃',ll:'≪',gg:'≫',dagger:'†',measuredangle:'∡',square:'□',Box:'□',lozenge:'◊'});
+Object.assign(SYM,{uparrow:'↑',downarrow:'↓',longrightarrow:'⟶',longleftarrow:'⟵',Leftarrow:'⇐',nearrow:'↗',searrow:'↘',propto:'∝',hbar:'ℏ',ohm:'Ω'});
+const AR_FN={sin:'جا',cos:'جتا',tan:'ظا',cot:'ظتا',sec:'قا',csc:'قتا',log:'لو'};
+const FUNCS=new Set(['sin','cos','tan','cot','sec','csc','log','ln','exp','min','max','det','mod','arcsin','arccos','arctan','sinh','cosh','tanh']);
+const OPS='+-−×÷=<>≤≥≠±∓≈≡→←⇌⇒⇔↔⟶∨∧∩∪∈∉⊂⊆⊃∝·';
+const REL='=<>≤≥≠≈≡→←⇌⇒⇔↔⟶∈∉⊂⊆⊃∝';
+function texToHTML(src,lang){
+ const problem=texProblem(src);if(problem)return`<span class="mx math-error" title="${esc(problem)}">${esc(src)}</span>`;
+ const D=lang==='ar'?toAr:toLa,s=String(src);let i=0,guard=0;
+ const sp=()=>{while(s[i]===' ')i++;};
+ function group(stop){let out='';while(i<s.length&&!stop()){if(++guard>20000)break;out+=atom();}return out;}
+ function braced(){sp();if(s[i]==='{'){i++;const r=group(()=>s[i]==='}');i++;return r;}return base();}
+ function rawBraced(){sp();if(s[i]!=='{')return'';i++;let d=1,o='';while(i<s.length){const c=s[i++];if(c==='{')d++;else if(c==='}'&&!--d)break;o+=c;}return o;}
+ function atom(){
+  let b=base(),sup=null,sub=null;
+  for(;;){if(s[i]==='^'){i++;sup=braced();}else if(s[i]==='_'){i++;sub=braced();}else break;}
+  if(sup===null&&sub===null)return b;
+  if(b.startsWith('<span class="mlim'))return`<span class="mul${sup!==null?' ht':''}${sub!==null?' hb':''}">${sup!==null?`<span class="mul-t">${sup}</span>`:''}${b}${sub!==null?`<span class="mul-b">${sub}</span>`:''}</span>`;
+  const tall=/^<span class="(mf|mfence|mr|mg"><span class="mfence)/.test(b),big=b.startsWith('<span class="mint');
+  if(sup!==null&&sub!==null)return`${b}<span class="mss${big?' int':''}${tall?' hi':''}"><span>${sup}</span><span>${sub}</span></span>`;
+  return sup!==null?`${b}<sup class="msup${tall?' hi':''}">${sup}</sup>`:`${b}<sub class="msub${big?' int':''}">${sub}</sub>`;
+ }
+ const cell=h=>h&&h.trim()?h:'<span class="m-gap"></span>';
+ const fence=(o,c,inner)=>{const f=d=>d==='.'||!d?'':`<span class="mfz" data-d="${esc(d)}">${fenceSVG(d)}</span>`;return`<span class="mfence">${f(o)}<span class="mfc">${inner}</span>${f(c)}</span>`;};
+ function delim(){sp();if(s[i]==='\\'){if(s[i+1]==='{'||s[i+1]==='}'){i+=2;return s[i-1];}if(s.startsWith('\\|',i)){i+=2;return'‖';}}return s[i++]||'.';}
+ function base(){
+  const c=s[i];if(c===undefined)return'';
+  if(c==='{'){i++;const r=group(()=>s[i]==='}');i++;return`<span class="mg">${r}</span>`;}
+  if(c==='\\'){
+   i++;let name='';while(i<s.length&&/[A-Za-z]/.test(s[i]))name+=s[i++];
+   if(name&&!['left','right'].includes(name))while(s[i]===' '&&name!=='text')i++;
+   if(!name){const ch=s[i++]||'';return ch===','?'<span class="m-th"></span>':ch===' '?' ':ch===';'?'<span class="m-sp"></span>':esc(ch);}
+   switch(name){
+    case'frac':case'dfrac':case'tfrac':{const a=braced(),b=braced();return`<span class="mf"><span>${cell(a)}</span><span>${cell(b)}</span></span>`;}
+    case'sqrt':{sp();let n='';if(s[i]==='['){i++;n=group(()=>s[i]===']');i++;}const x=braced();const deg=n&&!/^\s*[2٢]\s*$/.test(n);return`<span class="mr${deg?' ix':''}">${deg?`<span class="mr-i">${n}</span>`:''}<span class="mr-s">${rootSVG()}</span><span class="mr-u">${cell(x)}</span></span>`;}
+    case'isotope':{const a=braced(),z=braced(),x=braced().replace(/<\/?i>/g,'');return`<span class="miso"><span class="mss pre"><span>${a}</span><span>${z}</span></span>${x}</span>`;}
+    case'system':{const a=braced(),b=braced();return`<span class="mfence msys-w"><span class="mfz">${fenceSVG('{')}</span><span class="msys"><span>${a}</span><span>${b}</span></span></span>`;}
+    case'lim':return`<span class="mlim mfn">${lang==='ar'?'نها':'lim'}</span>`;
+    case'sum':return`<span class="mlim mbig">∑</span>`;
+    case'prod':return`<span class="mlim mbig">∏</span>`;
+    case'int':return`<span class="mint">∫</span>`;
+    case'oint':return`<span class="mint">∮</span>`;
+    case'dot':return`<span class="mdot">${braced()}</span>`;
+    case'hat':return`<span class="mhat">${braced()}</span>`;
+    case'unit':return`<span class="munit">${braced()}</span>`;
+    case'qty':{const v=braced(),u=braced().replace(/<\/?i>/g,'');return`${v}<span class="munit">${u}</span>`;}
+    case'longdiv':{const a=rawBraced(),b=rawBraced(),q=rawBraced();sp();const st=s[i]==='{'?rawBraced():'';return ldHTML(a,b,q,st==='1',lang,D);}
+    case'text':case'mathrm':case'textrm':case'mbox':return`<span class="mtx">${esc(D(rawBraced()))}</span>`;
+    case'overline':case'bar':return`<span class="mov">${braced()}</span>`;
+    case'vec':case'overrightarrow':return`<span class="mvec">${braced()}</span>`;
+    case'abs':return`|${braced()}|`;
+    case'left':{const o=delim();const inner=group(()=>s.startsWith('\\right',i));if(s.startsWith('\\right',i))i+=6;const cl=delim();return fence(o,cl,inner);}
+    case'right':return'';
+    case'quad':return'<span class="m-q"></span>';case'qquad':return'<span class="m-q"></span><span class="m-q"></span>';
+    case'xrightarrow':case'xrightleftharpoons':case'xleftarrow':{sp();let b='';if(s[i]==='['){i++;b=group(()=>s[i]===']');i++;}const a=braced();const k=name==='xrightarrow'?'r':name==='xleftarrow'?'l':'eq';return`<span class="marr"><span class="ma-t">${a||'&nbsp;'}</span><span class="ma-l">${arrowSVG(k)}</span><span class="ma-b">${b||'&nbsp;'}</span></span>`;}
+    case'ce':return`<span class="mce" dir="ltr">${ceHTML(rawBraced(),D)}</span>`;
+    case'mathbb':{const t=rawBraced();return esc({R:'ℝ',N:'ℕ',Z:'ℤ',Q:'ℚ',C:'ℂ'}[t]||t);}
+   }
+   if(FUNCS.has(name))return`<span class="mfn">${lang==='ar'&&AR_FN[name]||name}</span>`;
+   if(SYM[name]){const v=SYM[name];return OPS.includes(v)?`<span class="mo${REL.includes(v)?' rel':''}">${v}</span>`:/[α-ω]/.test(v)?`<i>${v}</i>`:v;}
+   return`<span class="math-error" title="صيغة غير مدعومة: ${esc(name)}">${esc('\\'+name)}</span>`;
+  }
+  i++;
+  if(c===' '){while(s[i]===' ')i++;const pv=s[i-2]||'',nx=s[i]||'';return /[\u0600-\u06FF]/.test(pv)||/[\u0600-\u06FF]/.test(nx)?'<span class="m-sp"></span>':'';}
+  if(c==='}')return'';
+  if(/[A-Za-z]/.test(c))return`<i>${c}</i>`;
+  if(/[0-9٠-٩۰-۹]/.test(c))return esc(D(c));
+  if(c==='-'||c==='−'||c==='+'){let j=i-2;while(j>=0&&s[j]===' ')j--;const pv=j<0?'':s[j];const un=!pv||'({[=<>≤≥≠±+-−×÷,،^_'.includes(pv)||/\\left.$/.test(s.slice(0,j+1));return`<span class="mo${un?' un':''}">${c==='+'?'+':'−'}</span>`;}
+  if(c==='*')return'<span class="mo">×</span>';
+  if(c===','||c==='،')return`<span class="mc">${lang==='ar'?'،':','}</span>`;
+  if(c==='.'&&/[0-9٠-٩]/.test(s[i]||'')&&/[0-9٠-٩]/.test(s[i-2]||''))return lang==='ar'?'٫':'.';
+  if(OPS.includes(c))return`<span class="mo${REL.includes(c)?' rel':''}">${esc(c)}</span>`;
+  return esc(c);
+ }
+ const out=group(()=>false);
+ return`<span class="mx mx-${lang}" dir="${lang==='ar'?'rtl':'ltr'}">${out}</span>`;
+}
+function fenceSVG(d){
+ const p={'(':'M9 1 Q1 20 9 39',')':'M1 1 Q9 20 1 39','[':'M9 1 H3 V39 H9',']':'M1 1 H7 V39 H1','|':'M5 1 V39','‖':'M3 1 V39 M7 1 V39','{':'M9 1 Q4 1 5 10 Q5 19 1 20 Q5 21 5 30 Q4 39 9 39','}':'M1 1 Q6 1 5 10 Q5 19 9 20 Q5 21 5 30 Q6 39 1 39'}[d];
+ return p?`<svg viewBox="0 0 10 40" preserveAspectRatio="none" aria-hidden="true"><path d="${p}" fill="none" stroke="currentColor" stroke-width="1.4" vector-effect="non-scaling-stroke"/></svg>`:esc(d);
+}
+function rootSVG(){return`<svg viewBox="0 0 12 40" preserveAspectRatio="none" aria-hidden="true"><path d="M0.2 23.6 L2.7 21.3 L6.6 34.6 L11.25 0.2 L11.95 0.75 L7.05 39.8 L6.25 39.8 L1.95 24.4 L0.75 25.2 Z" fill="currentColor"/></svg>`;}
+
+/* النص الغني: $$عربي$$ و $English$ و **عريض** و __مسطر__ وصيغة كسر( ) القديمة */
+const RICH_RE=/\$\$([\s\S]+?)\$\$|\$([^$\n]+?)\$/g;
+const FN={'كسر':'frac','frac':'frac','جذر':'sqrt','sqrt':'sqrt','أس':'pow','pow':'pow','قسمة':'ld','longdiv':'ld'};
+const FN_RE=/(كسر|frac|جذر|sqrt|أس|pow|قسمة|longdiv)\(/g;
+function matchParen(s,open){let d=0;for(let i=open;i<s.length;i++){if(s[i]==='(')d++;else if(s[i]===')'){d--;if(!d)return i;}}return -1;}
+function splitArgs(s){const out=[];let d=0,cur='';for(const c of s){if(c==='(')d++;if(c===')')d--;if(d===0&&(c===','||c==='،')){out.push(cur);cur='';}else cur+=c;}out.push(cur);return out.map(x=>x.trim());}
+function legacyToTex(src){
+ let out='',i=0;
+ while(i<src.length){FN_RE.lastIndex=i;const m=FN_RE.exec(src);if(!m){out+=src.slice(i);break;}
+  const st=m.index,prev=src[st-1],open=st+m[0].length-1;
+  if(prev&&/[\p{L}\p{M}]/u.test(prev)){out+=src.slice(i,open+1);i=open+1;continue;}
+  const close=matchParen(src,open);if(close<0){out+=src.slice(i);break;}
+  const a=splitArgs(src.slice(open+1,close)).map(legacyToTex),t=FN[m[1]];
+  out+=src.slice(i,st)+(t==='frac'?`\\frac{${a[0]||''}}{${a[1]||''}}`:t==='sqrt'?(a[1]?`\\sqrt[${a[1]}]{${a[0]}}`:`\\sqrt{${a[0]||''}}`):t==='pow'?`{${a[0]||''}}^{${a[1]||''}}`:`\\longdiv{${a[0]||''}}{${a[1]||''}}{${a[2]||''}}`);
+  i=close+1;}
+ return out;
+}
+const hasLegacy=s=>{FN_RE.lastIndex=0;let m;const t=String(s);while((m=FN_RE.exec(t))){const p=t[m.index-1];if(!p||!/[\p{L}\p{M}]/u.test(p))return true;}return false;};
+const hasRich=s=>{const t=String(s||'');RICH_RE.lastIndex=0;return RICH_RE.test(t)||/\*\*.+?\*\*|__.+?__/.test(t)||hasLegacy(t);};
+const chipHTML=(tex,l,h)=>`<span class="eqc" contenteditable="false" data-l="${l}" data-tex="${esc(tex)}">${h}</span>`;
+function richHTML(text,D,lang,chips){
+ const tokens=[];
+ const stash=(tex,l)=>{const h=texToHTML(tex,l);tokens.push(chips?chipHTML(tex,l,h):h);return'\uE200'+String.fromCharCode(0xE300+tokens.length-1)+'\uE201';};
+ const t=String(text??'').replace(new RegExp(RICH_RE.source,'g'),(m,a,b)=>stash(a??b,a!==undefined?'ar':'en'));
+ const mark=h=>h.replace(/\*\*([\s\S]+?)\*\*/g,'<b>$1</b>').replace(/__([\s\S]+?)__/g,'<u>$1</u>').replace(/\n/g,'<br>');
+ const plain=seg=>{
+  if(!hasLegacy(seg))return esc(D(seg));
+  let o='',j=0;
+  while(j<seg.length){FN_RE.lastIndex=j;const m=FN_RE.exec(seg);if(!m){o+=esc(D(seg.slice(j)));break;}
+   const st=m.index,prev=seg[st-1],open=st+m[0].length-1;
+   if(prev&&/[\p{L}\p{M}]/u.test(prev)){o+=esc(D(seg.slice(j,open+1)));j=open+1;continue;}
+   const close=matchParen(seg,open);if(close<0){o+=esc(D(seg.slice(j)));break;}
+   {const tx=legacyToTex(seg.slice(st,close+1)),lg=D('1')==='1'&&lang==='en'?'en':'ar';o+=esc(D(seg.slice(j,st)))+stash(tx,lg);}
+   j=close+1;}
+  return o;
+ };
+ return mark(plain(t)).replace(/\uE200([\s\S])\uE201/g,(m,c)=>tokens[c.charCodeAt(0)-0xE300]??m);
+}
+
+function ceHTML(raw,D){
+ /* صيغ كيميائية: معاملات عادية، أدلة سفلية، شحنات فوق الدليل، حالات المادة، وأسهم بشرط */
+ let o='',k=0;const t=String(raw);
+ const grp=()=>{let g='';if(t[k]==='{'){k++;while(k<t.length&&t[k]!=='}')g+=t[k++];k++;}else{while(k<t.length&&/[0-9+\-]/.test(t[k]))g+=t[k++];}return esc(g.replace(/-/g,'−'));};
+ const cond=()=>{if(t[k]!=='[')return'';const e=t.indexOf(']',k);const c=t.slice(k+1,e<0?t.length:e);k=e<0?t.length:e+1;return c;};
+ const arr=(kind,top)=>top?`<span class="marr"><span class="ma-t">${esc(top)}</span><span class="ma-l">${arrowSVG(kind)}</span><span class="ma-b">&nbsp;</span></span>`:`<span class="mo rel">${kind==='eq'?'⇌':'→'}</span>`;
+ while(k<t.length){const c=t[k];
+  if(c==='^'){k++;o+=`<sup class="msup">${grp()}</sup>`;continue;}
+  if(/[0-9]/.test(c)&&k>0&&/[A-Za-z)\]]/.test(t[k-1])){let g='';while(k<t.length&&/[0-9]/.test(t[k]))g+=t[k++];
+   if(t[k]==='^'){k++;o+=`<span class="mss"><span>${grp()}</span><span>${g}</span></span>`;}else o+=`<sub class="msub">${g}</sub>`;continue;}
+  if(c==='('&&k>0&&/^\((s|l|g|aq)\)/.test(t.slice(k))){const mm=t.slice(k).match(/^\((s|l|g|aq)\)/);o+=`<sub class="msub st">${mm[0]}</sub>`;k+=mm[0].length;continue;}
+  if(t.startsWith('<=>',k)||t.startsWith('<->',k)){k+=3;o+=arr('eq',cond());continue;}
+  if(t.startsWith('->',k)){k+=2;o+=arr('r',cond());continue;}
+  if(c==='+'&&(k===0||t[k-1]===' ')){o+='<span class="mo">+</span>';k++;continue;}
+  if(c==='='){o+='<span class="mo rel">=</span>';k++;continue;}
+  if(c===' '){o+=' ';k++;while(t[k]===' ')k++;continue;}
+  o+=esc(c);k++;}
+ return o.replace(/ +(<span class="(mo|marr))/g,'$1').replace(/(<\/span>) +/g,'$1');
+}
+
+
+/* القسمة الطويلة بشكل الكتب المدرسية: الحاصرة، والناتج فوق المقسوم، وخطوات الحل اختيارياً */
+function ldSteps(a,b){
+ a=toLa(String(a));b=toLa(String(b));if(!/^\d{1,12}$/.test(a)||!/^\d{1,9}$/.test(b)||+b===0)return{q:'',rows:[],error:'القسمة تتطلب أعداداً صحيحة ومقسوم عليه أكبر من صفر'};
+ const d=a.split('').map(Number),v=+b,rows=[];let cur=0,started=false,q='';
+ for(let i=0;i<d.length;i++){cur=cur*10+d[i];if(!started&&cur<v&&i<d.length-1)continue;started=true;
+  const qd=Math.floor(cur/v),prod=qd*v;q+=qd;rows.push({t:'p',v:String(prod),end:i});const rem=cur-prod;
+  rows.push({t:'r',v:i<d.length-1?String(rem)+d[i+1]:String(rem),end:i<d.length-1?i+1:i});cur=rem;}
+ return{q:q.replace(/^0+(?=\d)/,''),rows};
+}
+function ldHTML(a,b,q,steps,lang,D){
+ const A=toLa(String(a).trim()),B=toLa(String(b).trim()),Q=toLa(String(q).trim()),ar=lang==='ar';
+ const num=/^\d{1,12}$/.test(A),n=num?A.length:1;
+ let rows=[],quot=Q;
+ if(num&&/^\d{1,9}$/.test(B)&&+B>0&&steps){const r=ldSteps(A,B);rows=r.rows;if(!quot)quot=r.q;}
+ const dc=k=>ar?k+1:k+4,mc=ar?n+1:3,bc=ar?n+2:2,vc=ar?n+3:1;
+ const cell=(r,c,t,cls='')=>`<span class="dg ${cls}" style="grid-row:${r};grid-column:${c}">${t}</span>`;
+ let h='';
+ if(quot){const qs=quot.split('');qs.forEach((x,k)=>{const col=n-qs.length+k;if(col>=0)h+=cell(1,dc(col),esc(D(x)));});}
+ else h+=cell(1,dc(0),'&nbsp;');
+ if(num)A.split('').forEach((x,k)=>{h+=cell(2,dc(k),esc(D(x)),'top');});else h+=`<span class="dg top" style="grid-row:2;grid-column:${dc(0)}">${esc(D(a))}</span>`;
+ h+=cell(2,mc,'','top');
+ h+=`<span class="ld-br" style="grid-row:2;grid-column:${bc}"><svg viewBox="0 0 10 40" preserveAspectRatio="none" aria-hidden="true"><path d="M1.5 0.6 Q10.5 20 1.5 39.4" fill="none" stroke="currentColor" stroke-width="1.3" vector-effect="non-scaling-stroke"/></svg></span>`;
+ h+=cell(2,vc,esc(D(b)),'dv');
+ rows.forEach((rw,k)=>{const r=k+3,ds=rw.v.split(''),st=rw.end-ds.length+1;
+  ds.forEach((x,j)=>{h+=cell(r,dc(st+j),esc(D(x)),rw.t==='p'?'ul':'');});
+  if(rw.t==='p'){const mcol=ar?(rw.end+1>=n?mc:dc(rw.end+1)):(st-1<0?mc:dc(st-1));h+=cell(r,mcol,'−','ul mn');}
+ });
+ return`<span class="ldg${ar?' ar':''}" style="grid-template-columns:repeat(${n+3},auto)">${h}</span>`;
+}
+/* تحويل المعادلة إلى قطع قابلة للتعديل، والعكس */
+function readGroup(s,i){if(s[i]!=='{')return[null,i];let d=1,o='';i++;while(i<s.length){const c=s[i++];if(c==='{')d++;else if(c==='}'&&!--d)break;o+=c;}return[o,i];}
+function parseLegacyPieces(tex){
+ const s=String(tex||''),out=[];let i=0,txt='';
+ const flush=()=>{if(txt.trim())out.push({t:'text',v:txt.trim()});txt='';};
+ while(i<s.length){
+  if(s.startsWith('\\frac',i)){flush();let a,b;[a,i]=readGroup(s,i+5);[b,i]=readGroup(s,i);out.push({t:'frac',a:a||'',b:b||''});continue;}
+  if(s.startsWith('\\sqrt',i)){flush();i+=5;let n='';if(s[i]==='['){const e=s.indexOf(']',i);n=s.slice(i+1,e);i=e+1;}let x;[x,i]=readGroup(s,i);out.push({t:'root',n,x:x||''});continue;}
+  if(s.startsWith('\\qty{',i)){flush();let v,u;[v,i]=readGroup(s,i+4);[u,i]=readGroup(s,i);out.push({t:'unit',v:v||'',u:u||''});continue;}
+  if(s.startsWith('\\isotope',i)){flush();let a,z,x;[a,i]=readGroup(s,i+8);[z,i]=readGroup(s,i);[x,i]=readGroup(s,i);out.push({t:'iso',a:a||'',z:z||'',x:x||''});continue;}
+  if(s.startsWith('\\system',i)){flush();let a,b;[a,i]=readGroup(s,i+7);[b,i]=readGroup(s,i);out.push({t:'sys',a:a||'',b:b||''});continue;}
+  if(s.startsWith('\\log_{',i)){flush();let b,x;[b,i]=readGroup(s,i+5);[x,i]=readGroup(s,i);out.push({t:'log',b:b||'',x:x||''});continue;}
+  if(s.startsWith('\\lim_{',i)){flush();let v,x;[v,i]=readGroup(s,i+5);[x,i]=readGroup(s,i);const pr=(v||'').split('\\to');out.push({t:'lim',v:(pr[0]||'').trim(),a:(pr[1]||'').trim(),x:x||''});continue;}
+  if(s.startsWith('\\int_{',i)){flush();let a,b,f;[a,i]=readGroup(s,i+5);if(s[i]==='^')[b,i]=readGroup(s,i+1);[f,i]=readGroup(s,i);out.push({t:'int',a:a||'',b:b||'',f:f||''});continue;}
+  if(s.startsWith('\\sum_{',i)){flush();let a,b,x;[a,i]=readGroup(s,i+5);if(s[i]==='^')[b,i]=readGroup(s,i+1);[x,i]=readGroup(s,i);out.push({t:'sum',a:a||'',b:b||'',x:x||''});continue;}
+  if(s.startsWith('\\overline{',i)){flush();let x;[x,i]=readGroup(s,i+9);out.push({t:'bar',x:x||''});continue;}
+  if(s.startsWith('\\longdiv',i)){flush();let a,b,q,st;[a,i]=readGroup(s,i+8);[b,i]=readGroup(s,i);[q,i]=readGroup(s,i);if(s[i]==='{')[st,i]=readGroup(s,i);out.push({t:'longdiv',a:a||'',b:b||'',q:q||'',steps:st==='1'});continue;}
+  if(s.startsWith('\\left|',i)){flush();const e=s.indexOf('\\right|',i);const x=s.slice(i+6,e<0?s.length:e).trim();i=e<0?s.length:e+7;out.push({t:'abs',x});continue;}
+  if(s.startsWith('\\left(',i)){flush();const e=s.indexOf('\\right)',i);const x=s.slice(i+6,e<0?s.length:e).trim();i=e<0?s.length:e+7;out.push({t:'paren',x});continue;}
+  if(s.startsWith('\\xrightarrow',i)||s.startsWith('\\xrightleftharpoons',i)){flush();const rev=s.startsWith('\\xrightleftharpoons',i);i+=rev?19:12;let b='';if(s[i]==='['){const e=s.indexOf(']',i);b=s.slice(i+1,e);i=e+1;}let a;[a,i]=readGroup(s,i);out.push({t:'arrow',a:a||'',b,rev});continue;}
+  if(s.startsWith('\\vec{',i)){flush();let x;[x,i]=readGroup(s,i+4);out.push({t:'vec',x:x||''});continue;}
+  if(s.startsWith('\\ce',i)){flush();let x;[x,i]=readGroup(s,i+3);out.push({t:'chem',x:x||''});continue;}
+  if(s[i]==='{'){const [g,j]=readGroup(s,i);
+   if(s.startsWith('\\frac',j)){flush();let a,b,k;[a,k]=readGroup(s,j+5);[b,k]=readGroup(s,k);out.push({t:'mixed',w:g,a:a||'',b:b||''});i=k;continue;}
+   const pm=/^\\left\( ([\s\S]*) \\right\)$/.exec(g||'');
+   if(pm&&s[j]==='^'){flush();let e;[e,i]=readGroup(s,j+1);out.push({t:'ppow',x:pm[1],e:e||''});continue;}
+   if(s[j]==='^'||s[j]==='_'){flush();let k=j,e='',sb='';while(s[k]==='^'||s[k]==='_'){const c=s[k];let v;[v,k]=readGroup(s,k+1);if(v===null){v=s[k]||'';k++;}if(c==='^')e=v;else sb=v;}
+    out.push(e&&sb?{t:'powsub',x:g,e,s:sb}:e?{t:'pow',x:g,e}:{t:'sub',x:g,s:sb});i=k;continue;}
+  }
+  txt+=s[i++];
+ }
+ flush();return out;
+}
+function piecesToTex(ps){
+ return ps.map(p=>({text:()=>p.v,frac:()=>`\\frac{${p.a}}{${p.b}}`,mixed:()=>`{${p.w}}\\frac{${p.a}}{${p.b}}`,sqrt:()=>`\\sqrt{${p.x}}`,nroot:()=>`\\sqrt[${p.n}]{${p.x}}`,root:()=>p.n&&!/^\s*[2٢]?\s*$/.test(p.n)?`\\sqrt[${p.n}]{${p.x}}`:`\\sqrt{${p.x}}`,
+  unit:()=>`\\qty{${p.v}}{${p.u}}`,iso:()=>`\\isotope{${p.a}}{${p.z}}{${p.x}}`,sys:()=>`\\system{${p.a}}{${p.b}}`,log:()=>`\\log_{${p.b}}{${p.x}}`,lim:()=>`\\lim_{${p.v} \\to ${p.a}}{${p.x}}`,
+  int:()=>`\\int_{${p.a}}^{${p.b}}{${p.f}}`,sum:()=>`\\sum_{${p.a}}^{${p.b}}{${p.x}}`,bar:()=>`\\overline{${p.x}}`,ppow:()=>`{\\left( ${p.x} \\right)}^{${p.e}}`,
+  pow:()=>`{${p.x}}^{${p.e}}`,sub:()=>`{${p.x}}_{${p.s}}`,powsub:()=>`{${p.x}}^{${p.e}}_{${p.s}}`,longdiv:()=>`\\longdiv{${p.a}}{${p.b}}{${p.q}}{${p.steps?1:0}}`,
+  arrow:()=>`\\${p.rev?'xrightleftharpoons':'xrightarrow'}${p.b?`[${p.b}]`:''}{${p.a}}`,vec:()=>`\\vec{${p.x}}`,abs:()=>`\\left| ${p.x} \\right|`,paren:()=>`\\left( ${p.x} \\right)`,chem:()=>`\\ce{${p.x}}`}[p.t]||(()=>''))()).join(' ');
+}
+/* لا ندخل المحلل القديم مع أقواس ناقصة: كان يتوقف إلى الأبد في sqrt[ بلا ]. */
+function texProblem(tex){
+ const t=String(tex||'');if(t.length>12000)return'المعادلة طويلة جداً';
+ const stack=[];for(let i=0;i<t.length;i++){const c=t[i];if(c==='\\'&&'{}[]'.includes(t[i+1]||'\0')){i++;continue;}
+  if(c==='{'||c==='['){stack.push(c);if(stack.length>40)return'التداخل عميق جداً';}
+  else if(c==='}'||c===']'){if(stack.pop()!==(c==='}'?'{':'['))return'أكمل الأقواس في المعادلة';}}
+ if(stack.length)return'أكمل الأقواس في المعادلة';
+ if(/\\(?:dfrac|tfrac|frac)\{[^{}]*\}\{[0٠۰]+\}/.test(t)||/\\longdiv\{[^{}]*\}\{[0٠۰]+\}/.test(t))return'القسمة على صفر غير معرّفة';
+ return'';
+}
+function parsePieces(tex){
+ const t=String(tex||'');if(!t.trim())return[];
+ if(texProblem(t))return[{t:'text',v:t}];
+ const ps=parseLegacyPieces(t),back=piecesToTex(ps);
+ /* المعادلات المتداخلة أو غير المدعومة تبقى بصيغتها الأصلية، لا نغير معناها لتناسب القوالب. */
+ const compact=x=>x.replace(/\s+/g,'').replace(/\\sqrt\[[2٢]\]/g,'\\sqrt');
+ return compact(back)===compact(t)&&!/\s[\^_]/.test(back)?ps:[{t:'text',v:t}];
+}
+if(typeof module!=='undefined')module.exports={texToHTML,richHTML,chipHTML,hasRich,parsePieces,piecesToTex,ldSteps,texProblem};
+
+function arrowSVG(k){
+ const p=k==='eq'?'M1 7 H39 M33 2 L39 7 M1 13 H39 M7 18 L1 13':k==='l'?'M1 10 H39 M7 4 L1 10 L7 16':'M1 10 H39 M33 4 L39 10 L33 16';
+ return`<svg viewBox="0 0 40 20" preserveAspectRatio="none" aria-hidden="true"><path d="${p}" fill="none" stroke="currentColor" stroke-width="1.3" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+
+
+/* ===== المنهج العراقي ===== */
+const STAGES={
+ primary:{label:'الابتدائية',hint:'الرابع إلى السادس',grades:['الرابع الابتدائي','الخامس الابتدائي','السادس الابتدائي']},
+ intermediate:{label:'المتوسطة',hint:'الأول إلى الثالث',grades:['الأول المتوسط','الثاني المتوسط','الثالث المتوسط']},
+ preparatory:{label:'الإعدادية',hint:'العلمي والأدبي',grades:['الرابع العلمي','الرابع الأدبي','الخامس العلمي','الخامس الأدبي','السادس العلمي','السادس الأدبي']}
+};
+function subjectsFor(stage,grade){
+ grade=String(grade||'');
+ if(stage==='primary')return grade.includes('الرابع')?['اللغة العربية','الرياضيات']:['التربية الإسلامية','اللغة العربية','اللغة الإنكليزية','الرياضيات','العلوم','الاجتماعيات'];
+ if(stage==='intermediate')return['التربية الإسلامية','اللغة العربية','اللغة الإنكليزية','الرياضيات','الأحياء','الكيمياء','الفيزياء','الاجتماعيات','الحاسوب'];
+ const base=['التربية الإسلامية','اللغة العربية','اللغة الإنكليزية','الرياضيات'];
+ if(grade.includes('الأدبي'))return[...base,'التاريخ','الجغرافية',
+  ...(grade.includes('الرابع')?['علم الاجتماع','الحاسوب']:grade.includes('الخامس')?['الاقتصاد','الفلسفة وعلم النفس','الحاسوب']:['الاقتصاد'])];
+ return[...base,'الفيزياء','الكيمياء','الأحياء',...(grade.includes('الخامس')?['علم الأرض']:[]),...(grade.includes('السادس')?[]:['الحاسوب'])];
+}
+const KINDS=['الشهر الأول','الشهر الثاني','نصف السنة','نهاية السنة'];
+const hasRound=k=>k==='نهاية السنة'||k==='نصف السنة';
+const AR_SUBJ=['الإسلامية','العربية','الاجتماعيات','التاريخ','الجغرافية','الاقتصاد','علم الاجتماع'];
+const isForeign=s=>/الإنكليزية|الانكليزية|الإنجليزية|English|الفرنسية/i.test(s||'');
+function autoNumbering(stage,subject){if(stage==='primary')return isForeign(subject)?'latin':'arabic';return AR_SUBJ.some(k=>String(subject).includes(k))?'arabic':'latin';}
+const kindTitle=k=>({'نهاية السنة':'أسئلة امتحانات نهاية السنة','نصف السنة':'أسئلة امتحانات نصف السنة','الشهر الأول':'أسئلة امتحانات الشهر الأول','الشهر الثاني':'أسئلة امتحانات الشهر الثاني'}[k]||(k?'أسئلة امتحان '+k:'أسئلة الامتحان'));
+const PART_AR=['أ','ب','ج','د','هـ','و','ز','ح','ط','ي','ك','ل','م','ن','س','ع','ف','ص','ق','ر'];
+const PART_EN='ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+function scoreText(raw,en,D,paren){
+ const s=String(raw||'').trim();if(!s)return'';
+ const n=toLa(s);let out;
+ if(/^\d+(\.\d+)?$/.test(n)){const v=parseFloat(n);out=en?`${D(n)} ${v===1?'Mark':'Marks'}`:v===1?'درجة واحدة':v===2?'درجتان':`${D(n)} ${(v>=3&&v<=10&&Number.isInteger(v))?'درجات':'درجة'}`;}
+ else out=D(s.replace(/^\((.*)\)$/,'$1'));
+ return paren?`(${out})`:out;
+}
+
+/* ===== الألوان: مشتقة من ورقة المصدر، فاتحة وصالحة للطباعة ===== */
+const THEMES={
+ source:{label:'كحلي'},
+ sky:{label:'أزرق سماوي'},
+ teal:{label:'أزرق فولاذي'},
+ gray:{label:'رمادي'},
+ ink:{label:'أسود'}
+};
+const FONTS={
+ sans:{label:'نوتو سانس',css:"'Noto Sans Arabic',Tahoma,sans-serif"},
+ times:{label:'تايمز',css:"'Times New Roman',Tinos,'Noto Naskh Arabic',serif"},
+ naskh:{label:'نوتو نسخ',css:"'Noto Naskh Arabic',serif"},
+ cairo:{label:'القاهرة',css:"'Cairo',sans-serif"},
+ amiri:{label:'أميري',css:"'Amiri',serif"},
+ custom:{label:'خطي',css:"'ExamUserFont','Noto Sans Arabic',sans-serif"}
+};
+const LABELS={'n-dot':'1.','n-dash':'1-','n-paren':'1)','l-dash':'أ-','l-paren':'أ)','none':'بلا'};
+const QSTYLES={slash:'س1/',paren:'س1)',colon:'س1:',pre:'س:1)'};
+const KIND_INFO={
+ definitions:['تعريفات','مصطلحات قصيرة في مربعات'],
+ blanks:['فراغات','عبارات فيها نقاط للإكمال'],
+ mcq:['اختيار من متعدد','خيارات بين قوسين'],
+ branches:['أفرع','أ- ب- ج- مع فقرات داخلية'],
+ enumerate:['عدّد','أفرع قصيرة في سطر واحد'],
+ truefalse:['صح أو خطأ','عبارات للحكم عليها'],
+ match:['وصل وزاوج','عمود (أ) وعمود (ب) للربط بينهما'],
+ math:['سؤال معادلات','كسور، جذور، قسمة طويلة، كيمياء وفيزياء'],
+ text:['نص حر','فقرة أو نص قراءة'],
+ section:['عنوان قسم','مثل: القرآن الكريم (40 درجة)']
+};
+
+/* ===== النماذج حسب المادة: خمسة أسئلة تملأ صفحة A4 ===== */
+const it=(text='',x={})=>({id:uid(),text,choices:x.choices||[],subs:x.subs||[],subLabel:x.subLabel||'n-dot',score:x.score||'',pair:x.pair||'',table:x.table||null,align:x.align||'auto',answerLines:0,image:null});
+const Q=(kind,prompt,score,o={},items=[])=>({id:uid(),kind,prompt,score,showScore:true,title:'',cols:o.cols??-1,label:o.label||'n-dot',chStyle:o.ch||'letters',chLayout:o.lay||'inline',boxed:o.boxed??kind==='definitions',breakBefore:false,image:null,
+ colA:o.colA||'',colB:o.colB||'',extra:o.extra||[],mStyle:o.mStyle||'table',shuffle:o.shuffle??true,items});
+const pairs=(arr)=>arr.map(([a,b])=>it(a,{pair:b}));
+const TABLE=(r=3,c=3)=>({head:true,full:false,rows:Array.from({length:r},(_,i)=>Array.from({length:c},(_,j)=>i===0?'':''))});
+function family(s){s=String(s||'');if(isForeign(s))return'en';if(s.includes('الرياضيات'))return'math';if(s.includes('الإسلامية'))return'islamic';if(s.includes('الفيزياء'))return'physics';if(s.includes('الكيمياء'))return'chem';if(s.includes('الأحياء'))return'bio';if(s.includes('الحاسوب'))return'computer';if(s.includes('علم الأرض'))return'earth';if(s.includes('العلوم'))return'science';return'arabic';}
+function starter(stage,grade,subject){
+ const f=family(subject),prim=stage==='primary',S=prim?'10':'20',B='10';
+ if(f==='en')return[
+  Q('definitions','Define five of the following:',S,{label:'n-dot'},['Noun','Verb','Adjective','Adverb','Pronoun','Preposition'].map(t=>it(t))),
+  Q('blanks','Fill in the blanks with the correct words:',S,{label:'n-dot'},[it('I ............ to school every day.'),it('She ............ a letter yesterday.'),it('They are ............ football now.'),it('We ............ in Baghdad.')]),
+  Q('mcq','Choose the correct answer:',S,{label:'n-dot'},[it('He ............ a doctor.',{choices:['is','are']}),it('My sister ............ tea.',{choices:['like','likes']}),it('There ............ two books.',{choices:['is','are']})]),
+  Q('branches','Answer the following:',S,{label:'l-dash'},[it('Write five sentences about your school.'),it('What do you do in the morning?')]),
+  Q('enumerate','Write the opposite of:',S,{label:'l-dash'},[it('big'),it('hot'),it('happy')])];
+ if(f==='math'&&prim)return[
+  Q('math','أجب عما يأتي:',S,{cols:1,label:'l-dash'},[it('جد ناتج القسمة $$\\longdiv{٨٤}{٤}{}{0}$$ ثم حلّل الناتج إلى عوامله الأولية.'),it('جد ناتج القسمة $$\\longdiv{٩٦٣}{٣}{}{0}$$ ثم تحقّق من صحة الحل بالضرب.')]),
+  Q('math','جد ناتج ما يأتي بأبسط صورة:',S,{cols:2,label:'n-dot'},[it('$$\\frac{٣}{٤} + \\frac{١}{٤} =$$ ......'),it('$$\\frac{٥}{٦} - \\frac{١}{٣} =$$ ......'),it('$${٢}\\frac{١}{٢} + {١}\\frac{١}{٤} =$$ ......'),it('$$\\frac{٢}{٣} × \\frac{٣}{٥} =$$ ......')]),
+  Q('blanks','املأ الفراغات الآتية بما يناسبها:',S,{label:'n-dot'},[it('العدد الذي يلي ٩٩٩ هو ( .............. ).'),it('ناتج ٧ × ٨ = ( .............. ).'),it('القيمة المكانية للرقم ٥ في العدد ٣٥٢ هي ( .............. ).')]),
+  Q('mcq','اختر الإجابة الصحيحة من بين الأقواس:',S,{label:'n-dot'},[it('ناتج ٤٥ ÷ ٥ =',{choices:['٨','٩']}),it('الكسر المكافئ للكسر نصف هو',{choices:['$$\\frac{٢}{٤}$$','$$\\frac{٢}{٣}$$']})]),
+  Q('branches','حل المسألة الآتية:',S,{label:'none'},[it('اشترى أحمد ٣ أقلام بسعر ٢٥٠ ديناراً للقلم الواحد، كم ديناراً دفع؟')])];
+ if(f==='math')return[
+  Q('math','جد ناتج ما يأتي بأبسط صورة:',S,{cols:3,label:'n-paren'},[it('$\\sqrt[3]{-27}+\\sqrt[4]{16}$'),it('$6\\sqrt{5}+2\\sqrt{5}$'),it('$\\sqrt[3]{54}-\\sqrt[3]{16}$')]),
+  Q('math','جد ناتج ما يأتي:',S,{cols:2,label:'n-paren'},[it('$\\frac{-1}{5}\\times\\frac{25}{-3}+\\frac{3}{2}\\times\\frac{8}{21}$'),it('$4\\frac{1}{3}+3\\frac{2}{5}-\\frac{8}{15}$')]),
+  Q('math','حل المعادلات الآتية:',S,{cols:2,label:'n-paren'},[it('$2^{x^{2}-2x+1}=4^{x+3}$'),it('$|x-6| \\le 1$')]),
+  Q('math','بسّط ما يأتي:',S,{cols:2,label:'n-paren'},[it('$5\\sqrt{12}-7\\sqrt{32}$'),it('$\\sqrt{5}(\\sqrt{10}+\\sqrt{3})$')]),
+  Q('math','أثبت أن:',S,{label:'none'},[it('$\\sin 30^{\\circ} \\cos 60^{\\circ} + \\sin 60^{\\circ} \\cos 30^{\\circ} = 1$')])];
+ if(f==='islamic')return[
+  Q('section','القرآن الكريم',prim?'20':'40'),
+  Q('branches','أجب عن أحد الفرعين:',B,{label:'l-dash'},[it('عرّف المد، مع ذكر حروفه الثلاث، واذكر مثالاً لكل حرف.'),it('عيّن القلقلة وبيّن نوعها في الآيات الكريمة الآتية.')]),
+  Q('branches','اكتب ما تحفظه من سورة الانفطار من قوله تعالى (إِذَا السَّمَاءُ انْفَطَرَتْ) إلى قوله تعالى (فَسَوَّاكَ فَعَدَلَكَ).',B,{label:'none'},[]),
+  Q('section','التربية الإسلامية',prim?'20':'50'),
+  Q('branches','أجب عما يأتي لفرع واحد فقط:',B,{label:'l-dash'},[it('اكتب حديثاً نبوياً شريفاً عن السنة الحسنة والسيئة.'),it('اكتب حديثاً نبوياً شريفاً عن النهي عن الحسد.')]),
+  Q('blanks','املأ الفراغات الآتية (لأربع فقط):',prim?'10':'40',{label:'n-dot'},[it('مرت الدعوة الإسلامية بمرحلتين هما .................. و ..................'),it('العبادة هي ..................'),it('من شروط الوضوء .................. و ..................'),it('الصلاة هي ..................')])];
+ if(f==='physics')return[
+  Q('definitions','عرّف خمساً مما يأتي:',S,{},['الكتلة','الوزن','السرعة','التعجيل','الشغل','القدرة'].map(t=>it(t))),
+  Q('mcq','اختر الإجابة الصحيحة لكل مما يأتي:',S,{lay:'line'},[it('وحدة قياس القوة في النظام الدولي للوحدات هي:',{choices:['الجول','النيوتن','الواط']}),it('إذا تضاعفت سرعة جسم فإن طاقته الحركية:',{choices:['تتضاعف','تزداد أربع مرات','تقل إلى النصف']}),it('الكمية المتجهة من بين الكميات الآتية هي:',{choices:['الكتلة','الزمن','الإزاحة']})]),
+  Q('branches','حل المسائل الآتية:',S,{label:'l-dash'},[it('جسم كتلته $m=5\\,\\text{kg}$ يتحرك بتعجيل مقداره $a=2\\,\\text{m/s}^{2}$ ، احسب مقدار القوة المحصلة المؤثرة فيه.'),it('سقط حجر سقوطاً حراً من السكون لمدة $t=3\\,\\text{s}$ ، احسب سرعته النهائية علماً أن $g=10\\,\\text{m/s}^{2}$ .')]),
+  Q('blanks','املأ الفراغات الآتية بما يناسبها:',S,{},[it('حاصل ضرب القوة في الإزاحة باتجاهها يسمى ( .................... ).'),it('المعدل الزمني لتغير السرعة يسمى ( .................... ).'),it('وحدة قياس القدرة هي ( .................... ).')]),
+  Q('match','صل بين الكمية الفيزيائية في العمود (أ) ووحدة قياسها في العمود (ب):',S,{extra:['$\\text{m/s}$']},pairs([['القوة','$\\text{N}$'],['الشغل','$\\text{J}$'],['القدرة','$\\text{W}$'],['الضغط','$\\text{Pa}$']]))];
+ if(f==='chem')return[
+  Q('definitions','عرّف خمساً مما يأتي:',S,{},['العنصر','المركب','العدد الذري','العدد الكتلي','الأيون','النظائر'].map(t=>it(t))),
+  Q('math','وازن المعادلات الكيميائية الآتية:',S,{cols:1,label:'n-paren'},[it('$\\ce{H2 + O2 -> H2O}$'),it('$\\ce{Fe + HCl -> FeCl2 + H2}$'),it('$\\ce{N2 + H2 <=> NH3}$')]),
+  Q('mcq','اختر الإجابة الصحيحة لكل مما يأتي:',S,{lay:'line'},[it('عدد البروتونات في نواة ذرة $\\isotope{12}{6}{C}$ يساوي:',{choices:['6','12','18']}),it('الصيغة الكيميائية لكبريتات الصوديوم هي:',{choices:['$\\ce{Na2SO4}$','$\\ce{NaSO4}$','$\\ce{Na2SO3}$']}),it('المحلول الذي قيمة الأس الهيدروجيني $\\text{pH}$ له تساوي 7 يكون:',{choices:['حامضياً','قاعدياً','متعادلاً']})]),
+  Q('blanks','املأ الفراغات الآتية بما يناسبها:',S,{},[it('تسمى الأعمدة الرأسية في الجدول الدوري ( .................... ).'),it('شحنة أيون الكبريتات $\\ce{SO4^{2-}}$ تساوي ( .................... ).'),it('الغاز المتصاعد في التفاعل $\\ce{Zn + 2HCl -> ZnCl2 + H2 ↑}$ هو ( .................... ).')]),
+  Q('match','زاوج بين العنصر في العمود (أ) ورمزه الكيميائي في العمود (ب):',S,{extra:['$\\ce{Cu}$']},pairs([['الصوديوم','$\\ce{Na}$'],['الحديد','$\\ce{Fe}$'],['الكالسيوم','$\\ce{Ca}$'],['البوتاسيوم','$\\ce{K}$']]))];
+ if(f==='bio')return[
+  Q('definitions','عرّف خمساً مما يأتي:',S,{},['الخلية','النسيج','الانقسام الخيطي','البناء الضوئي','الإنزيم','الهرمون'].map(t=>it(t))),
+  Q('blanks','املأ الفراغات الآتية بما يناسبها:',S,{},[it('الوحدة الأساسية للتركيب والوظيفة في الكائن الحي هي ( .................... ).'),it('العضية المسؤولة عن تحرير الطاقة في الخلية هي ( .................... ).'),it('تحدث عملية البناء الضوئي في ( .................... ).')]),
+  Q('mcq','اختر الإجابة الصحيحة لكل مما يأتي:',S,{lay:'line'},[it('الخلية هي:',{choices:['كل شيء يشغل حيزاً من الفراغ','الوحدة الوظيفية والتركيبية للكائن الحي']}),it('الصبغة الخضراء في النبات هي:',{choices:['الكلوروفيل','الهيموغلوبين','الميلانين']})]),
+  Q('branches','علّل ما يأتي:',S,{label:'l-dash'},[it('تعد الميتوكوندريا مصنع الطاقة في الخلية.'),it('يحتاج النبات الأخضر إلى ضوء الشمس.')]),
+  Q('match','صل بين العضية في العمود (أ) ووظيفتها في العمود (ب):',S,{extra:['نقل الأوكسجين']},pairs([['النواة','السيطرة على فعاليات الخلية'],['الميتوكوندريا','تحرير الطاقة'],['البلاستيدات الخضراء','البناء الضوئي'],['الرايبوسومات','بناء البروتين']]))];
+ if(f==='earth')return[
+  Q('definitions','عرّف ما يأتي:',S,{},['الغلاف الجوي','الطقس','المناخ','الزلزال','التجوية'].map(t=>it(t))),
+  Q('blanks','املأ الفراغات الآتية بما يناسبها:',S,{},[it('يقاس الضغط الجوي بجهاز ( ............. ).'),it('يسمى تفتت الصخور وتحللها في موضعها ( ............. ).'),it('من مصادر التلوث البيئي ( ............. ).')]),
+  Q('mcq','اختر الإجابة الصحيحة لكل مما يأتي:',S,{lay:'line'},[it('تفتت الصخور دون تغير تركيبها الكيميائي يُعد:',{choices:['تجوية ميكانيكية','تجوية كيميائية','تحولاً صخرياً']}),it('تسجيل الاهتزازات الأرضية يتم بواسطة:',{choices:['السيزموجراف','البارومتر','الثرمومتر']})]),
+  Q('branches','أجب عما يأتي:',S,{label:'l-dash'},[it('ما الفرق بين الطقس والمناخ؟'),it('اذكر ثلاثة من آثار التلوث البيئي.')]),
+  Q('match','صل بين الظاهرة في العمود (أ) وما يناسبها في العمود (ب):',S,{extra:['تغير حالة الجو خلال مدة قصيرة']},pairs([['الزلزال','اهتزاز مفاجئ للقشرة الأرضية'],['البركان','اندفاع مواد منصهرة إلى سطح الأرض'],['التجوية','تفكك الصخور وتحللها في موضعها'],['التعرية','نقل فتات الصخور من مكان إلى آخر']]))];
+ if(f==='computer')return[
+  Q('definitions','عرّف ما يأتي:',S,{},['نظام التشغيل','الذاكرة الرئيسة','البرمجيات','وحدة المعالجة المركزية','الشبكة'].map(t=>it(t))),
+  Q('blanks','املأ الفراغات الآتية بما يناسبها:',S,{},[it('من وحدات إدخال البيانات في الحاسوب ( ............. ).'),it('تُستخدم الطابعة لـ ( ............. ).'),it('تسمى البرامج التي تدير موارد الحاسوب ( ............. ).')]),
+  Q('mcq','اختر الإجابة الصحيحة لكل مما يأتي:',S,{lay:'line'},[it('الجهاز المستخدم لإدخال النصوص هو:',{choices:['لوحة المفاتيح','الشاشة','الطابعة']}),it('الذاكرة التي تفقد محتواها عند انقطاع الطاقة هي:',{choices:['RAM','ROM','القرص الصلب']})]),
+  Q('branches','أجب عما يأتي:',S,{label:'l-dash'},[it('اذكر مثالين لأجهزة الإدخال ومثالين لأجهزة الإخراج.'),it('ما الفرق بين المكونات المادية والبرمجيات؟')]),
+  Q('match','صل بين الجهاز في العمود (أ) ووظيفته في العمود (ب):',S,{extra:['معالجة البيانات']},pairs([['لوحة المفاتيح','إدخال النصوص'],['الشاشة','عرض المعلومات'],['الطابعة','إخراج المعلومات على الورق'],['الماسح الضوئي','إدخال الصور إلى الحاسوب']]))];
+ if(f==='science')return[
+  Q('definitions','عرّف خمساً مما يأتي:',S,{label:'n-dot'},['التكاثر الخضري','التطعيم','الفسيلة','العمود الفقري','الجهاز العصبي','غلاف البذرة'].map(t=>it(t))),
+  Q('blanks','املأ الفراغات الآتية بما يناسبها:',S,{label:'n-dot'},[it('تركيب يوجد داخل البذرة ويعد غذاءً للجنين يسمى ( .................... ).'),it('تسمى المراحل التي تمر بها البذرة أثناء نموها ( .................... ).'),it('يسمى نوع من أنواع الفسائل ينمو مرتفعاً على الساق ( .................... ).'),it('الجزء الأول من أجزاء الجهاز العصبي المركزي هو ( .................... ).'),it('يتكون العمود الفقري من ( ........ ) فقرة.')]),
+  Q('branches','أجب عما يأتي:',S,{label:'l-dash'},[it('ارسم مع التأشير أجزاء بذرة الفاصوليا.'),it('اذكر وظائف العظام في كل مما يأتي:',{subs:['عظام الجمجمة','عظام العمود الفقري','عظام الصدر','عظام الحوض والذراعين']})]),
+  Q('mcq','اختر الإجابة الصحيحة من بين الأقواس:',S,{label:'n-dot'},[it('من البذور ذوات الفلقة الواحدة:',{choices:['الفاصوليا','الذرة']}),it('نبات يتكاثر بوساطة الدرنات وله استخدامات طبية:',{choices:['اليانسون','السوس']}),it('من النباتات التي يتم تكثيرها بالتطعيم:',{choices:['البرتقال','الموز']}),it('جنس النخلة الناتجة من فسيلة مأخوذة من شجرة مؤنثة:',{choices:['مذكرة','مؤنثة']}),it('يبلغ عدد العظام في جسم الإنسان البالغ:',{choices:['206 عظمة','306 عظمة']})]),
+  Q('enumerate','عدّد فقط:',S,{label:'l-dash'},[it('طرائق انتشار البذور؟'),it('أنواع فسائل نخلة التمر؟'),it('أقسام الجهاز العصبي؟')])];
+ return[
+  Q('definitions','عرّف ما يأتي:',S,{label:'n-dot'},['المصطلح الأول','المصطلح الثاني','المصطلح الثالث','المصطلح الرابع','المصطلح الخامس','المصطلح السادس'].map(t=>it(t))),
+  Q('blanks','املأ الفراغات الآتية بما يناسبها:',S,{label:'n-dot'},[it('العبارة الأولى ( .................... ).'),it('العبارة الثانية ( .................... ).'),it('العبارة الثالثة ( .................... ).'),it('العبارة الرابعة ( .................... ).')]),
+  Q('branches','أجب عما يأتي:',S,{label:'l-dash'},[it('السؤال الأول؟'),it('السؤال الثاني؟',{subs:['الفقرة الأولى','الفقرة الثانية','الفقرة الثالثة']})]),
+  Q('mcq','اختر الإجابة الصحيحة من بين الأقواس:',S,{label:'n-dot'},[it('نص السؤال الأول:',{choices:['الخيار الأول','الخيار الثاني']}),it('نص السؤال الثاني:',{choices:['الخيار الأول','الخيار الثاني']}),it('نص السؤال الثالث:',{choices:['الخيار الأول','الخيار الثاني']})]),
+  Q('enumerate','عدّد فقط:',S,{label:'l-dash'},[it('الأول؟'),it('الثاني؟'),it('الثالث؟')])];
+}
+function kindTemplate(kind,en){
+ const S='10',B=(p,o,items)=>Q(kind,p,S,o,items);
+ if(kind==='section')return Q('section',en?'Section title':'عنوان القسم','40');
+ if(en)return({definitions:()=>B('Define the following:',{},[it('Term'),it('Term'),it('Term')]),blanks:()=>B('Fill in the blanks:',{},[it('Sentence ............'),it('Sentence ............')]),
+  mcq:()=>B('Choose the correct answer:',{},[it('Question',{choices:['first','second']})]),branches:()=>B('Answer the following:',{label:'l-dash'},[it('First branch'),it('Second branch')]),
+  enumerate:()=>B('List only:',{label:'l-dash'},[it('First'),it('Second'),it('Third')]),truefalse:()=>B('Write True or False:',{},[it('Statement.        (      )'),it('Statement.        (      )')]),
+  match:()=>B('Match column A with column B:',{colA:'Column A',colB:'Column B',extra:['']},pairs([['First','One'],['Second','Two'],['Third','Three']])),
+  math:()=>B('Solve:',{cols:2,label:'n-paren'},[it('$\\frac{1}{2}+\\frac{3}{4}$'),it('$x^{2}-4=0$')]),text:()=>B('',{label:'none'},[it('Text')])}[kind])();
+ return({definitions:()=>B('عرّف ما يأتي:',{},[it('المصطلح الأول'),it('المصطلح الثاني'),it('المصطلح الثالث')]),
+  blanks:()=>B('املأ الفراغات الآتية بما يناسبها:',{},[it('العبارة الأولى ( .................... ).'),it('العبارة الثانية ( .................... ).')]),
+  mcq:()=>B('اختر الإجابة الصحيحة من بين الأقواس:',{},[it('نص السؤال:',{choices:['الخيار الأول','الخيار الثاني']})]),
+  branches:()=>B('أجب عما يأتي:',{label:'l-dash'},[it('الفرع الأول؟'),it('الفرع الثاني؟')]),
+  enumerate:()=>B('عدّد فقط:',{label:'l-dash'},[it('الأول؟'),it('الثاني؟'),it('الثالث؟')]),
+  truefalse:()=>B('ضع كلمة (صح) أمام العبارة الصحيحة وكلمة (خطأ) أمام العبارة الخاطئة:',{},[it('العبارة الأولى.        (      )'),it('العبارة الثانية.        (      )')]),
+  match:()=>B('صل بين ما في العمود (أ) وما يناسبه في العمود (ب):',{extra:['']},pairs([['العبارة الأولى','الجواب الأول'],['العبارة الثانية','الجواب الثاني'],['العبارة الثالثة','الجواب الثالث']])),
+  math:()=>B('جد ناتج ما يأتي:',{cols:2,label:'l-dash'},[it('$$\\frac{٣}{٤} + \\frac{١}{٤} =$$ ......'),it('$$\\longdiv{٨٤}{٤}{}{0}$$')]),
+  text:()=>B('',{label:'none'},[it('اكتب النص هنا.')])}[kind])();
+}
+const SHOW_KEYS=['country','ministry','directorate','school','title','subtitle','round','subject','year','time','hijri','name','note','logo','closing','teacher','footLeft','flip','pageNo'];
+function baseMeta(stage){
+ const m={country:'جمهورية العراق',ministry:'وزارة التربية',directorate:'المديرية العامة للتربية',schoolLabel:'المدرسة:',school:'',
+  grade:{primary:'السادس الابتدائي',intermediate:'الأول المتوسط',preparatory:'الرابع العلمي'}[stage],subject:{primary:'العلوم',intermediate:'الكيمياء',preparatory:'الرياضيات'}[stage],
+  subjectLabel:'المادة:',examKind:'الشهر الأول',round:'الدور الأول',yearLabel:'العام الدراسي:',year:'2026 - 2027',timeLabel:'الوقت:',time:stage==='primary'?'ساعة واحدة':'ساعتان',hijri:'',
+  title:'',titleAuto:true,subtitle:'',subtitleAuto:true,noteLabel:'ملاحظة:',note:'',
+  nameLabel:'اسم الطالب/ـة:',logo:'',logoH:16,logoDx:0,logoDy:0,
+  closing:'مع تمنياتنا لكم بالنجاح والتوفيق',teacherLabel:'معلم المادة:',teacher:'',footLeftLabel:'',footLeft:'',flip:'اقلب الصفحة',
+  show:{}};
+ SHOW_KEYS.forEach(k=>m.show[k]=!['directorate','time','hijri','note','footLeft'].includes(k)||(k==='note'&&stage!=='primary')||(k==='time'&&stage!=='primary'));
+ m.show.directorate=true;
+ return m;
+}
+function autoTitles(p){const m=p.meta;if(m.titleAuto)m.title=kindTitle(m.examKind)+(m.subject?' في مادة '+m.subject:'');if(m.subtitleAuto)m.subtitle=m.grade?'للصف '+String(m.grade).replace(/^الصف\s+/,''):'';}
+function makeProject(stage,blank){
+ if(blank===undefined)blank=true;
+ const p={meta:baseMeta(stage),style:'source',theme:'source',font:'sans',customFont:null,size:13,density:'normal',digits:'auto',dir:'auto',qStyle:'slash',rules:true,fit:true,pristine:true,questions:[]};
+ autoTitles(p);if(!blank)p.questions=starter(stage,p.meta.grade,p.meta.subject);return p;
+}
+function blankQuestion(kind,en){
+ const q=kindTemplate(kind,en);q.score='';q.showScore=false;q.prompt='';
+ q.items=kind==='section'?[]:[it('',{choices:kind==='mcq'?['','']:[]})];
+ if(kind==='text'){q.label='none';q.cols=1;q.boxed=false;}
+ return q;
+}
+
+/* ===== التحقق ===== */
+const str=(v,max)=>typeof v==='string'?(max===undefined?v:v.slice(0,max)):(typeof v==='number'?String(v):'');
+const okId=v=>typeof v==='string'&&/^[a-z0-9]+$/.test(v)?v:uid();
+const imageData=s=>typeof s==='string'&&/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(s);
+function normImg(x){if(!x||typeof x!=='object'||!imageData(x.src))return null;
+ return{src:x.src,w:Math.min(100,Math.max(10,+x.w||40)),r:Number.isFinite(+x.r)&&+x.r>0?+x.r:1,align:['start','center','end'].includes(x.align)?x.align:'center',side:!!x.side};}
+function normTable(t){if(!t||typeof t!=='object'||!Array.isArray(t.rows))return null;const rows=t.rows.slice(0,30).map(r=>Array.isArray(r)?r.slice(0,10).map(c=>str(c)):[]).filter(r=>r.length);
+ if(!rows.length)return null;const w=Math.max(...rows.map(r=>r.length));rows.forEach(r=>{while(r.length<w)r.push('');});return{head:t.head!==false,full:!!t.full,align:['right','center','left'].includes(t.align)?t.align:'center',rows};}
+function normItem(x){if(!x||typeof x!=='object')return null;const arr=a=>Array.isArray(a)?a.filter(s=>typeof s==='string').slice(0,40):[];
+ return{id:okId(x.id),text:str(x.text),choices:arr(x.choices),subs:arr(x.subs),subLabel:LABELS[x.subLabel]&&x.subLabel!=='none'?x.subLabel:'n-dot',score:str(x.score),pair:str(x.pair),table:normTable(x.table),align:['right','center','left'].includes(x.align)?x.align:'auto',answerLines:Math.max(0,Math.min(12,parseInt(x.answerLines)||0)),image:normImg(x.image)};}
+function normQ(q){if(!q||typeof q!=='object')return null;
+ const lab=LABELS[q.label]?q.label:q.label==='l-paren'?'l-paren':q.label==='letter'?'l-dash':q.label==='none'?'none':'n-dot';
+ const c=+q.cols;const cols=Number.isInteger(c)&&c>=-1&&c<=4?(c===0?-1:c):-1;
+ return{id:okId(q.id),kind:KIND_INFO[q.kind]?q.kind:'branches',prompt:str(q.prompt),score:str(q.score),showScore:q.showScore!==false,title:str(q.title),
+  cols,label:lab,chStyle:['dash','plain'].includes(q.chStyle)?q.chStyle:'letters',chLayout:['inline','line','grid','stack'].includes(q.chLayout)?q.chLayout:'inline',
+  colA:str(q.colA),colB:str(q.colB),extra:Array.isArray(q.extra)?q.extra.filter(v=>typeof v==='string').slice(0,10):[],mStyle:q.mStyle==='lists'?'lists':'table',shuffle:q.shuffle!==false,boxed:!!q.boxed,breakBefore:!!q.breakBefore,image:normImg(q.image),items:(Array.isArray(q.items)?q.items:[]).slice(0,80).map(normItem).filter(Boolean)};}
+function normProject(p,stage){
+ if(!p||typeof p!=='object')return makeProject(stage);
+ const base=baseMeta(stage),meta={...base,show:{...base.show}};
+ if(p.meta&&typeof p.meta==='object'){for(const k of Object.keys(base)){if(k==='show')continue;const v=p.meta[k],t=typeof base[k];
+   if(t==='boolean'){if(typeof v==='boolean')meta[k]=v;}else if(t==='number'){if(Number.isFinite(+v))meta[k]=+v;}else if(typeof v==='string')meta[k]=v;}
+  if(p.meta.show&&typeof p.meta.show==='object')SHOW_KEYS.forEach(k=>{if(typeof p.meta.show[k]==='boolean')meta.show[k]=p.meta.show[k];});
+  if(typeof p.meta.showName==='boolean')meta.show.name=p.meta.showName;}
+ if(meta.logo&&!imageData(meta.logo))meta.logo='';
+ meta.logoH=Math.min(40,Math.max(8,meta.logoH));
+ const pick=(v,list,d)=>list.includes(v)?v:d;
+ const cf=p.customFont&&typeof p.customFont.src==='string'&&/^data:(font\/[\w.+-]+|application\/[\w.+-]+|);base64,[A-Za-z0-9+/]+={0,2}$/.test(p.customFont.src)?{name:str(p.customFont.name,120),src:p.customFont.src}:null;
+ const out={meta,style:'source',theme:pick(p.theme,Object.keys(THEMES),'source'),font:pick(p.font,Object.keys(FONTS),'sans'),customFont:cf,
+  size:pick(+p.size,[13,14,15],13),density:pick(p.density,['tight','normal','airy'],'normal'),digits:pick(p.digits,['auto','arabic','latin'],'auto'),dir:pick(p.dir,['auto','rtl','ltr'],'auto'),
+  qStyle:pick(p.qStyle,Object.keys(QSTYLES),'slash'),rules:p.rules!==false,fit:p.fit!==false,pristine:!!p.pristine,questions:(Array.isArray(p.questions)?p.questions:[]).slice(0,80).map(normQ).filter(Boolean)};
+ const ids=new Set();const unique=x=>{while(ids.has(x.id))x.id=uid();ids.add(x.id);};
+ out.questions.forEach(q=>{unique(q);q.items.forEach(unique);});
+ if(out.font==='custom'&&!cf)out.font='sans';autoTitles(out);return out;
+}
+function convertV05(o){
+ const m=o.meta||{},stage=STAGES[m.stage]?m.stage:'primary',p=makeProject(stage,true);
+ Object.assign(p.meta,{country:str(m.country)||p.meta.country,ministry:str(m.ministry)||p.meta.ministry,directorate:str(m.directorate)||p.meta.directorate,school:str(m.school),
+  grade:str(m.grade).replace(/^الصف\s+/,'')||p.meta.grade,subject:str(m.subject)||p.meta.subject,examKind:KINDS.includes(m.examKind)?m.examKind:p.meta.examKind,
+  round:str(m.round)||p.meta.round,year:str(m.examDate)||p.meta.year,hijri:str(m.hijriDate),time:str(m.duration)||p.meta.time,teacher:str(m.teacher),note:str(m.note).replace(/^ملاحظة:\s*/,'')});
+ p.meta.show.note=!!p.meta.note;p.pristine=false;autoTitles(p);
+ p.questions=((o.structured&&o.structured.questions)||[]).map(q=>normQ({kind:'branches',prompt:str(q.prompt)||str(q.title),score:q.score!=null?String(q.score):'',
+  label:(q.parts||[]).length>1?'l-dash':'none',items:(q.parts||[]).map(x=>({text:str(x.text)+(x.formula&&x.formula.value?(x.formula.language==='latin'?' $'+x.formula.value+'$':' $$'+x.formula.value+'$$'):''),subs:x.subItems||[],score:x.score!=null?String(x.score):''}))})).filter(Boolean);
+ return{stage,project:p};
+}
+
+/* ===== رسم الورقة (نص HTML فقط، يصلح للمتصفح وللاختبار) ===== */
+function makeCtx(p,stage){
+ const dg=p.digits==='auto'?autoNumbering(stage,p.meta.subject):p.digits;
+ const en=p.dir==='ltr'||(p.dir==='auto'&&isForeign(p.meta.subject));
+ const ar=dg==='arabic'&&!en;
+ const D=s=>ar?toAr(s):toLa(s);
+ const L=i=>(ar?PART_AR[i]:PART_EN[i])||D(String(i+1));
+ const lab=(f,i)=>f==='none'?'':f.startsWith('n')?D(String(i+1))+({'n-dash':'-','n-dot':'.','n-paren':')'}[f]):L(i)+(f==='l-paren'?')':'-');
+ return{dg,en,ar,D,L,lab,rich:t=>richHTML(t,D,ar?'ar':'en'),richEd:t=>richHTML(t,D,ar?'ar':'en',true),edit:true};
+}
+const visLen=t=>String(t||'').replace(/\$\$?([^$]*)\$\$?/g,(m,x)=>'x'.repeat(Math.min(72,Math.ceil(x.replace(/\\[a-z]+|[{}]/gi,'').length*.7)))).replace(/\*\*|__/g,'').trim().length;
+function autoCols(q){
+ if(q.cols>0)return q.cols;
+ const xs=q.items;if(!xs.length||q.kind==='text')return 1;
+ if(q.kind==='match'||xs.some(x=>x.choices.some(s=>s.trim())||x.subs.some(s=>s.trim())||x.image||x.table||x.answerLines))return 1;
+ const max=Math.max(...xs.map(x=>visLen(x.text)+(x.score.trim()?6:0))),n=xs.length;
+ if(n>=3&&max<=26)return 3;
+ if(n>=2&&max<=38)return 2;
+ return 1;
+}
+function ed(c,path,text,cls='',ph=''){
+ if(!c.edit)return`<span class="${cls}">${c.rich(text)}</span>`;
+ return`<span class="${cls}${hasRich(text)?' rich':''}" data-k="${path}" data-rich="1" data-ph="${esc(ph)}" contenteditable="true" spellcheck="false">${c.richEd(text)}</span>`;
+}
+const vis=(m,k)=>m.show[k]!==false;
+const logoHTML=m=>`<span class="lg" style="height:${m.logoH}mm;transform:translate(${m.logoDx}mm,${m.logoDy}mm)"><img src="${m.logo}" alt="" draggable="false"><span class="lg-h" title="اسحب لتغيير الحجم"></span></span>`;
+function noteHTML(c,m){return vis(m,'note')&&m.note?`<div class="pnote"><span class="nt"><b class="nl">${ed(c,'meta.noteLabel',m.noteLabel)}</b> ${ed(c,'meta.note',m.note)}</span></div>`:'';}
+function nameHTML(c,m){return vis(m,'name')?`<div class="pname">${ed(c,'meta.nameLabel',m.nameLabel,'lbl')}<span class="dots"></span></div>`:'';}
+function headerHTML(p,c){
+ const m=p.meta,L=(lp,l,vp,v,cls='')=>`<div class="hl ${cls}">${ed(c,lp,l,'lbl')} ${ed(c,vp,v,'val kp','..................')}</div>`;
+ const right=[vis(m,'country')&&`<div>${ed(c,'meta.country',m.country)}</div>`,vis(m,'ministry')&&`<div>${ed(c,'meta.ministry',m.ministry)}</div>`,
+  vis(m,'directorate')&&m.directorate&&`<div>${ed(c,'meta.directorate',m.directorate)}</div>`,vis(m,'school')&&L('meta.schoolLabel',m.schoolLabel,'meta.school',m.school)].filter(Boolean).join('');
+ const mid=[vis(m,'logo')&&m.logo&&`<div class="lgw">${logoHTML(m)}</div>`,vis(m,'title')&&`<div class="ttl">${ed(c,'meta.title',m.title)}</div>`,
+  vis(m,'year')&&L('meta.yearLabel',m.yearLabel,'meta.year',m.year,'yr'),
+  vis(m,'round')&&hasRound(m.examKind)&&m.round&&`<div class="rnd">${ed(c,'meta.round',m.round)}</div>`].filter(Boolean).join('');
+ const left=[vis(m,'subtitle')&&`<div class="sub grade">${ed(c,'meta.subtitle',m.subtitle)}</div>`,vis(m,'subject')&&L('meta.subjectLabel',m.subjectLabel,'meta.subject',m.subject),
+  vis(m,'time')&&m.time&&L('meta.timeLabel',m.timeLabel,'meta.time',m.time),vis(m,'hijri')&&m.hijri&&`<div class="hl">${ed(c,'meta.hijri',m.hijri,'val')}</div>`].filter(Boolean).join('');
+ const box=true;
+ return`<header class="ph${box?' box':''}"><div class="hg"><div class="hr">${right}</div><div class="hm">${mid}</div><div class="hlft">${left}</div></div>${box?nameHTML(c,m).replace('pname','pname in'):''}</header>${box?'':'<div class="hrule"></div>'}${noteHTML(c,m)}${box?'':nameHTML(c,m)}`;
+}
+function footerHTML(p,c){
+ const m=p.meta;
+ const t=vis(m,'teacher')?`<span class="ft">${ed(c,'meta.teacherLabel',m.teacherLabel,'lbl')} ${m.teacher?ed(c,'meta.teacher',m.teacher,'val'):'<span class="dots short"></span>'}</span>`:'';
+ const l=vis(m,'footLeft')&&(m.footLeftLabel||m.footLeft)?`<span class="ft">${ed(c,'meta.footLeftLabel',m.footLeftLabel,'lbl')} ${ed(c,'meta.footLeft',m.footLeft,'val')}</span>`:'';
+ const cl=vis(m,'closing')&&m.closing?`<span class="cl">${ed(c,'meta.closing',m.closing)}</span>`:'';
+ if(!t&&!l&&!cl)return'';
+ return`<div class="pf">${cl}<span class="sg">${l}${t}</span></div>`;
+}
+const flipHTML=(p,c)=>vis(p.meta,'flip')?`<div class="pflip"><span class="ln"></span>${ed(c,'meta.flip',p.meta.flip)}<span class="ln"></span></div>`:'';
+function imgHTML(img){return`<figure class="qi al-${img.align}${img.side?' side':''}" style="width:${img.w}%"><img src="${img.src}" alt="" style="aspect-ratio:${img.r}"></figure>`;}
+function qnum(n,c,p){const N=c.D(String(n)),s=c.en?'Q':'س';return{slash:`${s}${N}/`,paren:`${s}${N})`,colon:`${s}${N}:`,pre:`${s}:${N})`}[p.qStyle];}
+const scoreH=(raw,c,p,cls='qs')=>{const t=scoreText(raw,c.en,c.D,p.style==='source');return t?`<span class="${cls}">${esc(t)}</span>`:'';};
+function itemHTML(q,x,i,c,p,cols,part){
+ const lb=c.lab(q.label,i),img=x.image?imgHTML(x.image):'',side=x.image&&x.image.side;
+ const chIdx=x.choices.map((s,j)=>s.trim()?j:-1).filter(j=>j>=0),ch=chIdx.map(j=>x.choices[j].trim());
+ const cE=j=>ed(c,`it.${q.id}.${x.id}.choice.${chIdx[j]}`,ch[j]);
+ const letter=j=>q.chStyle==='letters'?`${c.ar?(PART_AR[j]||c.D(j+1)):(PART_EN[j]||String(j+1))}- `:'';
+ let chH='',chB='';
+ if(ch.length&&q.chLayout==='inline')chH=` <span class="ch">( ${q.chStyle==='letters'?ch.map((s,j)=>letter(j)+cE(j)).join(c.en?' , ':' ، '):ch.map((s,j)=>cE(j)).join(q.chStyle==='dash'?' – ':' ، ')} )</span>`;
+ else if(ch.length){const lay=q.chLayout,long=Math.max(...ch.map(visLen)),cc=lay==='grid'?(long<=14&&ch.length>=4?4:long<=30&&ch.length>=3?3:2):0;
+  chB=`<div class="chl${lay==='grid'?' grid':lay==='stack'?' stack':''}"${cc?` style="--cc:${Math.min(cc,ch.length)}"`:''}>${ch.map((s,j)=>`<span class="cho">${letter(j)?`<span class="il">${esc(letter(j).trim())}</span> `:''}${cE(j)}${q.chStyle==='plain'&&lay==='line'?' .':''}</span>`).join('')}</div>`;}
+ const tb=x.table?tableHTML(x.table,c,`it.${q.id}.${x.id}`,part):'';
+ if(part&&part.cont)return`<div class="ir table-cont" data-item="${x.id}"><div class="ix">${tb}${part.last&&x.answerLines?`<div class="answer-lines">${'<div></div>'.repeat(x.answerLines)}</div>`:''}</div></div>`;
+ const subs=x.subs.map((s,j)=>({s:s.trim(),j})).filter(v=>v.s);
+ const subH=subs.length?`<div class="subs">${subs.map((v,k)=>`<span class="sb"><span class="il">${esc(c.lab(x.subLabel,k))}</span> ${ed(c,`it.${q.id}.${x.id}.sub.${v.j}`,v.s)}</span>`).join('')}</div>`:'';
+ const strong=q.label.startsWith('l')&&cols===1;
+ const answer=x.answerLines&&(!part||part.last)?`<div class="answer-lines" aria-label="${c.en?'Answer space':'مساحة الإجابة'}">${'<div></div>'.repeat(x.answerLines)}</div>`:'';
+ return`<div class="ir${strong?' br':''}">${lb?`<span class="il">${esc(lb)}</span>`:''}<div class="ix"${x.align&&x.align!=='auto'?` style="text-align:${x.align}"`:''}>${side?img:''}${ed(c,`it.${q.id}.${x.id}.text`,x.text,'',c.en?'Type here':'اكتب هنا')}${chH}${x.score.trim()?' '+scoreH(x.score,c,p,'qs in'):''}${chB}${side?'':img}${subH}${tb}${answer}</div></div>`;
+}
+function tableHTML(t,c,path,part){
+ const from=part?.from??0,to=part?.to??t.rows.length;
+ const indices=Array.from({length:Math.max(0,to-from)},(_,i)=>from+i);
+ if(part?.cont&&t.head&&from>0)indices.unshift(0);
+ return`<table class="qtab${t.full?' full':' ctr'}" data-table="${path}" style="--ta:${t.align||'center'}">${indices.map(i=>{const r=t.rows[i];return`<tr data-table-row="${i}">${r.map((v,j)=>{const tg=t.head&&i===0?'th':'td';return`<${tg}>${ed(c,`${path}.cell.${i}.${j}`,v)}</${tg}>`;}).join('')}</tr>`;}).join('')}</table>`;
+}
+/* ترتيب العمود (ب) مخلوط بشكل ثابت حسب رقم السؤال حتى لا يتغير مع كل عرض */
+function matchOrder(q){
+ const b=q.items.map((x,i)=>({v:x.pair,k:i})).concat(q.extra.map((v,i)=>({v,k:100+i})).filter(o=>o.v.trim()));
+ if(!q.shuffle)return b;
+ let h=0;for(const ch of q.id)h=(h*31+ch.charCodeAt(0))>>>0;
+ const r=()=>{h=(h*1664525+1013904223)>>>0;return h/4294967296;};
+ for(let i=b.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[b[i],b[j]]=[b[j],b[i]];}
+ if(b.length>2&&b.every((o,i)=>o.k===i))b.push(b.shift());
+ return b;
+}
+function matchHTML(q,c,from,to){
+ const B=matchOrder(q),last=to>=q.items.length,end=last?Math.max(to,B.length):to;
+ const A=c.en?'Column A':'العمود (أ)',Bh=c.en?'Column B':'العمود (ب)';
+ const ha=ed(c,`q.${q.id}.colA`,q.colA||A),hb=ed(c,`q.${q.id}.colB`,q.colB||Bh);
+ const bl=j=>c.L(j)+'-';
+ const rows=[];for(let i=from;i<end;i++){const x=q.items[i],y=B[i];rows.push({a:x?{lb:c.lab(q.label==='none'?'n-dot':q.label,i),h:ed(c,`it.${q.id}.${x.id}.text`,x.text)+(x.image?imgHTML(x.image):'')}:null,b:y?{lb:bl(i),h:ed(c,y.k<100?`it.${q.id}.${q.items[y.k].id}.pair`:`q.${q.id}.extra.${y.k-100}`,y.v)}:null});}
+ if(q.mStyle==='lists')return`<div class="mlist">${from===0?`<span class="mh">${ha}</span><span></span><span class="mh">${hb}</span>`:''}${rows.map(r=>`<span class="ma">${r.a?`<span><span class="il">${esc(r.a.lb)}</span> ${r.a.h}</span><span class="dot"></span>`:''}</span><span></span><span class="mb">${r.b?`<span class="dot"></span><span><span class="il">${esc(r.b.lb)}</span> ${r.b.h}</span>`:''}</span>`).join('')}</div>`;
+ return`<table class="mtab">${from===0?`<tr><th>${ha}</th><th class="ans"></th><th>${hb}</th></tr>`:''}${rows.map(r=>`<tr><td>${r.a?`<span class="il">${esc(r.a.lb)}</span>${r.a.h}`:''}</td><td class="ans">${r.a?'(&emsp;&ensp;)':''}</td><td>${r.b?`<span class="il">${esc(r.b.lb)}</span>${r.b.h}`:''}</td></tr>`).join('')}</table>`;
+}
+function blockHTML(q,n,c,p,from,to,head,part){
+ if(q.kind==='text'&&!q.prompt.trim()&&!q.showScore){
+  return`<section class="qb free-block" data-q="${q.id}" dir="${c.en?'ltr':'rtl'}"><div class="qbody" style="--cols:1">${q.items.slice(from,to).map((x,k)=>itemHTML(q,x,from+k,c,p,1,part)).join('')}</div></section>`;
+ }
+ if(q.kind==='section')return`<section class="qb sec" data-q="${q.id}"><span class="sec-t">${ed(c,`q.${q.id}.prompt`,q.prompt,'','عنوان القسم')}${q.showScore&&q.score?` (${esc(scoreText(q.score,c.en,c.D,false))})`:''}</span></section>`;
+ const cols=part?1:autoCols(q);let h='';
+ if(head)h+=`<div class="qh"><span class="qmk"></span><h2><span class="qn">${esc(q.title.trim()?c.D(q.title.trim()):qnum(n,c,p))}</span> ${ed(c,`q.${q.id}.prompt`,q.prompt,'',c.en?'Question':'نص السؤال')}</h2>${q.showScore?scoreH(q.score,c,p):''}</div>`;
+ else h+=`<div class="qcontinue">${esc(q.title.trim()?c.D(q.title.trim()):qnum(n,c,p))} ${c.en?'(continued)':'(تابع)'}</div>`;
+ if(head&&q.image)h+=imgHTML(q.image);
+ const items=q.items.slice(from,to);
+ if(q.kind==='match'){if(items.length||(head&&q.extra.length))h+=`<div class="qbody" style="--cols:1">${matchHTML(q,c,from,to)}</div>`;return`<section class="qb${head?'':' cont'}" data-q="${q.id}" dir="${c.en?'ltr':'rtl'}">${h}</section>`;}
+ if(items.length)h+=`<div class="qbody${q.boxed?' boxed':''}" style="--cols:${cols}">${items.map((x,k)=>itemHTML(q,x,from+k,c,p,cols,part)).join('')}</div>`;
+ return`<section class="qb${head?'':' cont'}" data-q="${q.id}" dir="${c.en?'ltr':'rtl'}">${h}</section>`;
+}
+function pageShell(p,c,first,inner,bottom){
+ return`<article class="page"><div class="pin">${first?headerHTML(p,c):''}<div class="pbody">${inner||''}</div><div class="pbot">${bottom||''}</div></div></article>`;
+}
+function paperClass(p){return`pages st-source th-${p.theme} dn-${p.density}`;}
+
 /* ===================== الواجهة ===================== */
 let DEMO=false;
 const OPEN_LESSON=location.hash==='#demo',LS='almufeed-exam-v13',BACKUP=LS+'-backup';
@@ -25,32 +614,12 @@ function examStats(p){
  const scores=questions.map(q=>toNumber(q.score));
  const invalid=scores.filter(v=>!Number.isFinite(v)||v<0).length;
  const empty=questions.filter(q=>!q.prompt?.trim()&&!q.items.some(x=>x.text?.trim())).length;
- const issues=[];
- questions.forEach((q,index)=>{
-  const used=q.items.filter(x=>x.text?.trim()||x.choices?.some(t=>t.trim())||x.table||x.image||x.subs?.some(t=>t.trim()));
-  const filled=used.filter(x=>String(x.score??'').trim());
-  if(!filled.length)return; // Assigning branch marks is optional.
-  const values=filled.map(x=>toNumber(x.score));
-  let issue='';
-  if(values.some(n=>!Number.isFinite(n)||n<0))issue='إحدى درجات الأفرع غير صالحة';
-  else if(filled.length!==used.length)issue='بعض الأفرع بلا درجة؛ أكمل توزيع الدرجات';
-  else if(!Number.isFinite(toNumber(q.score))||toNumber(q.score)<0)issue='حدّد درجة السؤال لمقارنتها بدرجات الأفرع';
-  else {
-   const sum=values.reduce((a,b)=>a+b,0),total=toNumber(q.score);
-   if(Math.abs(sum-total)>0.001)issue=`مجموع الأفرع ${sum.toLocaleString('ar-IQ')}، ودرجة السؤال ${total.toLocaleString('ar-IQ')}`;
-  }
-  if(issue)issues.push({id:q.id,number:index+1,message:issue});
- });
- return {count:questions.length,marks:scores.reduce((n,v)=>n+(Number.isFinite(v)&&v>=0?v:0),0),invalid,empty,issues};
+ return {count:questions.length,marks:scores.reduce((n,v)=>n+(Number.isFinite(v)&&v>=0?v:0),0),invalid,empty};
 }
 function examStatsMarkup(stats){
- return `<span class="stat-main"><b>${stats.count.toLocaleString('ar-IQ')}</b> ${stats.count===1?'سؤال':stats.count<11?'أسئلة':'سؤالاً'}</span><span class="stat-divider"></span><span><b>${stats.marks.toLocaleString('ar-IQ')}</b> مجموع الدرجات</span>${stats.invalid?`<span class="stat-alert">${stats.invalid} درجة غير صالحة</span>`:''}${stats.empty?`<span class="stat-alert">${stats.empty} سؤال غير مكتمل</span>`:''}${stats.issues.length?`<span class="stat-alert">${stats.issues.length} تنبيه توزيع درجات</span>`:''}`;
+ return `<span class="stat-main"><b>${stats.count.toLocaleString('ar-IQ')}</b> ${stats.count===1?'سؤال':stats.count<11?'أسئلة':'سؤالاً'}</span><span class="stat-divider"></span><span><b>${stats.marks.toLocaleString('ar-IQ')}</b> مجموع الدرجات</span>${stats.invalid?`<span class="stat-alert">${stats.invalid} درجة غير صالحة</span>`:''}${stats.empty?`<span class="stat-alert">${stats.empty} سؤال غير مكتمل</span>`:''}`;
 }
-function gradeAuditMarkup(stats){
- if(!stats.issues.length)return '';
- return `<details class="grade-audit"><summary><span class="grade-audit-icon" aria-hidden="true">!</span> تدقيق درجات الأفرع <b>${stats.issues.length.toLocaleString('ar-IQ')}</b><span class="grade-audit-hint">اضغط لمراجعة الأسئلة</span></summary><div class="grade-audit-body">${stats.issues.map(item=>`<button type="button" data-act="jumpQuestion" data-target="${esc(item.id)}"><b>س${toAr(item.number)}</b><span>${esc(item.message)}</span></button>`).join('')}</div></details>`;
-}
-function refreshStats(){const stats=examStats(P());const node=document.querySelector('.exam-statline');if(node)node.innerHTML=examStatsMarkup(stats);const audit=document.getElementById('gradeAudit');if(audit){const expanded=!!audit.querySelector('details[open]');audit.innerHTML=gradeAuditMarkup(stats);if(expanded&&audit.querySelector('details'))audit.querySelector('details').open=true;}}
+function refreshStats(){const node=document.querySelector('.exam-statline');if(node)node.innerHTML=examStatsMarkup(examStats(P()));}
 
 const P=()=>S.stages[S.active];
 const ctx=()=>makeCtx(P(),S.active);
@@ -212,7 +781,6 @@ function questionsView(p,c){
  return`<div class="pad pad-questions">
   <header class="work-heading"><span class="step-kicker">الخطوة ٢ من ٣</span><div class="bar"><h2>كتابة الأسئلة</h2><button type="button" class="btn soft" data-act="adding" aria-expanded="${UI.adding}">${ic(UI.adding?'x':'plus',18)}${UI.adding?'إغلاق الأنواع':'سؤال جديد'}</button></div><p>كل سؤال في مكانه: اكتب النص، أضف الفروع ثم المعادلة أو الصورة عند الحاجة.</p></header>
   <div class="exam-statline" role="status" aria-live="polite">${examStatsMarkup(stats)}</div>
-  <div id="gradeAudit">${gradeAuditMarkup(stats)}</div>
   ${UI.adding?addSheet():''}
   ${p.questions.length?`<ol class="qlist">${rows}</ol>`:UI.adding?`<p class="pick-hint">اختر نوع السؤال أعلاه. ويمكنك تغيير تنسيقه وتحرير نصه بعد إضافته.</p>`:`<div class="empty write-welcome"><b>ورقتك جاهزة لإضافة أول سؤال</b><span>ابدأ بسؤال من الأنواع الجاهزة، أو اكتب نصاً حرّاً داخل الورقة.</span><button type="button" class="btn primary" data-act="adding">${ic('plus',17)}إضافة السؤال الأول</button><button type="button" class="text-link" data-act="startWriting">أفضّل الكتابة المباشرة</button></div>`}
   <div class="step-footer"><button type="button" class="btn" data-act="startWriting">${ic('pencil',17)}تحرير مباشر</button><button type="button" class="btn primary" data-act="view" data-v="preview">معاينة الورقة ${ic('arrow-left',17)}</button></div>
@@ -246,20 +814,14 @@ function choicesEd(path,x,c){
 }
 function tableEd(path,t){
  const pos=UI.tableCells[path]||[0,0],r=Math.min(pos[0],t.rows.length-1),c=Math.min(pos[1],t.rows[0].length-1);
- const cols=t.rows[0].length,ctxNow=ctx();
- const headers=Array.from({length:cols},(_,i)=>`<span class="tbed-col-head" role="columnheader">${ctxNow.D(String(i+1))}</span>`).join('');
- const cells=t.rows.map((row,i)=>`<span class="tbed-row-head" role="rowheader">${ctxNow.D(String(i+1))}</span>`+row.map((v,j)=>`<div class="tbed-cell${r===i&&c===j?' current':''}${t.head&&i===0?' table-heading-cell':''}" role="gridcell" aria-label="صف ${i+1}، عمود ${j+1}">${rte(`${path}.cell.${i}.${j}`,v,t.head&&i===0?'عنوان العمود':'محتوى الخلية',t.head&&i===0?'th':'')}</div>`).join('')).join('');
- return`<section class="tbed" aria-label="محرّر جدول السؤال">
-  <div class="tbed-head"><b>جدول السؤال</b><span>${ctxNow.D(String(t.rows.length))} صفوف × ${ctxNow.D(String(cols))} أعمدة</span></div>
-  <p class="tbed-help">حدد خلية ثم أضف صفًا أو عمودًا قبلها أو بعدها. مرر الجدول أفقيًا عند الحاجة.</p>
-  <div class="tbed-scroll" role="region" tabindex="0" aria-label="خلايا الجدول، يمكن التمرير أفقيًا"><div class="tbed-g" role="grid" style="--tc:${cols}"><span class="tbed-corner" aria-hidden="true">صف / عمود</span>${headers}${cells}</div></div>
-  <div class="tbed-a"><button type="button" class="tb" data-act="tbRow" data-path="${path}" data-d="1" title="إضافة صف"${t.rows.length>=30?' disabled':''}>${ic('plus',15)}صف</button><button type="button" class="tb" data-act="tbRow" data-path="${path}" data-d="-1" title="حذف آخر صف"${t.rows.length<2?' disabled':''}>${ic('minus',15)}صف</button>
-  <button type="button" class="tb" data-act="tbCol" data-path="${path}" data-d="1" title="إضافة عمود"${cols>=10?' disabled':''}>${ic('plus',15)}عمود</button><button type="button" class="tb" data-act="tbCol" data-path="${path}" data-d="-1" title="حذف آخر عمود"${cols<2?' disabled':''}>${ic('minus',15)}عمود</button>
+ return`<div class="tbed"><div class="tbed-g" style="--tc:${t.rows[0].length}">${t.rows.map((r,i)=>r.map((v,j)=>rte(`${path}.cell.${i}.${j}`,v,t.head&&i===0?'عنوان':'',t.head&&i===0?'th':'')).join('')).join('')}</div>
+  <div class="tbed-a"><button type="button" class="tb" data-act="tbRow" data-path="${path}" data-d="1" title="إضافة صف">${ic('plus',15)}صف</button><button type="button" class="tb" data-act="tbRow" data-path="${path}" data-d="-1" title="حذف آخر صف"${t.rows.length<2?' disabled':''}>${ic('minus',15)}صف</button>
+  <button type="button" class="tb" data-act="tbCol" data-path="${path}" data-d="1" title="إضافة عمود"${t.rows[0].length>=8?' disabled':''}>${ic('plus',15)}عمود</button><button type="button" class="tb" data-act="tbCol" data-path="${path}" data-d="-1" title="حذف آخر عمود"${t.rows[0].length<2?' disabled':''}>${ic('minus',15)}عمود</button>
   <span class="sp"></span><button type="button" class="tb danger" data-act="tbDel" data-path="${path}" title="حذف الجدول">${ic('trash-2',15)}</button></div>
   <div class="row wrap">${chk('الصف الأول عناوين',`${path}.table.head`,t.head)}${chk('بعرض السطر كاملاً',`${path}.table.full`,t.full)}</div>
   <div class="opt"><span>محاذاة خلايا الجدول</span>${seg(path+'.table.align',t.align||'center',[['right','يمين'],['center','وسط'],['left','يسار']],'sm')}</div>
-  <details class="table-edit-more"><summary>تخصيص الصف والعمود المحدد</summary><p class="hint" data-cell-info="${path}">الصف ${r+1}، العمود ${c+1}. اضغط على خلية لتحديدها.</p>
-  <div class="table-actions">${[['rowBefore','صف قبله'],['rowAfter','صف بعده'],['colBefore','عمود قبله'],['colAfter','عمود بعده'],['delRow','حذف الصف'],['delCol','حذف العمود']].map(([op,label])=>`<button type="button" class="btn sm${op.startsWith('del')?' danger-t':''}" data-act="tbEdit" data-path="${path}" data-op="${op}">${label}</button>`).join('')}</div></details></section>`;
+  <details class="table-edit-more"><summary>التحكم بالصف والعمود المحدد</summary><p class="hint" data-cell-info="${path}">الصف ${r+1}، العمود ${c+1}. اضغط على خلية لتحديدها.</p>
+  <div class="table-actions">${[['rowBefore','صف قبله'],['rowAfter','صف بعده'],['colBefore','عمود قبله'],['colAfter','عمود بعده'],['delRow','حذف الصف'],['delCol','حذف العمود']].map(([op,label])=>`<button type="button" class="btn sm${op.startsWith('del')?' danger-t':''}" data-act="tbEdit" data-path="${path}" data-op="${op}">${label}</button>`).join('')}</div></details></div>`;
 }
 function subsEd(path,x,c){
  return`<div class="fld"><span>فقرات داخل الفرع</span>${x.subs.map((v,j)=>`<div class="chr"><span class="chn">${esc(c.lab(x.subLabel,j))}</span>${rte(path+'.sub.'+j,v,'فقرة داخلية')}<button type="button" class="ib sm" data-act="subDel" data-path="${path}" data-j="${j}" title="حذف الفقرة">${ic('x',16)}</button></div>`).join('')}
@@ -731,10 +1293,9 @@ document.addEventListener('click',e=>{
  if(a==='addEqItem'&&q.items.length>=80){toast('الحد ٨٠ فرعاً لكل سؤال');return;}
  if(a==='exAdd'&&q.extra.length>=10){toast('الحد ١٠ إجابات زائدة');return;}
  if(a==='chAdd'){const [,qid,iid]=b.dataset.path.split('.'),x=findQ(qid)?.items.find(i=>i.id===iid);if(x&&x.choices.length>=40){toast('الحد ٤٠ خياراً');return;}}
- if(!['jumpQuestion','symOpen','symTab','symClose','eqRoot','eqRemove','fmt','rEq','rSym','view','toggle','adding','more','zin','zout','zfit','eq','eqEdit','eqAdd','eqSel','eqMove','eqDel','eqClose','eqOk','eqTab','wz','wzNext','wzBack','wzClose','img','logo','font','open','save','print','wizard','undo','redo'].includes(a))pushHist();
+ if(!['symOpen','symTab','symClose','eqRoot','eqRemove','fmt','rEq','rSym','view','toggle','adding','more','zin','zout','zfit','eq','eqEdit','eqAdd','eqSel','eqMove','eqDel','eqClose','eqOk','eqTab','wz','wzNext','wzBack','wzClose','img','logo','font','open','save','print','wizard','undo','redo'].includes(a))pushHist();
  switch(a){
   case'view':setView(b.dataset.v);break;
-  case'jumpQuestion':{const target=b.dataset.target;UI.open=target;UI.view='questions';renderSide();requestAnimationFrame(()=>{$(`.qc[data-qid="${target}"]`)?.scrollIntoView({behavior:'smooth',block:'center'});});break;}
   case'home':showWelcome();break;
   case'continueProject':$('#welcome').hidden=true;UI.view='questions';renderAll();break;
   case'homeNew':openWizard(1);W.newProject=true;renderWizard();break;
@@ -818,7 +1379,7 @@ document.addEventListener('click',e=>{
 });
 document.addEventListener('focusin',e=>{if(EQ&&e.target.dataset&&e.target.dataset.eq!==undefined&&e.target.type!=='checkbox'){EQ.focusKey=e.target.dataset.eq;EQ.caret=null;}
  const path=e.target.dataset?.r||e.target.dataset?.k,m=path&&/^(it\.[a-z0-9]+\.[a-z0-9]+)\.cell\.(\d+)\.(\d+)$/.exec(path);
- if(m){UI.tableCells[m[1]]=[+m[2],+m[3]];const info=$(`[data-cell-info="${m[1]}"]`);if(info)info.textContent=`الصف ${+m[2]+1}، العمود ${+m[3]+1}. اضغط على خلية لتحديدها.`;const grid=e.target.closest('.tbed-g');if(grid){$$('.tbed-cell.current',grid).forEach(el=>el.classList.remove('current'));e.target.closest('.tbed-cell')?.classList.add('current');}}
+ if(m){UI.tableCells[m[1]]=[+m[2],+m[3]];const info=$(`[data-cell-info="${m[1]}"]`);if(info)info.textContent=`الصف ${+m[2]+1}، العمود ${+m[3]+1}. اضغط على خلية لتحديدها.`;}
 });
 document.addEventListener('input',e=>{
  const el=e.target;

@@ -1,0 +1,12 @@
+const assert=require('node:assert/strict'),fs=require('node:fs');
+const read=p=>fs.readFileSync(p,'utf8');
+const render=read('src/render.js'),ui=read('src/ui.js'),css=read('src/workspace.css')+read('src/shell_head.html'),paper=read('src/paper.css');
+assert(render.includes('<thead>')&&render.includes('<tbody>'),'Semantic table headings');
+assert(render.includes('part?.cont&&t.head&&from>0'),'Repeated multi-page table header');
+assert(ui.includes('function gradeAuditMarkup')&&ui.includes('function refreshStats'),'Live branch mark auditing');
+assert(ui.includes('data-act="jumpQuestion"'),'Marks audit jumps to question');
+assert(ui.includes('role="columnheader"')&&ui.includes('role="rowheader"'),'Table editor guides');
+assert(css.includes('.tbed-scroll')&&css.includes('.tbed-cell.current'),'Mobile table editing');
+assert(paper.includes('.ph.box')&&paper.includes('grid-template-columns'),'Formal ministry exam header');
+assert(paper.includes('table-header-group'),'Semantic printed tables');
+console.log('PASS premium table editor, score checks, ministry header, print structure');
