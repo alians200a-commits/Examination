@@ -10,7 +10,7 @@ const SYM={times:'×',div:'÷',pm:'±',mp:'∓',cdot:'·',le:'≤',leq:'≤',ge:
  alpha:'α',beta:'β',gamma:'γ',delta:'δ',epsilon:'ε',theta:'θ',lambda:'λ',mu:'μ',pi:'π',rho:'ρ',sigma:'σ',tau:'τ',phi:'φ',omega:'ω',Delta:'Δ',Gamma:'Γ',Theta:'Θ',Lambda:'Λ',Pi:'Π',Sigma:'Σ',Phi:'Φ',Omega:'Ω'};
 Object.assign(SYM,{varepsilon:'ε',vartheta:'ϑ',varphi:'φ',eta:'η',kappa:'κ',nu:'ν',xi:'ξ',chi:'χ',psi:'ψ',zeta:'ζ',Psi:'Ψ',ell:'ℓ',AA:'Å',deg:'°',permil:'‰',bullet:'•',star:'⋆',leftrightharpoons:'⇋',rightharpoonup:'⇀',mapsto:'↦',implies:'⇒',iff:'⇔',ni:'∋',setminus:'∖',sqcup:'⊔',top:'⊤',bot:'⊥',cong:'≅',simeq:'≃',ll:'≪',gg:'≫',dagger:'†',measuredangle:'∡',square:'□',Box:'□',lozenge:'◊'});
 Object.assign(SYM,{uparrow:'↑',downarrow:'↓',longrightarrow:'⟶',longleftarrow:'⟵',Leftarrow:'⇐',nearrow:'↗',searrow:'↘',propto:'∝',hbar:'ℏ',ohm:'Ω'});
-const AR_FN={sin:'جا',cos:'جتا',tan:'ظا',cot:'ظتا',sec:'قا',csc:'قتا',log:'لو'};
+const AR_FN={sin:'جا',cos:'جتا',tan:'ظا',cot:'ظتا',sec:'قا',csc:'قتا',arcsin:'جا⁻¹',arccos:'جتا⁻¹',arctan:'ظا⁻¹',log:'لو'};
 const FUNCS=new Set(['sin','cos','tan','cot','sec','csc','log','ln','exp','min','max','det','mod','arcsin','arccos','arctan','sinh','cosh','tanh']);
 const OPS='+-−×÷=<>≤≥≠±∓≈≡→←⇌⇒⇔↔⟶∨∧∩∪∈∉⊂⊆⊃∝·';
 const REL='=<>≤≥≠≈≡→←⇌⇒⇔↔⟶∈∉⊂⊆⊃∝';
@@ -216,7 +216,15 @@ function parseLegacyPieces(tex){
 function piecesToTex(ps){
  return ps.map(p=>({text:()=>p.v,frac:()=>`\\frac{${p.a}}{${p.b}}`,mixed:()=>`{${p.w}}\\frac{${p.a}}{${p.b}}`,sqrt:()=>`\\sqrt{${p.x}}`,nroot:()=>`\\sqrt[${p.n}]{${p.x}}`,root:()=>p.n&&!/^\s*[2٢]?\s*$/.test(p.n)?`\\sqrt[${p.n}]{${p.x}}`:`\\sqrt{${p.x}}`,
   unit:()=>`\\qty{${p.v}}{${p.u}}`,iso:()=>`\\isotope{${p.a}}{${p.z}}{${p.x}}`,sys:()=>`\\system{${p.a}}{${p.b}}`,log:()=>`\\log_{${p.b}}{${p.x}}`,lim:()=>`\\lim_{${p.v} \\to ${p.a}}{${p.x}}`,
-  int:()=>`\\int_{${p.a}}^{${p.b}}{${p.f}}`,sum:()=>`\\sum_{${p.a}}^{${p.b}}{${p.x}}`,bar:()=>`\\overline{${p.x}}`,ppow:()=>`{\\left( ${p.x} \\right)}^{${p.e}}`,
+  int:()=>`\\int_{${p.a}}^{${p.b}}{${p.f}}`,
+  trig:()=>`\\${['sin','cos','tan','cot','sec','csc','arcsin','arccos','arctan'].includes(p.fn)?p.fn:'sin'}${p.e?`^{${p.e}}`:''}{${p.x}}`,
+  identity:()=>`\\sin^{2}{${p.x}}+\\cos^{2}{${p.x}}=1`,
+  deriv:()=>`\\frac{${p.d}}{${p.d}${p.v}}\\left(${p.f}\\right)`,
+  deriv2:()=>`\\frac{${p.d}^{2}}{${p.d}${p.v}^{2}}\\left(${p.f}\\right)`,
+  partialderiv:()=>`\\frac{\\partial}{\\partial ${p.v}}\\left(${p.f}\\right)`,
+  intindef:()=>`\\int{${p.f}}\\,${p.d}${p.v}`,
+  intdef:()=>`\\int_{${p.a}}^{${p.b}}{${p.f}}\\,${p.d}${p.v}`,
+  sum:()=>`\\sum_{${p.a}}^{${p.b}}{${p.x}}`,bar:()=>`\\overline{${p.x}}`,ppow:()=>`{\\left( ${p.x} \\right)}^{${p.e}}`,
   pow:()=>`{${p.x}}^{${p.e}}`,sub:()=>`{${p.x}}_{${p.s}}`,powsub:()=>`{${p.x}}^{${p.e}}_{${p.s}}`,longdiv:()=>`\\longdiv{${p.a}}{${p.b}}{${p.q}}{${p.steps?1:0}}`,
   arrow:()=>`\\${p.rev?'xrightleftharpoons':'xrightarrow'}${p.b?`[${p.b}]`:''}{${p.a}}`,vec:()=>`\\vec{${p.x}}`,abs:()=>`\\left| ${p.x} \\right|`,paren:()=>`\\left( ${p.x} \\right)`,chem:()=>`\\ce{${p.x}}`}[p.t]||(()=>''))()).join(' ');
 }
@@ -230,9 +238,32 @@ function texProblem(tex){
  if(/\\(?:dfrac|tfrac|frac)\{[^{}]*\}\{[0٠۰]+\}/.test(t)||/\\longdiv\{[^{}]*\}\{[0٠۰]+\}/.test(t))return'القسمة على صفر غير معرّفة';
  return'';
 }
+/* Recognize native calculus templates when reopening a saved inline equation.
+   Compare with the canonical serialization to avoid silently mangling user-edited expressions. */
+function parseAdvancedPiece(raw){
+ const s=String(raw||'').trim();let p=null;
+ const tr=/^\\(sin|cos|tan|cot|sec|csc|arcsin|arccos|arctan)(?:\^\{([^{}]+)\})?\{([\s\S]*)\}$/.exec(s);
+ if(tr)p={t:'trig',fn:tr[1],e:tr[2]||'',x:tr[3]};
+ const id=/^\\sin\^\{2\}\{([\s\S]+)\}\+\\cos\^\{2\}\{\1\}=1$/.exec(s);
+ if(id)p={t:'identity',x:id[1]};
+ const der=/^\\frac\{(d|د)(\^\{2\})?\}\{\1([^{}]+?)(\^\{2\})?\}\\left\(([\s\S]*)\\right\)$/.exec(s);
+ if(der&&Boolean(der[2])===Boolean(der[4]))p={t:der[2]?'deriv2':'deriv',d:der[1],v:der[3],f:der[5]};
+ const par=/^\\frac\{\\partial\}\{\\partial ([^{}]+)\}\\left\(([\s\S]*)\\right\)$/.exec(s);
+ if(par)p={t:'partialderiv',v:par[1],f:par[2]};
+ if(s.startsWith('\\int')){
+   let i=4,a='',b='';
+   if(s[i]==='_'){[a,i]=readGroup(s,i+1);if(a===null)return null;}
+   if(s[i]==='^'){[b,i]=readGroup(s,i+1);if(b===null)return null;}
+   let f;[f,i]=readGroup(s,i);if(f===null)return null;
+   const end=/^\\,(d|د)(.+)$/.exec(s.slice(i));
+   if(end)p=a||b?{t:'intdef',a,b,f,d:end[1],v:end[2]}:{t:'intindef',f,d:end[1],v:end[2]};
+ }
+ return p&&piecesToTex([p])===s?p:null;
+}
 function parsePieces(tex){
  const t=String(tex||'');if(!t.trim())return[];
  if(texProblem(t))return[{t:'text',v:t}];
+ const advanced=parseAdvancedPiece(t);if(advanced)return[advanced];
  const ps=parseLegacyPieces(t),back=piecesToTex(ps);
  /* المعادلات المتداخلة أو غير المدعومة تبقى بصيغتها الأصلية، لا نغير معناها لتناسب القوالب. */
  const compact=x=>x.replace(/\s+/g,'').replace(/\\sqrt\[[2٢]\]/g,'\\sqrt');
@@ -309,7 +340,7 @@ const KIND_INFO={
  enumerate:['عدّد','أفرع قصيرة في سطر واحد'],
  truefalse:['صح أو خطأ','عبارات للحكم عليها'],
  match:['وصل وزاوج','عمود (أ) وعمود (ب) للربط بينهما'],
- math:['سؤال معادلات','كسور، جذور، قسمة طويلة، كيمياء وفيزياء'],
+ math:['سؤال رياضيات ومعادلات','دوال مثلثية، تفاضل، تكامل، كسور، جذور وقسمة طويلة'],
  text:['نص حر','فقرة أو نص قراءة'],
  section:['عنوان قسم','مثل: القرآن الكريم (40 درجة)']
 };
@@ -1125,7 +1156,7 @@ function finishWizard(){
 }
 
 /* ---------- محرر المعادلات: تختار الصيغة ثم تملأ خاناتها، والناتج يدخل داخل السطر ---------- */
-const EQG=[['أساسيات',['frac','mixed','root','pow','sub','powsub','ppow','paren','abs']],['حساب',['longdiv','sys','log','lim','int','sum','bar']],['علوم',['chem','iso','arrow','vec','unit']],['نص',['text']]];
+const EQG=[['الدوال المثلثية',['trig','identity']],['التفاضل',['deriv','deriv2','partialderiv']],['التكامل',['intindef','intdef','lim','sum']],['أساسيات',['frac','mixed','root','pow','sub','powsub','ppow','paren','abs']],['حساب',['longdiv','sys','log','int','bar']],['علوم',['chem','iso','arrow','vec','unit']],['نص',['text']]];
 const EQT={
  frac:['كسر',[['a','البسط (فوق)'],['b','المقام (تحت)']],{a:'١',b:'٢'}],
  mixed:['عدد كسري',[['w','العدد الصحيح'],['a','البسط'],['b','المقام']],{w:'٢',a:'١',b:'٣'}],
@@ -1141,6 +1172,13 @@ const EQT={
  log:['لوغاريتم',[['b','الأساس'],['x','العدد']],{b:'٢',x:'٨'}],
  lim:['غاية',[['v','المتغير'],['a','يقترب من'],['x','الدالة']],{v:'x',a:'2',x:'x^{2}'}],
  int:['تكامل',[['a','الحد الأدنى'],['b','الحد الأعلى'],['f','الدالة مع dx']],{a:'0',b:'1',f:'2x\\,dx'}],
+  trig:['دالة مثلثية',[['fn','اختر الدالة'],['x','الزاوية أو التعبير'],['e','أس الدالة (اختياري)']],{fn:'sin',x:'س',e:''},{fn:'sin',x:'x',e:''}],
+  identity:['هوية مثلثية',[['x','الزاوية أو المتغير']],{x:'س'},{x:'x'}],
+  deriv:['المشتقة الأولى',[['f','الدالة المراد اشتقاقها'],['v','متغير الاشتقاق']],{f:'س^{٢}+٣س',v:'س',d:'د'},{f:'x^{2}+3x',v:'x',d:'d'}],
+  deriv2:['المشتقة الثانية',[['f','الدالة المراد اشتقاقها'],['v','متغير الاشتقاق']],{f:'س^{٣}',v:'س',d:'د'},{f:'x^{3}',v:'x',d:'d'}],
+  partialderiv:['مشتقة جزئية',[['f','الدالة'],['v','متغير الاشتقاق']],{f:'س^{٢}+ص',v:'س'},{f:'x^{2}+y',v:'x'}],
+  intindef:['تكامل غير محدد',[['f','الدالة تحت إشارة التكامل'],['v','متغير التكامل']],{f:'س^{٢}',v:'س',d:'د'},{f:'x^{2}',v:'x',d:'d'}],
+  intdef:['تكامل محدد',[['a','الحد الأدنى'],['b','الحد الأعلى'],['f','الدالة تحت إشارة التكامل'],['v','متغير التكامل']],{a:'٠',b:'١',f:'س^{٢}',v:'س',d:'د'},{a:'0',b:'1',f:'x^{2}',v:'x',d:'d'}],
  sum:['مجموع',[['a','من (تحت)'],['b','إلى (فوق)'],['x','الحد العام']],{a:'i=1',b:'n',x:'i'}],
  bar:['خط علوي',[['x','الرمز (قطعة، عدد دوري)']],{x:'AB'}],
  chem:['صيغة كيميائية',[['x','اكتب: 2H2 + O2 -> 2H2O أو <=> للمتزن، و ->[Δ] لشرط']],{x:'H2O'}],
@@ -1190,6 +1228,7 @@ function renderEq(){
  const strip=e.pieces.map((p,i)=>`<button type="button" class="pc${i===e.sel?' sel':''}" data-act="eqSel" data-i="${i}">${texToHTML(pieceTex(p),e.lang)}</button>`).join('');
  const D=v=>ar?toAr(v):toLa(v);
  const field=(f,l)=>{
+  if(sel.t==='trig'&&f==='fn')return`<label class="fld"><span>${l}</span><select data-eq="fn" aria-label="اختر الدالة المثلثية">${[['sin','جا / sin'],['cos','جتا / cos'],['tan','ظا / tan'],['cot','ظتا / cot'],['sec','قا / sec'],['csc','قتا / csc'],['arcsin','جا العكسية / arcsin'],['arccos','جتا العكسية / arccos'],['arctan','ظا العكسية / arctan']].map(([v,n])=>`<option value="${v}"${sel.fn===v?' selected':''}>${n}</option>`).join('')}</select></label>`;
   if(sel.t==='root'&&f==='n'){const cur=ROOTS.some(([v])=>v===toLa(sel.n||'')&&v!=='n')?toLa(sel.n||''):'n';
    return`<div class="fld wide"><span>${l}</span><div class="seg sm" role="group">${ROOTS.map(([v,n])=>`<button type="button" data-act="eqRoot" data-v="${v}" aria-pressed="${cur===v}">${n}${v&&v!=='n'?` <small>${D(v)}</small>`:''}</button>`).join('')}</div>${cur==='n'?`<input data-eq="n" value="${esc(sel.n??'')}" dir="${ar?'rtl':'ltr'}" placeholder="${ar?'ن أو ٦':'n or 6'}" autocomplete="off">`:''}</div>`;}
   return`<label class="fld"><span>${l}</span><input data-eq="${f}" value="${esc(sel[f]??'')}" dir="${ar?'rtl':'ltr'}" autocomplete="off"></label>`;};
@@ -1202,7 +1241,8 @@ function renderEq(){
   <div class="eqprev" dir="${ar?'rtl':'ltr'}">${prev}</div>
   ${e.pieces.length>1?`<div class="strip" dir="${ar?'rtl':'ltr'}">${strip}</div>`:''}
   ${form}
-  <details class="eqtemplates"${e.pieces.length?'':' open'}><summary>${e.pieces.length?'إضافة صيغة أخرى':'اختر صيغة المعادلة'}${ic('chevron-down',16)}</summary><div class="eqgal">${EQG.map(([g,ks])=>`<div class="gal-g"><span class="gal-h">${g}</span><div class="gal">${ks.map(k=>{const [n,,smp]=EQT[k];return`<button type="button" class="gt" data-act="eqAdd" data-t="${k}"><span class="gt-v" dir="${ar&&!['chem','iso','int','lim','sum','unit'].includes(k)?'rtl':'ltr'}">${texToHTML(pieceTex({t:k,...toPieceDigits(smp,['chem','iso','int','lim','sum','unit'].includes(k)?'en':e.lang),steps:false}),['chem','iso','int','lim','sum','unit'].includes(k)?'en':e.lang)}</span><small>${n}</small></button>`;}).join('')}</div></div>`).join('')}</div></details>
+  <div class="math-fast" aria-label="أدوات الرياضيات المتقدمة"><b>رياضيات: أضف الصيغة</b><div class="math-fast-scroll">${[['trig','جا / sin'],['identity','جا² + جتا²'],['deriv','المشتقة'],['deriv2','المشتقة الثانية'],['partialderiv','∂ مشتقة جزئية'],['intindef','∫ غير محدد'],['intdef','∫ بحدود']].map(([k,n])=>`<button type="button" data-act="eqAdd" data-t="${k}">${n}</button>`).join('')}</div></div>
+  <details class="eqtemplates"${e.pieces.length?'':' open'}><summary>${e.pieces.length?'إضافة صيغة أخرى':'اختر صيغة المعادلة'}${ic('chevron-down',16)}</summary><div class="eqgal">${EQG.map(([g,ks])=>`<div class="gal-g"><span class="gal-h">${g}</span><div class="gal">${ks.map(k=>{const [n,,smp,enSmp]=EQT[k],preview=e.lang==='en'&&enSmp?enSmp:smp;return`<button type="button" class="gt" data-act="eqAdd" data-t="${k}"><span class="gt-v" dir="${ar&&!['chem','iso','int','lim','sum','unit'].includes(k)?'rtl':'ltr'}">${texToHTML(pieceTex({t:k,...toPieceDigits(preview,['chem','iso','int','lim','sum','unit'].includes(k)?'en':e.lang),steps:false}),['chem','iso','int','lim','sum','unit'].includes(k)?'en':e.lang)}</span><small>${n}</small></button>`;}).join('')}</div></div>`).join('')}</div></details>
   <div class="sub-h">الرموز، تُكتب في الخانة المحددة</div>
   <div class="symtabs">${Object.keys(SYMS).map(k=>`<button type="button" data-act="eqTab" data-k="${k}" aria-pressed="${tab===k}">${k}</button>`).join('')}</div>
   <div class="syms">${SYMS[tab].map(symBtn).join('')}</div>
@@ -1238,7 +1278,7 @@ function equationProblem(pieces,tex){
  for(const p of pieces){
   if(p.t==='root'){const n=toLa(p.n||'').trim();if(n&&!/^(?:[2-9]|[1-9]\d+|n|ن)$/.test(n))return'درجة الجذر: عدد صحيح ٢ أو أكثر، أو ن';}
   if(p.t==='longdiv'&&/^[0٠]+$/.test(String(p.b).trim()))return'القسمة على صفر غير معرّفة';
-  const optional={root:['n'],arrow:['a','b'],longdiv:['q'],int:['a','b']};
+  const optional={root:['n'],arrow:['a','b'],longdiv:['q'],int:['a','b'],trig:['e']};
   for(const [f,l] of EQT[p.t]?.[1]||[]){if(!(optional[p.t]||[]).includes(f)&&!String(p[f]??'').trim())return'أكمل خانة: '+l;}
  }
  return'';
@@ -1425,7 +1465,7 @@ document.addEventListener('click',e=>{
    else if(a==='tbRow'){const w=x.table.rows[0].length;if(+b.dataset.d>0){if(x.table.rows.length>=30){toast('الحد ٣٠ صفاً، وزّع المحتوى على أكثر من جدول');break;}x.table.rows.push(Array(w).fill(''));}else if(x.table.rows.length>1)x.table.rows.pop();}
    else{if(+b.dataset.d>0)x.table.rows.forEach(r=>r.push(''));else if(x.table.rows[0].length>1)x.table.rows.forEach(r=>r.pop());}
    p.pristine=false;commit();if(a==='tbDel')toast('حُذف الجدول',{label:'تراجع',run:()=>undo(-1)});break;}
-  case'eqAdd':{const [,,smp]=EQT[b.dataset.t];const np={t:b.dataset.t,steps:false};EQT[b.dataset.t][1].forEach(([f])=>np[f]='');if(b.dataset.t==='text')np.v='';if(['chem','iso','unit'].includes(b.dataset.t))EQ.lang='en';EQ.pieces.splice(EQ.sel+1,0,np);EQ.sel++;EQ.focusKey=null;EQ.autofocus=true;renderEq();break;}
+  case'eqAdd':{const [,,smp]=EQT[b.dataset.t];const np={t:b.dataset.t,steps:false};EQT[b.dataset.t][1].forEach(([f])=>np[f]='');if(b.dataset.t==='text')np.v='';if(b.dataset.t==='trig')np.fn='sin';if(['deriv','deriv2','intindef','intdef'].includes(b.dataset.t)){np.v=EQ.lang==='ar'?'س':'x';np.d=EQ.lang==='ar'?'د':'d';}if(b.dataset.t==='partialderiv')np.v=EQ.lang==='ar'?'س':'x';if(['chem','iso','unit'].includes(b.dataset.t))EQ.lang='en';EQ.pieces.splice(EQ.sel+1,0,np);EQ.sel++;EQ.focusKey=null;EQ.autofocus=true;renderEq();break;}
   case'eqSel':EQ.sel=+b.dataset.i;EQ.focusKey=null;EQ.autofocus=true;renderEq();break;
   case'eqMove':{const d=+b.dataset.d;move(EQ.pieces,EQ.sel,d);EQ.sel=Math.max(0,Math.min(EQ.pieces.length-1,EQ.sel+d));EQ.focusKey=null;renderEq();break;}
   case'eqDel':EQ.pieces.splice(EQ.sel,1);EQ.sel=Math.min(EQ.sel,EQ.pieces.length-1);EQ.focusKey=null;renderEq();break;
