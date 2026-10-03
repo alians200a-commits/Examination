@@ -30,6 +30,7 @@ jobs:
           cp index.html /tmp/almufeed-built.html
           node build.js
           cmp /tmp/almufeed-built.html index.html
+          node -e "const s=require('fs').readFileSync('index.html','utf8'); if(!s.includes('Mobile navigation occupies a real grid track')||!s.includes('function gradeAuditMarkup')) throw Error('Premium UI CSS or grade auditing missing from compiled HTML')"
       - name: Install Playwright and Chromium for real browser/PDF checks
         run: |
           npm install --no-save --no-package-lock playwright@1.56.1

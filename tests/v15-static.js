@@ -1,6 +1,7 @@
 const assert=require('node:assert/strict'),fs=require('node:fs');
 const read=p=>fs.readFileSync(p,'utf8');
 const render=read('src/render.js'),ui=read('src/ui.js'),css=read('src/workspace.css')+read('src/shell_head.html'),paper=read('src/paper.css');
+assert(read('build.js').includes("src('workspace.css')"),'Standalone builder must bundle premium workspace styles');
 assert(render.includes('<thead>')&&render.includes('<tbody>'),'Semantic table headings');
 assert(render.includes('part?.cont&&t.head&&from>0'),'Repeated multi-page table header');
 assert(ui.includes('function gradeAuditMarkup')&&ui.includes('function refreshStats'),'Live branch mark auditing');
