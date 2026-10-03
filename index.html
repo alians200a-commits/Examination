@@ -506,6 +506,50 @@ input:not([type=checkbox]):not([type=range]):focus,textarea:focus{outline:none;b
 .math-fast-scroll button{border:1px solid var(--acc-line);background:var(--panel);border-radius:9px;padding:8px 11px;min-height:43px;white-space:nowrap;font-size:13px;font-weight:800;color:var(--ink)}
 .eqfields select[data-eq]{width:100%;padding:10px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--ink);font-size:14px;font-weight:700}
 .eqprev .mx,.gt-v .mx{font-weight:800}
+
+/* v18 — MathType-inspired structured mathematics palette; original offline engine */
+#eqdlg{width:min(100%,960px);max-height:96dvh}
+#eqdlg::backdrop{background:rgba(14,28,53,.66)}
+#eqdlg .eq{gap:11px;max-height:96dvh;background:#f9fbff;border:1px solid #c5d2e6;box-shadow:0 30px 80px rgba(16,39,78,.25)}
+#eqdlg .eq>header{background:#fff;border:1px solid #dae3f0;border-radius:12px;padding:9px 11px;flex-wrap:wrap;gap:10px}
+#eqdlg .eq>header b{font-size:15px;color:#173A63}
+#eqdlg .eq-preview-label{font-size:12px;font-weight:800;color:#486486;letter-spacing:.01em}
+#eqdlg .eqprev{position:relative;min-height:112px;max-height:225px;background:#fff;border:2px solid #3a629a;box-shadow:inset 0 1px 8px rgba(24,58,99,.06);border-radius:11px;padding:20px 14px;overflow:auto;color:#101a2e}
+#eqdlg .eqprev .mx{font-size:1.2em;font-weight:800}
+#eqdlg .math-fast{background:#ecf1fa;border-color:#bed0e9;border-radius:11px;padding:10px}
+#eqdlg .math-fast-scroll button{border-color:#c5d5e8;background:#fff;min-height:40px}
+#eqdlg .eq-palette{background:#fff;border:1px solid #ccd8e9;border-radius:13px;overflow:hidden;min-height:188px}
+#eqdlg .eq-palette-title{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:12px 13px 8px;color:#173A63}
+#eqdlg .eq-palette-title b{font-size:14px}
+#eqdlg .eq-palette-title span{font-size:11px;color:#627993}
+#eqdlg .eq-cat-tabs{display:flex;overflow-x:auto;gap:3px;padding:0 8px 7px;border-bottom:1px solid #d9e2f0;scrollbar-width:thin;scroll-snap-type:x proximity}
+#eqdlg .eq-cat-tabs button{scroll-snap-align:start;flex:none;min-height:40px;padding:8px 13px;border:0;border-radius:9px;background:transparent;color:#435875;font-weight:800;font-size:12px;white-space:nowrap}
+#eqdlg .eq-cat-tabs button[aria-selected=true]{background:#214a80;color:#fff}
+#eqdlg .eq-cat-tabs button:focus-visible{outline:2px solid #214a80;outline-offset:2px}
+#eqdlg .eq-template-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:9px;padding:13px;max-height:255px;overflow:auto}
+#eqdlg .eq-template-tile{min-height:100px;min-width:0;border:1px solid #d2def0;background:#fff;border-radius:11px;padding:10px 6px 8px;display:flex;flex-direction:column;justify-content:space-between;align-items:center;gap:6px;color:#1b3559;transition:border-color .12s,box-shadow .12s,transform .12s}
+#eqdlg .eq-template-tile:hover,#eqdlg .eq-template-tile:focus-visible{border-color:#315e95;box-shadow:0 0 0 3px rgba(49,94,149,.1);background:#f7faff}
+#eqdlg .eq-template-tile:active{transform:translateY(1px)}
+#eqdlg .eq-tile-symbol{font-family:'STIX Two Math','Noto Sans Arabic',sans-serif;display:flex;flex:1;align-items:center;justify-content:center;max-width:100%;max-height:76px;overflow:auto;text-align:center;font-size:17px;font-weight:800}
+#eqdlg .eq-tile-caption{color:#344c6c;font-size:12px;font-weight:800;text-align:center}
+#eqdlg .eqform{background:#fff;border-color:#aabed9;border-radius:13px;gap:12px}
+#eqdlg .eqform-h{border-bottom:1px solid #e5ebf3;padding-bottom:7px}
+#eqdlg .eqform .fld>span,#eqdlg .eq-line label>span{font-size:12px;font-weight:800;color:#354b67}
+#eqdlg .eq-matrix-fields{display:grid;grid-template-columns:repeat(var(--eq-cols,2),minmax(0,1fr));gap:8px;flex:1 0 100%;border:1px dashed #95afce;padding:12px;border-radius:10px;background:#f8fbff;min-width:0}
+#eqdlg .eq-matrix-fields label{display:grid;gap:4px;min-width:0}
+#eqdlg .eq-matrix-fields small{font-size:11px;color:#425d80}
+#eqdlg .eq-matrix-fields input,#eqdlg .eq-multiline input{width:100%;min-width:0;padding:10px;border:1px solid #b6c8e0;border-radius:9px;background:#fff;color:#101828;font-family:'STIX Two Math','Noto Sans Arabic',serif;font-size:17px;font-weight:700}
+#eqdlg .eq-multiline{display:grid;gap:8px;flex:1 0 100%;min-width:0}
+#eqdlg .eq-line{display:flex;align-items:center;gap:7px;padding:8px;border:1px solid #d8e3f1;border-radius:10px;background:#f8fbff;min-width:0}
+#eqdlg .eq-line>b{background:#e7eef8;color:#183e71;border-radius:7px;padding:7px 9px;font-size:13px}
+#eqdlg .eq-line label{display:grid;gap:5px;flex:1;min-width:0}
+#eqdlg .eq-code{border:1px solid #d4deec;background:#fff;border-radius:10px;padding:9px 12px}
+#eqdlg .eq-code summary{color:#28496f;font-size:12px;font-weight:800;cursor:pointer}
+#eqdlg .eq-code label{display:grid;gap:6px;font-size:12px;font-weight:700;margin:9px 0}
+#eqdlg .eq-code textarea{width:100%;border:1px solid #bacbe0;border-radius:8px;resize:vertical;min-height:65px;font-size:13px;padding:8px;font-family:monospace;text-align:left}
+#eqdlg .eq-code small{display:block;margin:7px 0;font-size:11px;color:#576e89}
+#eqdlg .eq footer{background:#f9fbff;border-top:1px solid #d6e0ec;z-index:2}
+@media(max-width:639px){#eqdlg .eq{height:min(96dvh,940px);max-height:96dvh;padding:10px 10px calc(9px + env(safe-area-inset-bottom))}#eqdlg .eq-template-grid{grid-template-columns:repeat(2,minmax(0,1fr));max-height:240px}#eqdlg .eq-palette-title{display:grid;gap:3px}#eqdlg .eq-preview-label{margin-top:2px}#eqdlg .eqprev{min-height:106px;font-size:21px;padding:14px 10px}#eqdlg .eq-line{display:grid;grid-template-columns:30px minmax(0,1fr);align-items:start}#eqdlg .eq-line label:nth-of-type(2){grid-column:2}#eqdlg .eq-cat-tabs button{padding:7px 11px}}
 /* A4 print palettes: reference-matched navy / muted blue / pale burgundy score chips. */
 /* The legacy `teal` theme ID remains loadable, but now renders steel blue; no green palette. */
 .pages{font-family:var(--pf);color:var(--ink)}
@@ -713,6 +757,28 @@ input:not([type=checkbox]):not([type=range]):focus,textarea:focus{outline:none;b
 
 /* Mathematical typography stays consistently dark in preview and in exported PDF. */
 @media print{.mx,.mx .mfn,.mx .mint,.mx .mf,.mx .mr{color:#101828!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+
+/* v18 printable advanced mathematics — dark, proportional and never green */
+.mx .mmat,.mx .mcases,.mx .maligned,.mx .mbinom{display:inline-flex;align-items:stretch;vertical-align:middle;max-width:100%;margin:0 .11em;font-weight:700;color:#101828}
+.mx .mmat-grid{display:grid;align-content:center;justify-items:center;align-items:center;gap:.28em .52em;padding:.16em .25em;max-width:100%}
+.mx .mmat-cell{display:flex;min-width:1.4em;justify-content:center;align-items:center;white-space:nowrap}
+.mx .mmat-br,.mx .mcases-br,.mx .mbinom-br{display:flex;align-self:stretch;flex:none;width:.44em;min-height:2.2em}
+.mx .mmat-br svg,.mx .mcases-br svg,.mx .mbinom-br svg{width:100%;height:100%;overflow:visible}
+.mx .mmat-v .mmat-grid{border-inline-start:.105em solid currentColor;border-inline-end:.105em solid currentColor;padding-inline:.5em}
+.mx .mcases-grid,.mx .maligned{display:inline-grid;gap:.3em;line-height:1.5;align-content:center}
+.mx .mcases-grid{padding:.15em .2em}
+.mx .mcases-row,.mx .maligned-row{display:grid;grid-template-columns:max-content max-content;align-items:baseline;gap:.5em;white-space:nowrap}
+.mx .mcases-cond{font-size:.78em;font-weight:600;opacity:.9}
+.mx .maligned{padding:.2em .35em;border-inline-start:.09em solid #5475a0}
+.mx .mbinom-stack{display:flex;flex-direction:column;text-align:center;justify-content:center;line-height:1.3;padding:0 .2em}
+.mx .mbinom-stack>span{padding:.08em .15em}
+.mx .mbrace{display:inline-flex;flex-direction:column;align-items:stretch;vertical-align:middle;line-height:1.2;margin:.1em}
+.mx .mbrace-main{display:block;text-align:center;padding:.17em .14em}
+.mx .mbrace-over .mbrace-main{border-top:.095em solid currentColor;border-radius:45% 45% 0 0}
+.mx .mbrace-under .mbrace-main{border-bottom:.095em solid currentColor;border-radius:0 0 45% 45%}
+.mx .mbrace-label{text-align:center;font-size:.69em;line-height:1.1;min-height:.75em;font-weight:700}
+.mx .mint{font-weight:800}
+@media print{.mx .mmat,.mx .mcases,.mx .maligned,.mx .mbinom,.mx .mbrace{color:#101828!important;font-weight:700!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}}
 /* Premium workspace design system. Native HTML/CSS; inspired by MIT shadcn/ui and Tabler.
    Palette policy: navy, true blue, white/slate, blush for grade warnings. Never green, olive, teal or petrol. */
 :root {
@@ -1093,7 +1159,7 @@ const AR='٠١٢٣٤٥٦٧٨٩',FA='۰۱۲۳۴۵۶۷۸۹';
 const toAr=s=>String(s).replace(/[0-9]/g,d=>AR[d]).replace(/[۰-۹]/g,d=>AR[FA.indexOf(d)]);
 const toLa=s=>String(s).replace(/[٠-٩]/g,d=>AR.indexOf(d)).replace(/[۰-۹]/g,d=>FA.indexOf(d));
 /* ===== محرك الرياضيات: صيغة LaTeX مبسطة تُرسم HTML حقيقي ===== */
-const SYM={times:'×',div:'÷',pm:'±',mp:'∓',cdot:'·',le:'≤',leq:'≤',ge:'≥',geq:'≥',ne:'≠',neq:'≠',approx:'≈',equiv:'≡',sim:'~',to:'→',rightarrow:'→',leftarrow:'←',Rightarrow:'⇒',Leftrightarrow:'⇔',leftrightarrow:'↔',rightleftharpoons:'⇌',lor:'∨',land:'∧',neg:'~',lnot:'~',cap:'∩',cup:'∪',in:'∈',notin:'∉',subset:'⊂',subseteq:'⊆',supset:'⊃',emptyset:'∅',varnothing:'∅',infty:'∞',angle:'∠',triangle:'△',degree:'°',circ:'°',perp:'⊥',parallel:'∥',therefore:'∴',because:'∵',forall:'∀',exists:'∃',sum:'∑',int:'∫',prod:'∏',partial:'∂',nabla:'∇',prime:'′',ldots:'…',cdots:'⋯',
+const SYM={times:'×',div:'÷',pm:'±',mp:'∓',cdot:'·',le:'≤',leq:'≤',ge:'≥',geq:'≥',ne:'≠',neq:'≠',approx:'≈',equiv:'≡',sim:'~',to:'→',rightarrow:'→',leftarrow:'←',Rightarrow:'⇒',Leftrightarrow:'⇔',leftrightarrow:'↔',rightleftharpoons:'⇌',lor:'∨',land:'∧',neg:'~',lnot:'~',cap:'∩',cup:'∪',in:'∈',notin:'∉',subset:'⊂',subseteq:'⊆',supset:'⊃',emptyset:'∅',varnothing:'∅',infty:'∞',angle:'∠',triangle:'△',degree:'°',circ:'°',perp:'⊥',parallel:'∥',therefore:'∴',because:'∵',forall:'∀',exists:'∃',sum:'∑',int:'∫',prod:'∏',iint:'∬',iiint:'∭',oint:'∮',partial:'∂',nabla:'∇',prime:'′',ldots:'…',cdots:'⋯',
  alpha:'α',beta:'β',gamma:'γ',delta:'δ',epsilon:'ε',theta:'θ',lambda:'λ',mu:'μ',pi:'π',rho:'ρ',sigma:'σ',tau:'τ',phi:'φ',omega:'ω',Delta:'Δ',Gamma:'Γ',Theta:'Θ',Lambda:'Λ',Pi:'Π',Sigma:'Σ',Phi:'Φ',Omega:'Ω'};
 Object.assign(SYM,{varepsilon:'ε',vartheta:'ϑ',varphi:'φ',eta:'η',kappa:'κ',nu:'ν',xi:'ξ',chi:'χ',psi:'ψ',zeta:'ζ',Psi:'Ψ',ell:'ℓ',AA:'Å',deg:'°',permil:'‰',bullet:'•',star:'⋆',leftrightharpoons:'⇋',rightharpoonup:'⇀',mapsto:'↦',implies:'⇒',iff:'⇔',ni:'∋',setminus:'∖',sqcup:'⊔',top:'⊤',bot:'⊥',cong:'≅',simeq:'≃',ll:'≪',gg:'≫',dagger:'†',measuredangle:'∡',square:'□',Box:'□',lozenge:'◊'});
 Object.assign(SYM,{uparrow:'↑',downarrow:'↓',longrightarrow:'⟶',longleftarrow:'⟵',Leftarrow:'⇐',nearrow:'↗',searrow:'↘',propto:'∝',hbar:'ℏ',ohm:'Ω'});
@@ -1130,12 +1196,29 @@ function texToHTML(src,lang){
    switch(name){
     case'frac':case'dfrac':case'tfrac':{const a=braced(),b=braced();return`<span class="mf"><span>${cell(a)}</span><span>${cell(b)}</span></span>`;}
     case'sqrt':{sp();let n='';if(s[i]==='['){i++;n=group(()=>s[i]===']');i++;}const x=braced();const deg=n&&!/^\s*[2٢]\s*$/.test(n);return`<span class="mr${deg?' ix':''}">${deg?`<span class="mr-i">${n}</span>`:''}<span class="mr-s">${rootSVG()}</span><span class="mr-u">${cell(x)}</span></span>`;}
+    case'binom':{const a=braced(),b=braced();return`<span class="mbinom"><span class="mbinom-br">${fenceSVG('(')}</span><span class="mbinom-stack"><span>${cell(a)}</span><span>${cell(b)}</span></span><span class="mbinom-br">${fenceSVG(')')}</span></span>`;}
+    case'mat':case'detmatrix':{
+      const nr=Number(rawBraced()),nc=Number(rawBraced()),style=name==='detmatrix'?'v':rawBraced();
+      if(!Number.isInteger(nr)||!Number.isInteger(nc)||nr<1||nc<1||nr>4||nc>4||!['p','b','v','n'].includes(style))return'<span class="math-error">مصفوفة غير صالحة</span>';
+      const data=[];for(let k=0;k<nr*nc;k++){sp();if(s[i]!=='{')return'<span class="math-error">مصفوفة غير مكتملة</span>';data.push(rawBraced());}
+      const l=style==='p'?'(':style==='b'?'[':'',r=style==='p'?')':style==='b'?']':'';
+      return`<span class="mmat mmat-${style}" role="math" aria-label="${style==='v'?'محدد':'مصفوفة'} ${nr} × ${nc}">${l?`<span class="mmat-br">${fenceSVG(l)}</span>`:''}<span class="mmat-grid" style="grid-template-columns:repeat(${nc},minmax(0,max-content));direction:${lang==='ar'?'rtl':'ltr'}">${data.map(v=>`<span class="mmat-cell">${cell(texToHTML(v,lang))}</span>`).join('')}</span>${r?`<span class="mmat-br">${fenceSVG(r)}</span>`:''}</span>`;
+    }
+    case'cases':case'aligned':{
+      const nr=Number(rawBraced());if(!Number.isInteger(nr)||nr<1||nr>6)return'<span class="math-error">عدد أسطر غير صالح</span>';
+      const data=[];for(let k=0;k<nr;k++){sp();if(s[i]!=='{')return'<span class="math-error">أسطر غير مكتملة</span>';const a=rawBraced();sp();if(s[i]!=='{')return'<span class="math-error">أسطر غير مكتملة</span>';data.push([a,rawBraced()]);}
+      return name==='cases'?`<span class="mcases"><span class="mcases-br">${fenceSVG('{')}</span><span class="mcases-grid">${data.map(pair=>`<span class="mcases-row"><span>${cell(texToHTML(pair[0],lang))}</span><span class="mcases-cond">${pair[1]?texToHTML(pair[1],lang):''}</span></span>`).join('')}</span></span>`:
+        `<span class="maligned">${data.map(pair=>`<span class="maligned-row"><span>${cell(texToHTML(pair[0],lang))}</span><span>${cell(texToHTML(pair[1],lang))}</span></span>`).join('')}</span>`;
+    }
+    case'overbrace':case'underbrace':{
+      const body=braced(),label=braced();return`<span class="mbrace mbrace-${name==='overbrace'?'over':'under'}">${name==='overbrace'?`<span class="mbrace-label">${label}</span>`:''}<span class="mbrace-main">${cell(body)}</span>${name==='underbrace'?`<span class="mbrace-label">${label}</span>`:''}</span>`;
+    }
     case'isotope':{const a=braced(),z=braced(),x=braced().replace(/<\/?i>/g,'');return`<span class="miso"><span class="mss pre"><span>${a}</span><span>${z}</span></span>${x}</span>`;}
     case'system':{const a=braced(),b=braced();return`<span class="mfence msys-w"><span class="mfz">${fenceSVG('{')}</span><span class="msys"><span>${a}</span><span>${b}</span></span></span>`;}
-    case'lim':return`<span class="mlim mfn">${lang==='ar'?'نها':'lim'}</span>`;
+    case'lim':case'limsup':case'liminf':return`<span class="mlim mfn">${name==='lim'?(lang==='ar'?'نها':'lim'):name==='limsup'?'lim sup':'lim inf'}</span>`;
     case'sum':return`<span class="mlim mbig">∑</span>`;
     case'prod':return`<span class="mlim mbig">∏</span>`;
-    case'int':return`<span class="mint">∫</span>`;
+    case'int':case'iint':case'iiint':return`<span class="mint">${name==='int'?'∫':name==='iint'?'∬':'∭'}</span>`;
     case'oint':return`<span class="mint">∮</span>`;
     case'dot':return`<span class="mdot">${braced()}</span>`;
     case'hat':return`<span class="mhat">${braced()}</span>`;
@@ -1300,6 +1383,15 @@ function parseLegacyPieces(tex){
  }
  flush();return out;
 }
+function matTex(p){
+ const r=Math.max(1,Math.min(4,Number(p.r)||2)),c=Math.max(1,Math.min(4,Number(p.c)||2));
+ const style=p.t==='det'?'v':(['p','b','v','n'].includes(p.style)?p.style:'p');
+ return`\\mat{${r}}{${c}}{${style}}`+Array.from({length:r*c},(_,i)=>`{${p.cells?.[i]??''}}`).join('');
+}
+function rowsTex(p){
+ const n=Math.max(1,Math.min(6,Number(p.n)||2));
+ return`\\${p.t}{${n}}`+Array.from({length:n},(_,i)=>`{${p.lines?.[i]?.[0]??''}}{${p.lines?.[i]?.[1]??''}}`).join('');
+}
 function piecesToTex(ps){
  return ps.map(p=>({text:()=>p.v,frac:()=>`\\frac{${p.a}}{${p.b}}`,mixed:()=>`{${p.w}}\\frac{${p.a}}{${p.b}}`,sqrt:()=>`\\sqrt{${p.x}}`,nroot:()=>`\\sqrt[${p.n}]{${p.x}}`,root:()=>p.n&&!/^\s*[2٢]?\s*$/.test(p.n)?`\\sqrt[${p.n}]{${p.x}}`:`\\sqrt{${p.x}}`,
   unit:()=>`\\qty{${p.v}}{${p.u}}`,iso:()=>`\\isotope{${p.a}}{${p.z}}{${p.x}}`,sys:()=>`\\system{${p.a}}{${p.b}}`,log:()=>`\\log_{${p.b}}{${p.x}}`,lim:()=>`\\lim_{${p.v} \\to ${p.a}}{${p.x}}`,
@@ -1311,6 +1403,16 @@ function piecesToTex(ps){
   partialderiv:()=>`\\frac{\\partial}{\\partial ${p.v}}\\left(${p.f}\\right)`,
   intindef:()=>`\\int{${p.f}}\\,${p.d}${p.v}`,
   intdef:()=>`\\int_{${p.a}}^{${p.b}}{${p.f}}\\,${p.d}${p.v}`,
+  iint:()=>`\\iint${p.a?`_{${p.a}}`:''}${p.b?`^{${p.b}}`:''}{${p.f}}\\,${p.d}${p.v}`,
+  iiint:()=>`\\iiint${p.a?`_{${p.a}}`:''}${p.b?`^{${p.b}}`:''}{${p.f}}\\,${p.d}${p.v}`,
+  oint:()=>`\\oint${p.a?`_{${p.a}}`:''}${p.b?`^{${p.b}}`:''}{${p.f}}\\,${p.d}${p.v}`,
+  derivn:()=>`\\frac{${p.d}^{${p.n}}}{${p.d}${p.v}^{${p.n}}}\\left(${p.f}\\right)`,
+  partialn:()=>`\\frac{\\partial^{${p.n}}}{\\partial ${p.v}^{${p.n}}}\\left(${p.f}\\right)`,
+  matrix:()=>matTex(p),det:()=>matTex(p),cases:()=>rowsTex(p),aligned:()=>rowsTex(p),
+  binom:()=>`\\binom{${p.a}}{${p.b}}`,
+  overbrace:()=>`\\overbrace{${p.x}}{${p.l}}`,underbrace:()=>`\\underbrace{${p.x}}{${p.l}}`,
+  limsup:()=>`\\limsup_{${p.v} \\to ${p.a}}{${p.x}}`,liminf:()=>`\\liminf_{${p.v} \\to ${p.a}}{${p.x}}`,
+  prod:()=>`\\prod_{${p.a}}^{${p.b}}{${p.x}}`,
   sum:()=>`\\sum_{${p.a}}^{${p.b}}{${p.x}}`,bar:()=>`\\overline{${p.x}}`,ppow:()=>`{\\left( ${p.x} \\right)}^{${p.e}}`,
   pow:()=>`{${p.x}}^{${p.e}}`,sub:()=>`{${p.x}}_{${p.s}}`,powsub:()=>`{${p.x}}^{${p.e}}_{${p.s}}`,longdiv:()=>`\\longdiv{${p.a}}{${p.b}}{${p.q}}{${p.steps?1:0}}`,
   arrow:()=>`\\${p.rev?'xrightleftharpoons':'xrightarrow'}${p.b?`[${p.b}]`:''}{${p.a}}`,vec:()=>`\\vec{${p.x}}`,abs:()=>`\\left| ${p.x} \\right|`,paren:()=>`\\left( ${p.x} \\right)`,chem:()=>`\\ce{${p.x}}`}[p.t]||(()=>''))()).join(' ');
@@ -1329,6 +1431,36 @@ function texProblem(tex){
    Compare with the canonical serialization to avoid silently mangling user-edited expressions. */
 function parseAdvancedPiece(raw){
  const s=String(raw||'').trim();let p=null;
+ if(s.startsWith('\\prod_{')){let i=6,a,b='',x;[a,i]=readGroup(s,i);if(s[i]==='^')[b,i]=readGroup(s,i+1);[x,i]=readGroup(s,i);if(i===s.length)p={t:'prod',a,b,x};}
+ const matrix=/^\\(?:mat|detmatrix)\{/.test(s);
+ if(matrix){
+   const cmd=s.startsWith('\\detmatrix')?'detmatrix':'mat';let i=cmd==='detmatrix'?10:4,r,c,style;
+   [r,i]=readGroup(s,i);[c,i]=readGroup(s,i);if(cmd==='mat')[style,i]=readGroup(s,i);else style='v';
+   const rows=Number(r),cols=Number(c);if(Number.isInteger(rows)&&Number.isInteger(cols)&&rows>=1&&rows<=4&&cols>=1&&cols<=4&&['p','b','v','n'].includes(style)){
+     const cells=[];for(let j=0;j<rows*cols;j++){let val;[val,i]=readGroup(s,i);if(val===null)return null;cells.push(val);}
+     if(i===s.length)p={t:style==='v'?'det':'matrix',r:String(rows),c:String(cols),style,cells};
+   }
+ }
+ const layout=/^\\(?:cases|aligned)\{/.test(s);
+ if(layout){
+   const cmd=s.startsWith('\\cases')?'cases':'aligned';let i=cmd==='cases'?6:8,n;[n,i]=readGroup(s,i);const count=Number(n);
+   if(Number.isInteger(count)&&count>=1&&count<=6){const lines=[];
+     for(let j=0;j<count;j++){let a,b;[a,i]=readGroup(s,i);[b,i]=readGroup(s,i);if(a===null||b===null)return null;lines.push([a,b]);}
+     if(i===s.length)p={t:cmd,n:String(count),lines};
+   }
+ }
+ const choose=/^\\binom\{/.test(s);
+ if(choose){let a,b,i;[a,i]=readGroup(s,6);[b,i]=readGroup(s,i);if(i===s.length)p={t:'binom',a,b};}
+ const braces=/^\\(?:overbrace|underbrace)\{/.exec(s);
+ if(braces){const cmd=s.startsWith('\\overbrace')?'overbrace':'underbrace';let a,b,i;[a,i]=readGroup(s,cmd.length+1);[b,i]=readGroup(s,i);if(i===s.length)p={t:cmd,x:a,l:b};}
+ const multi=/^\\(iint|iiint|oint)(?:_\{([^{}]+)\})?(?:\^\{([^{}]+)\})?\{([\s\S]*)\}\\,(d|د)(.+)$/.exec(s);
+ if(multi)p={t:multi[1],a:multi[2]||'',b:multi[3]||'',f:multi[4],d:multi[5],v:multi[6]};
+ const nth=/^\\frac\{(d|د)\^\{([^{}]+)\}\}\{\1([^{}]+)\^\{\2\}\}\\left\(([\s\S]*)\\right\)$/.exec(s);
+ if(nth)p={t:'derivn',d:nth[1],n:nth[2],v:nth[3],f:nth[4]};
+ const pnth=/^\\frac\{\\partial\^\{([^{}]+)\}\}\{\\partial ([^{}]+)\^\{\1\}\}\\left\(([\s\S]*)\\right\)$/.exec(s);
+ if(pnth)p={t:'partialn',n:pnth[1],v:pnth[2],f:pnth[3]};
+ const limsup=/^\\(limsup|liminf)_\{([^{}]+) \\to ([^{}]+)\}\{([\s\S]*)\}$/.exec(s);
+ if(limsup)p={t:limsup[1],v:limsup[2],a:limsup[3],x:limsup[4]};
  const tr=/^\\(sin|cos|tan|cot|sec|csc|arcsin|arccos|arctan)(?:\^\{([^{}]+)\})?\{([\s\S]*)\}$/.exec(s);
  if(tr)p={t:'trig',fn:tr[1],e:tr[2]||'',x:tr[3]};
  const id=/^\\sin\^\{2\}\{([\s\S]+)\}\+\\cos\^\{2\}\{\1\}=1$/.exec(s);
@@ -2243,7 +2375,15 @@ function finishWizard(){
 }
 
 /* ---------- محرر المعادلات: تختار الصيغة ثم تملأ خاناتها، والناتج يدخل داخل السطر ---------- */
-const EQG=[['الدوال المثلثية',['trig','identity']],['التفاضل',['deriv','deriv2','partialderiv']],['التكامل',['intindef','intdef','lim','sum']],['أساسيات',['frac','mixed','root','pow','sub','powsub','ppow','paren','abs']],['حساب',['longdiv','sys','log','int','bar']],['علوم',['chem','iso','arrow','vec','unit']],['نص',['text']]];
+const EQG=[
+ ['كسور وأسس',['frac','mixed','binom','root','pow','sub','powsub','ppow','paren','abs']],
+ ['الدوال والنهايات',['trig','identity','log','lim','limsup','liminf']],
+ ['التفاضل',['deriv','deriv2','derivn','partialderiv','partialn']],
+ ['التكامل',['intindef','intdef','iint','iiint','oint','sum','prod']],
+ ['المصفوفات والأنظمة',['matrix','det','cases','aligned','sys']],
+ ['هندسة وعلوم',['vec','bar','overbrace','underbrace','arrow','chem','iso','unit','longdiv']],
+ ['نص ورموز',['text']]
+];
 const EQT={
  frac:['كسر',[['a','البسط (فوق)'],['b','المقام (تحت)']],{a:'١',b:'٢'}],
  mixed:['عدد كسري',[['w','العدد الصحيح'],['a','البسط'],['b','المقام']],{w:'٢',a:'١',b:'٣'}],
@@ -2275,12 +2415,30 @@ const EQT={
  unit:['قيمة ووحدة',[['v','القيمة'],['u','الوحدة']],{v:'9.8',u:'m/s^{2}'}],
  text:['نص ورموز',[['v','اكتب أو استعمل لوحة الرموز']],{v:'='}]
 };
+/* Structured palette: no unverified external MathType dependencies; renders offline. */
+Object.assign(EQT,{
+ binom:['معامل ذات الحدين',[['a','العدد العلوي'],['b','العدد السفلي']],{a:'ن',b:'ك'},{a:'n',b:'k'}],
+ matrix:['مصفوفة',[['r','الصفوف'],['c','الأعمدة'],['style','شكل الإطار']],{r:'2',c:'2',style:'p',cells:['س','١','٠','ص']},{r:'2',c:'2',style:'p',cells:['a','1','0','b']}],
+ det:['محدد',[['r','عدد الصفوف'],['c','عدد الأعمدة']],{r:'2',c:'2',style:'v',cells:['س','١','٠','ص']},{r:'2',c:'2',style:'v',cells:['a','b','c','d']}],
+ cases:['دالة متعددة الحالات',[['n','عدد الحالات']],{n:'2',lines:[['س^{٢}','س\\ge ٠'],['-س','س<٠']]},{n:'2',lines:[['x^{2}','x\\ge 0'],['-x','x<0']]}],
+ aligned:['معادلات متعددة الأسطر',[['n','عدد الأسطر']],{n:'2',lines:[['س+ص','=٥'],['س-ص','=١']]},{n:'2',lines:[['x+y','=5'],['x-y','=1']]}],
+ derivn:['المشتقة من الرتبة ن',[['n','الرتبة'],['f','الدالة'],['v','المتغير']],{n:'٣',f:'س^{٣}',v:'س',d:'د'},{n:'3',f:'x^{3}',v:'x',d:'d'}],
+ partialn:['المشتقة الجزئية العليا',[['n','الرتبة'],['f','الدالة'],['v','المتغير']],{n:'٢',f:'س^{٢}+ص',v:'س'},{n:'2',f:'x^{2}+y',v:'x'}],
+ iint:['تكامل مزدوج',[['f','الدالة'],['v','متغير التكامل'],['a','الحد السفلي (اختياري)'],['b','الحد العلوي (اختياري)']],{f:'س+ص',v:'أ',a:'د',b:'',d:'د'},{f:'x+y',v:'A',a:'D',b:'',d:'d'}],
+ iiint:['تكامل ثلاثي',[['f','الدالة'],['v','متغير التكامل'],['a','الحد السفلي (اختياري)'],['b','الحد العلوي (اختياري)']],{f:'س+ص+ع',v:'ح',a:'ج',b:'',d:'د'},{f:'x+y+z',v:'V',a:'V',b:'',d:'d'}],
+ oint:['تكامل على مسار مغلق',[['f','الدالة'],['v','متغير التكامل'],['a','المسار (اختياري)'],['b','الحد العلوي (اختياري)']],{f:'س^{٢}',v:'س',a:'ج',b:'',d:'د'},{f:'x^{2}',v:'x',a:'C',b:'',d:'d'}],
+ limsup:['النهاية العليا',[['v','المتغير'],['a','يقترب من'],['x','الدالة']],{v:'ن',a:'\\infty',x:'س_{ن}'},{v:'n',a:'\\infty',x:'x_{n}'}],
+ liminf:['النهاية السفلى',[['v','المتغير'],['a','يقترب من'],['x','الدالة']],{v:'ن',a:'\\infty',x:'س_{ن}'},{v:'n',a:'\\infty',x:'x_{n}'}],
+ prod:['حاصل ضرب',[['a','الحد الأدنى'],['b','الحد الأعلى'],['x','الحد العام']],{a:'ك=١',b:'ن',x:'ك'},{a:'k=1',b:'n',x:'k'}],
+ overbrace:['قوس علوي مع وصف',[['x','المقدار داخل القوس'],['l','النص فوقه']],{x:'س+ص',l:'العدد'},{x:'a+b',l:'n'}],
+ underbrace:['قوس سفلي مع وصف',[['x','المقدار داخل القوس'],['l','النص تحته']],{x:'س+ص',l:'العدد'},{x:'a+b',l:'n'}]
+});
 const ROOTS=[['','تربيعي'],['3','تكعيبي'],['4','رابع'],['5','خامس'],['n','نوني']];
 const SYMS={
  'أساسية':['+','−','×','÷','=','±','∓','·','′','″','°','%','‰','…','∞','( .......... )'],
  'مقارنة':['≠','<','>','≤','≥','≈','≡','≅','∝','~','≪','≫'],
  'أسهم':['→','←','↑','↓','↔','⇒','⇐','⇔','⟶','⇌','⇋','↗','↘','↦'],
- 'هندسة':['∠','∡','△','⊥','∥','°','\\overline{AB}','\\vec{AB}','π','□','⊙'],
+ 'هندسة':['∠','∡','△','⊥','∥','°','\\overline{AB}','\\vec{AB}','π','□','⊙','≅','∼','∴','∵','∩','∪','\\triangle','\\angle','\\parallel','\\perp'],
  'وحدات':['\\text{m}','\\text{cm}','\\text{km}','\\text{s}','\\text{kg}','\\text{g}','\\text{N}','\\text{J}','\\text{W}','\\text{Pa}','\\text{V}','\\text{A}','\\text{Ω}','\\text{C}','\\text{F}','\\text{T}','\\text{Hz}','\\text{K}','\\text{eV}','\\text{kWh}','\\text{m/s}','\\text{m/s}^{2}','\\text{km/h}','\\text{N/C}','\\text{N·m}','\\text{kg/m}^{3}','\\text{rad/s}','^{\\circ}\\text{C}','\\text{mol}','\\text{L}','\\text{mL}','\\text{g/mol}','\\text{mol/L}'],
  'فيزياء':['Δ','Ω','μ','λ','θ','ω','α','β','γ','ρ','ε','η','τ','φ','ν','ℏ','\\Delta x','\\Delta t','\\Delta v','v_{0}','v_{f}','\\vec{F}','\\vec{v}','\\vec{a}','F_{net}','E_{k}','E_{p}','P_{E}','R_{eq}','\\varepsilon_{0}','\\mu_{0}','g','c','e^{-}','\\text{Å}','\\propto'],
  'كيمياء':['→','⇌','↑','↓','\\xrightarrow{\\Delta}','_{(s)}','_{(l)}','_{(g)}','_{(aq)}','^{+}','^{-}','^{2+}','^{2-}','^{3+}','^{3-}','e^{-}','\\Delta H','\\Delta G','\\Delta S','K_{c}','K_{p}','K_{a}','K_{b}','K_{w}','K_{sp}','\\text{pH}','\\text{pOH}','[\\text{H}^{+}]','[\\text{OH}^{-}]','\\text{M}','N_{A}','\\text{STP}','\\ce{H2O}','\\ce{CO2}','\\ce{H2SO4}','\\ce{NaCl}','\\ce{NH3}'],
@@ -2303,7 +2461,7 @@ function openEq(t){
  const chip=t.chip||null,lang=chip?chip.dataset.l:(ctx().ar?'ar':'en');
  const pieces=chip?parsePieces(chip.dataset.tex):[];
  const path=t.el.dataset.r||t.el.dataset.k;
- EQ={t,path,marked:markedText(t.el,chip,t.range),lang,pieces,sel:pieces.length?0:-1,focusKey:null,edit:!!chip,tab:EQ&&EQ.tab||'أساسية'};
+ EQ={t,path,marked:markedText(t.el,chip,t.range),lang,pieces,sel:pieces.length?0:-1,focusKey:null,edit:!!chip,tab:EQ&&EQ.tab||'أساسية',cat:EQ&&EQ.cat||'كسور وأسس'};
  renderEq();const d=$('#eqdlg');if(!d.open)d.showModal();
 }
 function pieceTex(p){return piecesToTex([p]);}
@@ -2316,20 +2474,30 @@ function renderEq(){
  const D=v=>ar?toAr(v):toLa(v);
  const field=(f,l)=>{
   if(sel.t==='trig'&&f==='fn')return`<label class="fld"><span>${l}</span><select data-eq="fn" aria-label="اختر الدالة المثلثية">${[['sin','جا / sin'],['cos','جتا / cos'],['tan','ظا / tan'],['cot','ظتا / cot'],['sec','قا / sec'],['csc','قتا / csc'],['arcsin','جا العكسية / arcsin'],['arccos','جتا العكسية / arccos'],['arctan','ظا العكسية / arctan']].map(([v,n])=>`<option value="${v}"${sel.fn===v?' selected':''}>${n}</option>`).join('')}</select></label>`;
+  if(['matrix','det'].includes(sel.t)&&['r','c'].includes(f))return`<label class="fld"><span>${l}</span><select data-eq-dim="${f}" aria-label="${l}">${[1,2,3,4].filter(n=>sel.t!=='det'||n>=2).map(n=>`<option value="${n}"${String(sel[f])===String(n)?' selected':''}>${D(String(n))}</option>`).join('')}</select></label>`;
+  if(sel.t==='matrix'&&f==='style')return`<label class="fld"><span>${l}</span><select data-eq="style">${[['p','( ) أقواس'],['b','[ ] مربعة'],['v','| | محدد'],['n','بدون إطار']].map(([v,name])=>`<option value="${v}"${sel.style===v?' selected':''}>${name}</option>`).join('')}</select></label>`;
+  if(['cases','aligned'].includes(sel.t)&&f==='n')return`<label class="fld"><span>${l}</span><select data-eq-dim="n">${[2,3,4,5,6].map(n=>`<option value="${n}"${String(sel.n)===String(n)?' selected':''}>${D(String(n))}</option>`).join('')}</select></label>`;
   if(sel.t==='root'&&f==='n'){const cur=ROOTS.some(([v])=>v===toLa(sel.n||'')&&v!=='n')?toLa(sel.n||''):'n';
    return`<div class="fld wide"><span>${l}</span><div class="seg sm" role="group">${ROOTS.map(([v,n])=>`<button type="button" data-act="eqRoot" data-v="${v}" aria-pressed="${cur===v}">${n}${v&&v!=='n'?` <small>${D(v)}</small>`:''}</button>`).join('')}</div>${cur==='n'?`<input data-eq="n" value="${esc(sel.n??'')}" dir="${ar?'rtl':'ltr'}" placeholder="${ar?'ن أو ٦':'n or 6'}" autocomplete="off">`:''}</div>`;}
   return`<label class="fld"><span>${l}</span><input data-eq="${f}" value="${esc(sel[f]??'')}" dir="${ar?'rtl':'ltr'}" autocomplete="off"></label>`;};
  const form=sel?`<div class="eqform"><div class="eqform-h"><b>${EQT[sel.t]?EQT[sel.t][0]:''}</b><span class="sp"></span><button type="button" class="ib" data-act="eqMove" data-d="-1" title="تقديم"${e.sel===0?' disabled':''}>${ic(ar?'arrow-right':'arrow-left',17)}</button><button type="button" class="ib" data-act="eqMove" data-d="1" title="تأخير"${e.sel===e.pieces.length-1?' disabled':''}>${ic(ar?'arrow-left':'arrow-right',17)}</button><button type="button" class="ib danger" data-act="eqDel" title="حذف الجزء">${ic('trash-2',17)}</button></div>
   <div class="eqfields">${(EQT[sel.t]?EQT[sel.t][1]:[]).map(([f,l])=>field(f,l)).join('')}
+  ${['matrix','det'].includes(sel.t)?`<div class="eq-matrix-fields" style="--eq-cols:${Math.min(4,Number(sel.c)||2)}" role="group" aria-label="خلايا المصفوفة">${Array.from({length:(Number(sel.r)||2)*(Number(sel.c)||2)},(_,i)=>`<label><small>${ar?'صف':'Row'} ${D(String(Math.floor(i/(Number(sel.c)||2)+1)))} · ${ar?'عمود':'Col'} ${D(String(i%(Number(sel.c)||2)+1))}</small><input data-eq-cell="${i}" aria-label="خلية ${i+1}" value="${esc(sel.cells?.[i]??'')}" dir="${ar?'rtl':'ltr'}" autocomplete="off"></label>`).join('')}</div>`:''}
+  ${['cases','aligned'].includes(sel.t)?`<div class="eq-multiline" role="group" aria-label="الأسطر الرياضية">${Array.from({length:Number(sel.n)||2},(_,i)=>`<div class="eq-line"><b>${D(String(i+1))}</b><label><span>${sel.t==='cases'?'التعبير':'الطرف الأول'}</span><input data-eq-line="${i}.0" value="${esc(sel.lines?.[i]?.[0]??'')}" dir="${ar?'rtl':'ltr'}"></label><label><span>${sel.t==='cases'?'الشرط (اختياري)':'الطرف الثاني'}</span><input data-eq-line="${i}.1" value="${esc(sel.lines?.[i]?.[1]??'')}" dir="${ar?'rtl':'ltr'}"></label></div>`).join('')}</div>`:''}
   ${sel.t==='longdiv'?`<label class="chk"><input type="checkbox" data-eq="steps"${sel.steps?' checked':''}><span>إظهار خطوات الحل تحت المقسوم</span></label>`:''}${sel.t==='arrow'?`<label class="chk"><input type="checkbox" data-eq="rev"${sel.rev?' checked':''}><span>سهم انعكاسي ⇌ (تفاعل متزن)</span></label>`:''}</div></div>`:'';
  const tab=e.tab||'أساسية';
  $('#eqdlg').innerHTML=`<div class="eq" dir="rtl">
-  <header><b>${e.edit?'تعديل المعادلة':'إدراج معادلة'}</b>${seg('eqlang',e.lang,[['ar','عربية ١٢٣'],['en','English 123']],'sm')}<button type="button" class="ib" data-act="eqClose" title="إغلاق">${ic('x',20)}</button></header>
-  <div class="eqprev" dir="${ar?'rtl':'ltr'}">${prev}</div>
+  <header><b>${e.edit?'محرّر المعادلات · تعديل':'محرّر المعادلات · لوحة القوالب'}</b>${seg('eqlang',e.lang,[['ar','عربية ١٢٣'],['en','English 123']],'sm')}<button type="button" class="ib" data-act="eqClose" title="إغلاق">${ic('x',20)}</button></header>
+  <div class="eq-preview-label">معاينة فورية · كما ستظهر بالورقة</div><div class="eqprev" role="status" aria-live="polite" dir="${ar?'rtl':'ltr'}">${prev}</div>
   ${e.pieces.length>1?`<div class="strip" dir="${ar?'rtl':'ltr'}">${strip}</div>`:''}
   ${form}
   <div class="math-fast" aria-label="أدوات الرياضيات المتقدمة"><b>رياضيات: أضف الصيغة</b><div class="math-fast-scroll">${[['trig','جا / sin'],['identity','جا² + جتا²'],['deriv','المشتقة'],['deriv2','المشتقة الثانية'],['partialderiv','∂ مشتقة جزئية'],['intindef','∫ غير محدد'],['intdef','∫ بحدود']].map(([k,n])=>`<button type="button" data-act="eqAdd" data-t="${k}">${n}</button>`).join('')}</div></div>
-  <details class="eqtemplates"${e.pieces.length?'':' open'}><summary>${e.pieces.length?'إضافة صيغة أخرى':'اختر صيغة المعادلة'}${ic('chevron-down',16)}</summary><div class="eqgal">${EQG.map(([g,ks])=>`<div class="gal-g"><span class="gal-h">${g}</span><div class="gal">${ks.map(k=>{const [n,,smp,enSmp]=EQT[k],preview=e.lang==='en'&&enSmp?enSmp:smp;return`<button type="button" class="gt" data-act="eqAdd" data-t="${k}"><span class="gt-v" dir="${ar&&!['chem','iso','int','lim','sum','unit'].includes(k)?'rtl':'ltr'}">${texToHTML(pieceTex({t:k,...toPieceDigits(preview,['chem','iso','int','lim','sum','unit'].includes(k)?'en':e.lang),steps:false}),['chem','iso','int','lim','sum','unit'].includes(k)?'en':e.lang)}</span><small>${n}</small></button>`;}).join('')}</div></div>`).join('')}</div></details>
+  <section class="eq-palette" aria-label="قوالب محرّر المعادلات">
+    <div class="eq-palette-title"><b>مكتبة الصيغ</b><span>اختر فئة ثم اضغط على شكل المعادلة</span></div>
+    <div class="eq-cat-tabs" role="tablist" aria-label="فئات المعادلات">${EQG.map(([g])=>`<button type="button" role="tab" aria-selected="${(e.cat||'كسور وأسس')===g}" data-act="eqCategory" data-cat="${g}">${g}</button>`).join('')}</div>
+    <div class="eq-template-grid" role="tabpanel">${(EQG.find(([g])=>g===(e.cat||'كسور وأسس'))||EQG[0])[1].map(k=>{const [label,,arSample,enSample]=EQT[k],sample=e.lang==='en'&&enSample?enSample:arSample;const sampleLang=e.lang==='en'?'en':'ar';return`<button type="button" class="eq-template-tile" data-act="eqAdd" data-t="${k}" title="${label}"><span class="eq-tile-symbol" dir="${ar?'rtl':'ltr'}">${texToHTML(pieceTex({t:k,...sample}),sampleLang)}</span><span class="eq-tile-caption">${label}</span></button>`}).join('')}</div>
+  </section>
+  <details class="eq-code"><summary>صيغة مخصّصة متقدمة (LaTeX)</summary><label>اكتب صيغة تدعمها مكتبة المفيد<textarea data-eq-tex dir="ltr" spellcheck="false" rows="3">${esc(piecesToTex(e.pieces))}</textarea></label><button type="button" class="btn sm" data-act="eqApplyTex">تطبيق الصيغة</button><small>مثال: \\frac{س+١}{٢} — الصيغ غير المدعومة تُرفض بدل طباعتها بصورة خاطئة.</small></details>
   <div class="sub-h">الرموز، تُكتب في الخانة المحددة</div>
   <div class="symtabs">${Object.keys(SYMS).map(k=>`<button type="button" data-act="eqTab" data-k="${k}" aria-pressed="${tab===k}">${k}</button>`).join('')}</div>
   <div class="syms">${SYMS[tab].map(symBtn).join('')}</div>
@@ -2342,7 +2510,7 @@ function renderEq(){
 }
 function eqLive(){$('#eqdlg .eqprev').innerHTML=EQ.pieces.length?texToHTML(piecesToTex(EQ.pieces),EQ.lang):'';const b=$$('#eqdlg .pc')[EQ.sel];if(b)b.innerHTML=texToHTML(pieceTex(EQ.pieces[EQ.sel]),EQ.lang);const err=$('#eqError');if(err)err.hidden=true;}
 function eqSym(s){
- let el=EQ.focusKey?$('#eqdlg [data-eq="'+EQ.focusKey+'"]'):null;
+ let el=EQ.focusKey?(EQ.focusKey.startsWith('cell:')?$('#eqdlg [data-eq-cell="'+EQ.focusKey.slice(5)+'"]'):EQ.focusKey.startsWith('line:')?$('#eqdlg [data-eq-line="'+EQ.focusKey.slice(5)+'"]'):$('#eqdlg [data-eq="'+EQ.focusKey+'"]')):null;
  if(!el){const sel=EQ.pieces[EQ.sel];if(!sel||sel.t!=='text'){EQ.pieces.splice(EQ.sel+1,0,{t:'text',v:''});EQ.sel++;renderEq();}el=$('#eqdlg [data-eq]');}
  const a=el.selectionStart??el.value.length,b=el.selectionEnd??a;el.value=el.value.slice(0,a)+s+el.value.slice(b);el.focus();el.setSelectionRange(a+s.length,a+s.length);el.dispatchEvent(new Event('input',{bubbles:true}));
 }
@@ -2365,7 +2533,14 @@ function equationProblem(pieces,tex){
  for(const p of pieces){
   if(p.t==='root'){const n=toLa(p.n||'').trim();if(n&&!/^(?:[2-9]|[1-9]\d+|n|ن)$/.test(n))return'درجة الجذر: عدد صحيح ٢ أو أكثر، أو ن';}
   if(p.t==='longdiv'&&/^[0٠]+$/.test(String(p.b).trim()))return'القسمة على صفر غير معرّفة';
-  const optional={root:['n'],arrow:['a','b'],longdiv:['q'],int:['a','b'],trig:['e']};
+  if(['matrix','det'].includes(p.t)){
+    const r=Number(p.r),c=Number(p.c);if(r<1||c<1||r>4||c>4||(p.t==='det'&&r!==c))return'أبعاد المصفوفة غير صحيحة';
+    if(!p.cells||p.cells.length!==r*c||p.cells.some(v=>!String(v).trim()))return'أكمل جميع خلايا المصفوفة أو المحدد';
+  }
+  if(['cases','aligned'].includes(p.t)){
+    if(!p.lines||p.lines.length!==Number(p.n)||p.lines.some(pair=>!String(pair?.[0]||'').trim()||(p.t==='aligned'&&!String(pair?.[1]||'').trim())))return'أكمل أسطر المعادلة أو الدالة';
+  }
+  const optional={root:['n'],arrow:['a','b'],longdiv:['q'],int:['a','b'],trig:['e'],iint:['a','b'],iiint:['a','b'],oint:['a','b']};
   for(const [f,l] of EQT[p.t]?.[1]||[]){if(!(optional[p.t]||[]).includes(f)&&!String(p[f]??'').trim())return'أكمل خانة: '+l;}
  }
  return'';
@@ -2484,7 +2659,7 @@ document.addEventListener('click',e=>{
  if(a==='addEqItem'&&q.items.length>=80){toast('الحد ٨٠ فرعاً لكل سؤال');return;}
  if(a==='exAdd'&&q.extra.length>=10){toast('الحد ١٠ إجابات زائدة');return;}
  if(a==='chAdd'){const [,qid,iid]=b.dataset.path.split('.'),x=findQ(qid)?.items.find(i=>i.id===iid);if(x&&x.choices.length>=40){toast('الحد ٤٠ خياراً');return;}}
- if(!['jumpQuestion','symOpen','symTab','symClose','eqRoot','eqRemove','fmt','rEq','rSym','view','toggle','adding','more','zin','zout','zfit','eq','eqEdit','eqAdd','eqSel','eqMove','eqDel','eqClose','eqOk','eqTab','wz','wzNext','wzBack','wzClose','img','logo','font','open','save','print','wizard','undo','redo'].includes(a))pushHist();
+ if(!['jumpQuestion','symOpen','symTab','symClose','eqRoot','eqRemove','fmt','rEq','rSym','view','toggle','adding','more','zin','zout','zfit','eq','eqEdit','eqAdd','eqCategory','eqApplyTex','eqSel','eqMove','eqDel','eqClose','eqOk','eqTab','wz','wzNext','wzBack','wzClose','img','logo','font','open','save','print','wizard','undo','redo'].includes(a))pushHist();
  switch(a){
   case'view':setView(b.dataset.v);break;
   case'jumpQuestion':{const target=b.dataset.target;UI.open=target;UI.view='questions';renderSide();requestAnimationFrame(()=>{$(`.qc[data-qid="${target}"]`)?.scrollIntoView({behavior:'smooth',block:'center'});});break;}
@@ -2496,7 +2671,7 @@ document.addEventListener('click',e=>{
   case'homeLearn':$('#learnSection').scrollIntoView({behavior:'smooth'});break;
   case'lessonNext':lessonIndex=Math.min(LESSONS.length-1,lessonIndex+1);renderLesson();break;
   case'lessonPrev':lessonIndex=Math.max(0,lessonIndex-1);renderLesson();break;
-  case'set':if(b.dataset.path==='eqlang'){EQ.lang=b.dataset.v;EQ.pieces=EQ.pieces.map(x=>{const y={...x};for(const k in y)if(typeof y[k]==='string'&&k!=='t')y[k]=EQ.lang==='ar'?toAr(y[k]):toLa(y[k]);return y;});renderEq();break;}
+  case'set':if(b.dataset.path==='eqlang'){EQ.lang=b.dataset.v;EQ.pieces=EQ.pieces.map(x=>{const y={...x};const convert=v=>typeof v==='string'?(EQ.lang==='ar'?toAr(v):toLa(v)):Array.isArray(v)?v.map(convert):v;for(const k in y)if(k!=='t'&&!( ['matrix','det','cases','aligned'].includes(y.t)&&['r','c','n','style'].includes(k)))y[k]=convert(y[k]);return y;});renderEq();break;}
    setPath(b.dataset.path,b.dataset.v);commit();break;
   case'eye':{const k=b.dataset.k;p.meta.show[k]=!(p.meta.show[k]!==false);commit();break;}
   case'toggle':UI.open=UI.open===q.id?null:q.id;renderSide();renderPaper();break;
@@ -2552,10 +2727,12 @@ document.addEventListener('click',e=>{
    else if(a==='tbRow'){const w=x.table.rows[0].length;if(+b.dataset.d>0){if(x.table.rows.length>=30){toast('الحد ٣٠ صفاً، وزّع المحتوى على أكثر من جدول');break;}x.table.rows.push(Array(w).fill(''));}else if(x.table.rows.length>1)x.table.rows.pop();}
    else{if(+b.dataset.d>0)x.table.rows.forEach(r=>r.push(''));else if(x.table.rows[0].length>1)x.table.rows.forEach(r=>r.pop());}
    p.pristine=false;commit();if(a==='tbDel')toast('حُذف الجدول',{label:'تراجع',run:()=>undo(-1)});break;}
-  case'eqAdd':{const [,,smp]=EQT[b.dataset.t];const np={t:b.dataset.t,steps:false};EQT[b.dataset.t][1].forEach(([f])=>np[f]='');if(b.dataset.t==='text')np.v='';if(b.dataset.t==='trig')np.fn='sin';if(['deriv','deriv2','intindef','intdef'].includes(b.dataset.t)){np.v=EQ.lang==='ar'?'س':'x';np.d=EQ.lang==='ar'?'د':'d';}if(b.dataset.t==='partialderiv')np.v=EQ.lang==='ar'?'س':'x';if(['chem','iso','unit'].includes(b.dataset.t))EQ.lang='en';EQ.pieces.splice(EQ.sel+1,0,np);EQ.sel++;EQ.focusKey=null;EQ.autofocus=true;renderEq();break;}
+  case'eqAdd':{const [,,smp,enSmp]=EQT[b.dataset.t];const np={t:b.dataset.t,steps:false};EQT[b.dataset.t][1].forEach(([f])=>np[f]='');const advanced=['matrix','det','cases','aligned','binom','derivn','partialn','iint','iiint','oint','limsup','liminf','prod','overbrace','underbrace'];if(advanced.includes(b.dataset.t))Object.assign(np,JSON.parse(JSON.stringify(EQ.lang==='en'&&enSmp?enSmp:smp)));if(b.dataset.t==='text')np.v='';if(b.dataset.t==='trig')np.fn='sin';if(['deriv','deriv2','intindef','intdef'].includes(b.dataset.t)){np.v=EQ.lang==='ar'?'س':'x';np.d=EQ.lang==='ar'?'د':'d';}if(b.dataset.t==='partialderiv')np.v=EQ.lang==='ar'?'س':'x';if(['chem','iso','unit'].includes(b.dataset.t))EQ.lang='en';EQ.pieces.splice(EQ.sel+1,0,np);EQ.sel++;EQ.focusKey=null;EQ.autofocus=true;renderEq();break;}
   case'eqSel':EQ.sel=+b.dataset.i;EQ.focusKey=null;EQ.autofocus=true;renderEq();break;
   case'eqMove':{const d=+b.dataset.d;move(EQ.pieces,EQ.sel,d);EQ.sel=Math.max(0,Math.min(EQ.pieces.length-1,EQ.sel+d));EQ.focusKey=null;renderEq();break;}
   case'eqDel':EQ.pieces.splice(EQ.sel,1);EQ.sel=Math.min(EQ.sel,EQ.pieces.length-1);EQ.focusKey=null;renderEq();break;
+  case'eqCategory':EQ.cat=b.dataset.cat;EQ.focusKey=null;renderEq();break;
+  case'eqApplyTex':{const raw=$('#eqdlg [data-eq-tex]')?.value||'';const issue=texProblem(raw);const rendered=issue?'':texToHTML(raw,EQ.lang);if(issue||rendered.includes('math-error')){const box=$('#eqError');box.textContent=issue||'هذه الصيغة غير مدعومة حاليًا';box.hidden=false;break;}EQ.pieces=parsePieces(raw);EQ.sel=0;EQ.focusKey=null;renderEq();break;}
   case'eqTab':EQ.tab=b.dataset.k;renderEq();break;
   case'eqOk':eqOk();break;case'eqClose':$('#eqdlg').close();break;
   case'img':imgTarget=b.dataset.path;$('#imgIn').click();break;
@@ -2580,13 +2757,21 @@ document.addEventListener('click',e=>{
   case'zfit':UI.zoom='fit';applyZoom();break;
  }
 });
-document.addEventListener('focusin',e=>{if(EQ&&e.target.dataset&&e.target.dataset.eq!==undefined&&e.target.type!=='checkbox'){EQ.focusKey=e.target.dataset.eq;EQ.caret=null;}
+document.addEventListener('focusin',e=>{if(EQ&&e.target.dataset&&e.target.type!=='checkbox'){if(e.target.dataset.eq!==undefined)EQ.focusKey=e.target.dataset.eq;else if(e.target.dataset.eqCell!==undefined)EQ.focusKey='cell:'+e.target.dataset.eqCell;else if(e.target.dataset.eqLine!==undefined)EQ.focusKey='line:'+e.target.dataset.eqLine;EQ.caret=null;}
  const path=e.target.dataset?.r||e.target.dataset?.k,m=path&&/^(it\.[a-z0-9]+\.[a-z0-9]+)\.cell\.(\d+)\.(\d+)$/.exec(path);
  if(m){UI.tableCells[m[1]]=[+m[2],+m[3]];const info=$(`[data-cell-info="${m[1]}"]`);if(info)info.textContent=`الصف ${+m[2]+1}، العمود ${+m[3]+1}. اضغط على خلية لتحديدها.`;const grid=e.target.closest('.tbed-g');if(grid){$$('.tbed-cell.current',grid).forEach(el=>el.classList.remove('current'));e.target.closest('.tbed-cell')?.classList.add('current');}}
 });
 document.addEventListener('input',e=>{
  const el=e.target;
- if(el.dataset&&el.dataset.eq!==undefined){const p=EQ.pieces[EQ.sel];if(!p)return;p[el.dataset.eq]=el.type==='checkbox'?el.checked:el.value;eqLive();return;}
+ if(el.dataset&&el.dataset.eqDim!==undefined){const p=EQ?.pieces[EQ.sel];if(!p)return;const key=el.dataset.eqDim,value=Math.max(1,Math.min(key==='n'?6:4,Number(el.value)||2));if(['matrix','det'].includes(p.t)){
+   const prevR=Number(p.r)||2,prevC=Number(p.c)||2,old=p.cells||[],nextR=key==='r'?value:prevR,nextC=p.t==='det'?nextR:key==='c'?value:prevC;
+   p.cells=Array.from({length:nextR*nextC},(_,i)=>old[Math.floor(i/nextC)*prevC+i%nextC]??'');p.r=String(nextR);p.c=String(nextC);
+  }else if(['cases','aligned'].includes(p.t)){p.n=String(value);p.lines=Array.from({length:value},(_,i)=>p.lines?.[i]||['','']);}
+  EQ.focusKey=null;renderEq();return;
+ }
+ if(el.dataset&&el.dataset.eqCell!==undefined){const p=EQ?.pieces[EQ.sel];if(!p)return;el.value=EQ.lang==='ar'?toAr(el.value):toLa(el.value);p.cells[Number(el.dataset.eqCell)]=el.value;eqLive();return;}
+ if(el.dataset&&el.dataset.eqLine!==undefined){const p=EQ?.pieces[EQ.sel];if(!p)return;const [row,col]=el.dataset.eqLine.split('.').map(Number);el.value=EQ.lang==='ar'?toAr(el.value):toLa(el.value);p.lines[row][col]=el.value;eqLive();return;}
+ if(el.dataset&&el.dataset.eq!==undefined){const p=EQ.pieces[EQ.sel];if(!p)return;if(el.type!=='checkbox'&&el.tagName!=='SELECT'&&el.dataset.eq!=='style'&&el.dataset.eq!=='fn')el.value=EQ.lang==='ar'?toAr(el.value):toLa(el.value);p[el.dataset.eq]=el.type==='checkbox'?el.checked:el.value;eqLive();return;}
  if(el.dataset&&el.dataset.wz){W[el.dataset.wz]=el.type==='checkbox'?el.checked:el.value;if(el.dataset.wz==='subject'&&el.value.trim()){W.subject=el.value.trim();$$('#wizard [data-f=subject]').forEach(c=>c.setAttribute('aria-pressed','false'));$('#wizard [data-act=wzNext]').disabled=false;}return;}
  if(el.dataset&&el.dataset.b){
   const path=el.dataset.b;setPath(path,el.type==='checkbox'?el.checked:el.value);
