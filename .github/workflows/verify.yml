@@ -1,4 +1,4 @@
-name: Verify AlMufeed v17
+name: Verify AlMufeed v18
 on:
   push:
     branches: [main, 'feature/**', 'replace/**']
@@ -25,6 +25,8 @@ jobs:
         run: node tests/v15-static.js
       - name: Verify calculus, trigonometry, equation editing and bold print fonts
         run: node tests/v17-calculus.js
+      - name: Verify reversible MathType-style templates and matrix validation
+        run: node tests/v18-mathtype.js
       - name: Build self-contained standalone HTML
         run: |
           node build.js
@@ -45,11 +47,13 @@ jobs:
         run: node tests/v16-regression.js
       - name: Browser-test mathematical question builder, mobile equation entry and print output
         run: node tests/v17-browser.js
+      - name: Test MathType-style mobile matrix editor, Arabic digits and PDF output
+        run: node tests/v18-mathtype-browser.js
       - name: Attach visual and PDF test evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: almufeed-v17-browser-evidence
+          name: almufeed-v18-browser-evidence
           path: |
             tests/v14-*.png
             tests/v14-ux-results.json
@@ -63,6 +67,7 @@ jobs:
             tests/v17-*.png
             tests/v17-*.pdf
             tests/v17-browser-results.json
+            tests/v18-ci-print.pdf
           if-no-files-found: ignore
       - name: Commit generated index.html and app.js after validation
         if: github.event_name == 'push'
@@ -71,6 +76,6 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html app.js
           if ! git diff --cached --quiet; then
-            git commit -m "Build verified AlMufeed v17 standalone app"
+            git commit -m "Build verified AlMufeed v18 standalone app"
             git push
           fi
